@@ -43,6 +43,20 @@ describe('useUiMode', () => {
     expect(setItem).toHaveBeenCalledWith(UI_MODE_KEY, 'nexus')
   })
 
+  it('syncs the html ui mode dataset when mode changes', async () => {
+    const dataset: Record<string, string> = {}
+    vi.stubGlobal('document', { documentElement: { dataset } })
+    const { useUiMode } = await import('./useUiMode')
+
+    useUiMode().setMode('classic')
+
+    expect(dataset.uiMode).toBe('classic')
+
+    useUiMode().setMode('nexus')
+
+    expect(dataset.uiMode).toBe('nexus')
+  })
+
   it('falls back to the default (nexus) for an invalid stored value', async () => {
     storage.set(UI_MODE_KEY, 'NEXUS')
     const { useUiMode } = await import('./useUiMode')

@@ -1,7 +1,6 @@
-/* Shared tokens — palette-independent. Fonts (mono stack for IPs/ports/UUIDs)
- * and motion durations from the reference prototype (styles.css): hover 100ms,
- * drawer/sidebar 200ms ease-out, dropdown 150ms. Declared on every theme class
- * and the pre-mount data-attr selector so they resolve in all palettes/themes. */
+/* Shared tokens — palette-independent. Fonts, motion, spacing and radii are
+ * declared on every theme class and the pre-mount data-attr selector so light
+ * and dark Nexus differ by color tokens only. */
 html[data-ui-mode='nexus'],
 .v-theme--technicalDark,
 .v-theme--technicalLight,
@@ -11,6 +10,16 @@ html[data-ui-mode='nexus'],
   --nexus-transition-fast: 100ms ease;
   --nexus-transition-base: 200ms ease-out;
   --nexus-transition-slow: 300ms ease-out;
+  --nexus-gap-1: 4px;
+  --nexus-gap-2: 8px;
+  --nexus-gap-3: 12px;
+  --nexus-gap-4: 16px;
+  --nexus-gap-20: 20px;
+  --nexus-gap-5: 24px;
+  --nexus-gap-6: 32px;
+  --nexus-radius-sm: 4px;
+  --nexus-radius-md: 6px;
+  --nexus-radius-lg: 8px;
 }
 
 /* Monospace utility for IPs, ports, UUIDs and keys (reference .text-mono). */
@@ -53,16 +62,6 @@ html[data-ui-mode='nexus'][data-ui-palette='technical'],
   --nexus-chart-5: #ff4444;
   --nexus-chart-6: #a78bfa;
 
-  --nexus-gap-1: 4px;
-  --nexus-gap-2: 8px;
-  --nexus-gap-3: 12px;
-  --nexus-gap-4: 16px;
-  --nexus-gap-20: 20px;
-  --nexus-gap-5: 24px;
-  --nexus-gap-6: 32px;
-  --nexus-radius-sm: 4px;
-  --nexus-radius-md: 6px;
-  --nexus-radius-lg: 8px;
 }
 
 .v-theme--technicalLight {
@@ -128,16 +127,6 @@ html[data-ui-mode='nexus'],
   --nexus-chart-5: #fb7185;
   --nexus-chart-6: #38bdf8;
 
-  --nexus-gap-1: 4px;
-  --nexus-gap-2: 8px;
-  --nexus-gap-3: 12px;
-  --nexus-gap-4: 16px;
-  --nexus-gap-20: 20px;
-  --nexus-gap-5: 24px;
-  --nexus-gap-6: 32px;
-  --nexus-radius-sm: 4px;
-  --nexus-radius-md: 6px;
-  --nexus-radius-lg: 8px;
 }
 
 .v-theme--nexusLight {
