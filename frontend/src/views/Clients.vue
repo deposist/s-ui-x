@@ -28,6 +28,12 @@
     :id="qrcode.id"
     @close="closeQrCode"
   />
+  <ClientDoctor
+    v-model="doctor.visible"
+    :visible="doctor.visible"
+    :id="doctor.id"
+    @close="closeDoctor"
+  />
   <Stats
     v-model="stats.visible"
     :visible="stats.visible"
@@ -52,6 +58,7 @@
     @add="showModal(0)"
     @add-bulk="addBulk"
     @del="delClient"
+    @diagnose="showDoctor"
     @edit="showModal"
     @edit-bulk="editBulk"
     @qr="showQrCode"
@@ -251,6 +258,9 @@
         >
           mdi-qrcode
         </v-icon>
+        <v-icon class="me-2" icon="lucide:activity" @click="showDoctor(item.id)">
+          <v-tooltip activator="parent" location="top" :text="$t('actions.diagnose')"></v-tooltip>
+        </v-icon>
         <v-icon icon="mdi-chart-line" @click="showStats(item.name)" v-if="Data().enableTraffic">
           <v-tooltip activator="parent" location="top" :text="$t('stats.graphTitle')"></v-tooltip>
         </v-icon>
@@ -275,6 +285,7 @@ import ClientModal from '@/layouts/modals/Client.vue'
 import ClientAddBulk from '@/layouts/modals/ClientAddBulk.vue'
 import ClientEditBulk from '@/layouts/modals/ClientEditBulk.vue'
 import QrCode from '@/layouts/modals/QrCode.vue'
+import ClientDoctor from '@/layouts/modals/ClientDoctor.vue'
 import Stats from '@/layouts/modals/Stats.vue'
 import IpHistoryModal from '@/components/IpHistoryModal.vue'
 import { Client } from '@/types/clients'
@@ -384,6 +395,19 @@ const showQrCode = (id: number) => {
 }
 const closeQrCode = () => {
   qrcode.value.visible = false
+}
+
+const doctor = ref({
+  visible: false,
+  id: 0,
+})
+
+const showDoctor = (id: number) => {
+  doctor.value.id = id
+  doctor.value.visible = true
+}
+const closeDoctor = () => {
+  doctor.value.visible = false
 }
 
 const stats = ref({

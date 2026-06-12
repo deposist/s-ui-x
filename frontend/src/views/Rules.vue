@@ -95,6 +95,11 @@
       </v-btn>
     </v-col>
   </v-row>
+  <RoutingDnsPresetGallery
+    :config="appConfig"
+    :outbound-tags="outboundTags"
+    @apply="applyPresetConfig"
+  />
   <v-row>
     <v-col class="v-card-subtitle" cols="12">{{ $t('basic.routing.title') }}</v-col>
     <v-col cols="12">
@@ -286,6 +291,7 @@ import RulesetVue from '@/layouts/modals/Ruleset.vue'
 import RulesetImport from '@/layouts/modals/RulesetImport.vue'
 import RuleImport from '@/layouts/modals/RuleImport.vue'
 import DomainResolver from '@/components/DomainResolver.vue'
+import RoutingDnsPresetGallery from '@/components/presets/RoutingDnsPresetGallery.vue'
 import { Config } from '@/types/config'
 import { actionKeys, ruleset } from '@/types/rules'
 import { FindDiff } from '@/plugins/utils'
@@ -421,6 +427,10 @@ const saveConfig = async () => {
     resyncFromStore()
     loading.value = false
   }
+}
+
+const applyPresetConfig = (config: Config) => {
+  appConfig.value = config
 }
 
 const clients = computed((): string[] => Data().clients.map((c:any) => c.name))

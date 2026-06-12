@@ -47,6 +47,8 @@ func TestAPIHandlerRegistersLegacyActionRoutesExplicitly(t *testing.T) {
 			"/api/logoutAllAdmins",
 			"/api/checkOutbounds",
 			"/api/rotateSubSecret",
+			"/api/doctor/run",
+			"/api/doctor/client",
 			"/api/telegram/test",
 			"/api/telegram/backup",
 			"/api/telegram/backup/run",

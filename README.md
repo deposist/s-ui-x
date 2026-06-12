@@ -26,7 +26,7 @@
 
 Advanced Web panel built on `SagerNet/Sing-Box`.
 
-**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current build: `v1.5.8-beta1`; latest stable: `v1.5.7-hotfix1`).
+**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current build: `v1.5.8-beta2`; latest stable: `v1.5.7-hotfix1`).
 
 **This fork keeps the original project structure and updates the user-facing documentation and installation links for this repository. You can use the scripts from this repository directly, or fork and build the project yourself.**
 
@@ -39,7 +39,7 @@ The full per-release notes live in the language-specific changelog files:
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Current release notes: [`docs/releases/v1.5.8-beta1.md`](docs/releases/v1.5.8-beta1.md)
+- Current release notes: [`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
@@ -121,19 +121,19 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Run `install-windows.bat` as Administrator.
 4. Follow the installation wizard.
 
-## Install v1.5.8-beta1 (pre-release)
+## Install v1.5.8-beta2 (pre-release)
 
-Beta on top of v1.5.7-hotfix1: saving inbounds, outbounds, endpoints, and
-services no longer restarts the sing-box core — the changed object is
-hot-replaced in the running core, so active connections on unrelated objects
-survive every save. Deleting or renaming an outbound/endpoint that is still
-referenced (routes, selectors, detours, DNS) is now blocked with an error
-listing the references instead of breaking the next core start. Re-saving an
-unchanged config no longer restarts the core either. Backend-only, no manual
-migration. For production, prefer the stable v1.5.7-hotfix1 below.
+Beta on top of v1.5.7-hotfix1: adds a Personal Ops Pack for RU/ZH admins — a
+Config Doctor on the Home page that dry-checks your full sing-box config without
+starting or restarting the running core, a per-client "why doesn't it work"
+diagnosis, a curated RU/ZH routing/DNS preset gallery (applied only to the local
+unsaved config), and a reworked subscription delivery dialog with per-platform
+links and the previously hidden subscription settings. The diagnostic side is
+read-only and additive; no manual migration. For production, prefer the stable
+v1.5.7-hotfix1 below.
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta1
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta2
 ```
 
 Or from a local clone:
@@ -141,7 +141,7 @@ Or from a local clone:
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.8-beta1
+sudo bash install.sh v1.5.8-beta2
 ```
 
 ## Install v1.5.7-hotfix1 Stable
@@ -438,7 +438,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 Продвинутая Web-панель, построенная на базе `SagerNet/Sing-Box`.
 
-**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая сборка: `v1.5.8-beta1`; последняя стабильная: `v1.5.7-hotfix1`).
+**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая сборка: `v1.5.8-beta2`; последняя стабильная: `v1.5.7-hotfix1`).
 
 **Этот fork сохраняет структуру оригинального проекта и обновляет пользовательскую документацию и ссылки установки для этого репозитория. Вы можете напрямую использовать скрипты из этого репозитория или сделать fork и собрать проект самостоятельно.**
 
@@ -451,7 +451,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Release notes текущей версии: [`docs/releases/v1.5.8-beta1.md`](docs/releases/v1.5.8-beta1.md)
+- Release notes текущей версии: [`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md)
 
 README оставляет только установку и общий обзор проекта. Полная история
 релизов, breaking-заметки, гайд по обновлению и инструкции по откату находятся
@@ -533,20 +533,19 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Запустите `install-windows.bat` от имени администратора.
 4. Следуйте инструкциям мастера установки.
 
-## Установка v1.5.8-beta1 (пре-релиз)
+## Установка v1.5.8-beta2 (пре-релиз)
 
-Бета поверх v1.5.7-hotfix1: сохранение inbound'ов, outbound'ов, endpoint'ов и
-сервисов больше не перезапускает ядро sing-box — изменённый объект горячо
-заменяется в работающем ядре, и активные соединения через незатронутые объекты
-переживают каждое сохранение. Удаление или переименование outbound'а/endpoint'а,
-на который ещё есть ссылки (маршруты, селекторы, detour, DNS), теперь
-блокируется ошибкой со списком ссылок, а не ломает следующий старт ядра.
-Повторное сохранение конфига без изменений тоже больше не перезапускает ядро.
-Только backend, ручных миграций нет. Для продакшена рекомендуется стабильная
-v1.5.7-hotfix1 ниже.
+Бета поверх v1.5.7-hotfix1: добавляет Personal Ops Pack для RU/ZH-админов —
+Config Doctor на главной странице, который проверяет полный конфиг sing-box без
+запуска или перезапуска работающего ядра, диагностику клиента «почему не
+работает», галерею curated RU/ZH-пресетов маршрутизации и DNS (применяется
+только к локальной несохранённой конфигурации) и переработанное окно доставки
+подписок со ссылками по платформам и ранее скрытыми настройками подписки.
+Диагностическая часть только на чтение и аддитивна; ручных миграций нет. Для
+продакшена рекомендуется стабильная v1.5.7-hotfix1 ниже.
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta1
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta2
 ```
 
 Или из локального клона:
@@ -554,7 +553,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.8-beta1
+sudo bash install.sh v1.5.8-beta2
 ```
 
 ## Установка стабильной версии v1.5.7-hotfix1

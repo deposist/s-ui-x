@@ -61,6 +61,46 @@
           </v-btn>
         </v-col>
       </v-row>
+      <v-row class="d-flex align-center justify-center">
+        <v-col cols="12" md="10" lg="8">
+          <v-card class="rounded-lg" variant="outlined">
+            <v-card-title class="d-flex align-center justify-space-between">
+              <span>{{ $t('doctor.title') }}</span>
+              <v-chip :color="doctorColor" density="compact" label>
+                {{ doctorLabel }}
+              </v-chip>
+            </v-card-title>
+            <v-card-text>
+              <div class="main-doctor__summary">
+                <span>{{ doctorReport?.summary ?? $t('doctor.idle') }}</span>
+                <v-btn
+                  color="primary"
+                  prepend-icon="lucide:activity"
+                  :loading="doctorLoading"
+                  variant="tonal"
+                  @click="runDoctor"
+                >
+                  {{ $t('doctor.run') }}
+                </v-btn>
+              </div>
+              <v-list v-if="doctorReport?.items?.length" class="main-doctor__list" density="compact">
+                <v-list-item v-for="item in doctorReport.items.slice(0, 6)" :key="item.id">
+                  <template #prepend>
+                    <v-chip :color="doctorItemColor(item.severity)" density="compact" label>
+                      {{ doctorItemLabel(item.severity) }}
+                    </v-chip>
+                  </template>
+                  <v-list-item-title>{{ item.title }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ item.message }}</v-list-item-subtitle>
+                  <v-list-item-subtitle v-if="item.action" class="main-doctor__action">
+                    {{ item.action }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
       <v-row>
         <v-col cols="12" sm="6" md="3" v-for="i in reloadItems" :key="i">
           <v-card class="rounded-lg" variant="outlined" height="210px" elevation="5">
@@ -199,6 +239,7 @@ import { i18n, locale } from '@/locales'
 import LogVue from '@/layouts/modals/Logs.vue'
 import Backup from '@/layouts/modals/Backup.vue'
 import UsageStats from '@/layouts/modals/UsageStats.vue'
+import type { DoctorReport, DoctorSeverity } from '@/types/doctor'
 
 const loading = ref(false)
 const menu = ref(false)
@@ -226,6 +267,8 @@ const menuItems = [
 ]
 
 const tilesData = ref(<any>{})
+const doctorLoading = ref(false)
+const doctorReport = ref<DoctorReport>()
 
 const reloadItems = computed({
   get() { return Data().reloadItems },
@@ -292,4 +335,57 @@ const restartSingbox = async () => {
   await HttpUtils.post('api/restartSb',{})
   loading.value = false
 }
+
+const doctorItemColor = (severity: DoctorSeverity) => {
+  if (severity === 'error') return 'error'
+  if (severity === 'warn') return 'warning'
+  return 'success'
+}
+
+const doctorItemLabel = (severity: DoctorSeverity) => {
+  if (severity === 'error') return i18n.global.t('doctor.error')
+  if (severity === 'warn') return i18n.global.t('doctor.warn')
+  return i18n.global.t('doctor.ok')
+}
+
+const doctorColor = computed(() => doctorReport.value ? doctorItemColor(doctorReport.value.status) : undefined)
+const doctorLabel = computed(() => doctorReport.value ? doctorItemLabel(doctorReport.value.status) : i18n.global.t('doctor.notRun'))
+
+const runDoctor = async () => {
+  doctorLoading.value = true
+  const msg = await HttpUtils.post('api/doctor/run', {})
+  if (msg.success) {
+    doctorReport.value = msg.obj as DoctorReport
+  }
+  doctorLoading.value = false
+}
 </script>
+
+<style scoped>
+.main-doctor__summary {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.main-doctor__summary span {
+  overflow-wrap: anywhere;
+}
+
+.main-doctor__list {
+  margin-top: 8px;
+}
+
+.main-doctor__action {
+  color: rgb(var(--v-theme-warning));
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .main-doctor__summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+</style>

@@ -17,6 +17,7 @@
 import { type Component, defineComponent, h, mergeProps } from 'vue'
 import { mdi as mdiSvgBase } from 'vuetify/iconsets/mdi-svg'
 import {
+  Activity,
   AlertCircle,
   AlertTriangle,
   ArrowDown,
@@ -92,6 +93,7 @@ import {
 // the mdi scan in mdiIcons.test.ts), catching typos/unmapped names that would
 // otherwise render a blank icon with only a DEV console.warn.
 export const iconMap: Record<string, Component> = {
+  activity: Activity,
   // Sidebar navigation
   'layout-grid': LayoutGrid,
   zap: Zap,

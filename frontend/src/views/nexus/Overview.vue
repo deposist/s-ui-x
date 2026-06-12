@@ -8,6 +8,7 @@
     />
 
     <div class="nexus-overview__primary">
+      <config-doctor />
       <top-clients :clients="topClients" :loading="storeLoading" />
       <recent-events
         :events="auditEvents"
@@ -35,6 +36,7 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import ConfigDoctor from '@/components/nexus/overview/ConfigDoctor.vue'
 import KpiRow from '@/components/nexus/overview/KpiRow.vue'
 import ProtocolSummaries from '@/components/nexus/overview/ProtocolSummaries.vue'
 import RecentEvents from '@/components/nexus/overview/RecentEvents.vue'
@@ -250,9 +252,10 @@ onBeforeUnmount(() => {
   gap: var(--nexus-gap-4);
   min-width: 0;
   grid-template-columns:
+    minmax(280px, 1fr)
     minmax(0, 1.15fr)
-    minmax(0, 1.4fr)
-    minmax(320px, 1fr);
+    minmax(0, 1.25fr)
+    minmax(300px, 1fr);
 }
 
 @media (max-width: 1264px) {
@@ -261,7 +264,7 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .nexus-overview__primary > :nth-child(3) {
+  .nexus-overview__primary > :nth-child(4) {
     grid-column: 1 / -1;
   }
 }
@@ -271,7 +274,7 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .nexus-overview__primary > :nth-child(3) {
+  .nexus-overview__primary > :nth-child(4) {
     grid-column: auto;
   }
 }

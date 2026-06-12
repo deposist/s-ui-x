@@ -144,6 +144,7 @@ const emit = defineEmits<{
   edit: [id: number]
   del: [id: number]
   qr: [id: number]
+  diagnose: [id: number]
   stats: [name: string]
   showIps: [name: string]
 }>()
@@ -211,6 +212,7 @@ const expiryColor = (c: ClientRow) => (c.expiry === 0 ? 'success' : c.expiry <= 
 const clientActions = (): RowAction[] => [
   { key: 'edit', labelKey: 'actions.edit', icon: 'lucide:pencil', inline: true },
   { key: 'qr', labelKey: 'objects.config', icon: 'lucide:qr-code', inline: true },
+  { key: 'diagnose', labelKey: 'actions.diagnose', icon: 'lucide:activity', inline: true },
   { key: 'stats', labelKey: 'stats.graphTitle', icon: 'lucide:line-chart', inline: true, hidden: !props.enableTraffic },
   { key: 'del', labelKey: 'actions.del', icon: 'lucide:trash-2', tone: 'error', divider: true },
 ]
@@ -222,6 +224,9 @@ const handleAction = async (key: string, item: ClientRow) => {
       break
     case 'qr':
       emit('qr', item.id)
+      break
+    case 'diagnose':
+      emit('diagnose', item.id)
       break
     case 'stats':
       emit('stats', item.name)

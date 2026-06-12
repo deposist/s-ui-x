@@ -89,6 +89,20 @@
           <v-col cols="12" sm="6" md="4">
             <v-switch color="primary" v-model="subShowInfo" :label="$t('setting.subInfo')" hide-details />
           </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-switch color="primary" v-model="subSecretRequired" :label="$t('setting.subSecretRequired')" hide-details />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" sm="6" md="4">
+            <v-switch color="primary" v-model="subLinkEnable" :label="$t('setting.subLinkEnable')" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-switch color="primary" v-model="subJsonEnable" :label="$t('setting.subJsonEnable')" hide-details />
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-switch color="primary" v-model="subClashEnable" :label="$t('setting.subClashEnable')" hide-details />
+          </v-col>
         </v-row>
         <v-row>
           <v-col cols="12" sm="6" md="4">
@@ -131,6 +145,33 @@
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-text-field v-model="settings.subURI" :label="$t('setting.subUri')" hide-details></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" class="v-card-subtitle">{{ $t('setting.subAdvanced') }}</v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="settings.subTitle" :label="$t('setting.subTitle')" hide-details></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="settings.subSupportUrl" :label="$t('setting.subSupportUrl')" hide-details></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field v-model="settings.subProfileUrl" :label="$t('setting.subProfileUrl')" hide-details></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-text-field
+              v-model.number="subRateLimitPerIP"
+              min="0"
+              type="number"
+              :label="$t('setting.subRateLimitPerIP')"
+              hide-details
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-switch color="primary" v-model="subNameInRemark" :label="$t('setting.subNameInRemark')" hide-details />
+          </v-col>
+          <v-col cols="12">
+            <v-textarea v-model="settings.subAnnounce" :label="$t('setting.subAnnounce')" rows="2" hide-details></v-textarea>
           </v-col>
         </v-row>
       </v-window-item>
@@ -208,11 +249,21 @@ const settings = ref({
 	subUpdates: "12",
   subEncode: "true",
   subShowInfo: "false",
+  subSecretRequired: "false",
+  subRateLimitPerIP: "60",
+  subLinkEnable: "true",
+  subJsonEnable: "true",
+  subClashEnable: "true",
 	subURI: "",
   subJsonPath: "/json/",
   subClashPath: "/clash/",
   subJsonURI: "",
   subClashURI: "",
+  subTitle: "",
+  subSupportUrl: "",
+  subProfileUrl: "",
+  subAnnounce: "",
+  subNameInRemark: "false",
   subJsonExt: "",
   subClashExt: "",
 })
@@ -303,6 +354,31 @@ const subShowInfo = computed({
   set: (v:boolean) => { settings.value.subShowInfo = v ? "true" : "false" }
 })
 
+const subSecretRequired = computed({
+  get: () => { return settings.value.subSecretRequired == "true" },
+  set: (v:boolean) => { settings.value.subSecretRequired = v ? "true" : "false" }
+})
+
+const subLinkEnable = computed({
+  get: () => { return settings.value.subLinkEnable == "true" },
+  set: (v:boolean) => { settings.value.subLinkEnable = v ? "true" : "false" }
+})
+
+const subJsonEnable = computed({
+  get: () => { return settings.value.subJsonEnable == "true" },
+  set: (v:boolean) => { settings.value.subJsonEnable = v ? "true" : "false" }
+})
+
+const subClashEnable = computed({
+  get: () => { return settings.value.subClashEnable == "true" },
+  set: (v:boolean) => { settings.value.subClashEnable = v ? "true" : "false" }
+})
+
+const subNameInRemark = computed({
+  get: () => { return settings.value.subNameInRemark == "true" },
+  set: (v:boolean) => { settings.value.subNameInRemark = v ? "true" : "false" }
+})
+
 const webPort = computed({
   get: () => { return settings.value.webPort.length>0 ? parseInt(settings.value.webPort) : 2095 },
   set: (v:number) => { settings.value.webPort = v>0 ? v.toString() : "2095" }
@@ -326,6 +402,11 @@ const subPort = computed({
 const subUpdates = computed({
   get: () => { return settings.value.subUpdates.length>0 ? parseInt(settings.value.subUpdates) : 12 },
   set: (v:number) => { settings.value.subUpdates = v>0 ? v.toString() : "12" }
+})
+
+const subRateLimitPerIP = computed({
+  get: () => { return settings.value.subRateLimitPerIP.length>0 ? parseInt(settings.value.subRateLimitPerIP) : 60 },
+  set: (v:number) => { settings.value.subRateLimitPerIP = v>=0 ? v.toString() : "60" }
 })
 
 const subscriptionPathKeys = ['subPath', 'subJsonPath', 'subClashPath'] as const

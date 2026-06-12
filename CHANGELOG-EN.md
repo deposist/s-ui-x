@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack: Config Doctor, RU/ZH routing/DNS presets, subscription delivery UX, client diagnosis
+
+Beta: an operations and diagnostics layer for RU/ZH single-panel admins.
+Additive — new read-only diagnostic endpoints and frontend surfaces, no database
+migration and no configuration changes.
+
+- Config Doctor on the Home page (Nexus and classic layouts): one click
+  assembles the full sing-box config and dry-checks it without starting or
+  restarting the running core (parse + `NewBox` construction with no listener
+  binds, outbound dials, or rule-set downloads), reporting ok/warn/error items
+  for config build, DNS/route references, remote rule-set URL shape, subscription
+  health, recent core warnings, and outbound reachability. Report-only; it never
+  mutates the config.
+- Client "why doesn't it work" diagnosis from each client row: enabled / expired
+  / traffic-limit, inbound membership, delivery links, subscription secret and
+  formats, core state, online signal, and outbound reachability.
+- RU/ZH routing & DNS preset gallery on the Rules and DNS pages: curated `.srs`
+  sources (SagerNet sing-geosite/sing-geoip, runetfreedom russia-blocked-geoip),
+  preview diff, applied only to the local unsaved config; you choose your own
+  proxy/direct outbound tags.
+- Subscription "Delivery" dialog (reworked client QR): per-platform tabs
+  (sing-box, Clash/Mihomo, Hiddify, raw links), copy/QR/test-URL. Settings now
+  exposes the previously hidden subscription controls (title/support/profile/
+  announce, format toggles, secret-required, per-IP rate limit, name-in-remark).
+- Hardening: the client-diagnose connectivity target is now validated with the
+  same SSRF guard the outbound-check endpoints use (HTTPS only, no userinfo, no
+  internal/metadata addresses) before any probe; subscription-format checks warn
+  on a settings read error instead of falsely reporting "all formats disabled";
+  outbound probes cancelled by the doctor's own time budget are reported as "not
+  tested" rather than failed.
+
+Full release notes: [`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md).
+
 ## [1.5.8-beta1] - 2026-06-11 - hot reload for all objects: saves without core restarts; referenced-tag delete guard
 
 Beta: no-restart apply now covers every object the panel manages. Backend-only,

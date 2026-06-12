@@ -48,6 +48,11 @@
       </v-btn>
     </v-col>
   </v-row>
+  <RoutingDnsPresetGallery
+    :config="appConfig"
+    :outbound-tags="outboundTags"
+    @apply="applyPresetConfig"
+  />
   <v-row>
     <v-col class="v-card-subtitle" cols="12">{{ $t('pages.basics') }}</v-col>
     <v-col cols="12">
@@ -271,6 +276,7 @@ import { computed, ref, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DnsVue from '@/layouts/modals/Dns.vue'
 import DnsRuleVue from '@/layouts/modals/DnsRule.vue'
+import RoutingDnsPresetGallery from '@/components/presets/RoutingDnsPresetGallery.vue'
 import { Config } from '@/types/config'
 import { actionDnsRuleKeys, dnsRule } from '@/types/dns'
 import { FindDiff } from '@/plugins/utils'
@@ -347,9 +353,18 @@ const saveConfig = async () => {
   loading.value = false
 }
 
+const applyPresetConfig = (config: Config) => {
+  appConfig.value = config
+}
+
 const inboundTags = computed((): string[] => {
   return [...Data().inbounds?.map((o:any) => o.tag), ...Data().endpoints?.filter((e:any) => e.listen_port > 0).map((e:any) => e.tag)]
 })
+
+const outboundTags = computed((): string[] => [
+  ...Data().outbounds?.map((o:any) => o.tag),
+  ...Data().endpoints?.map((e:any) => e.tag),
+])
 
 const dns = computed((): any => {
   return appConfig.value.dns
