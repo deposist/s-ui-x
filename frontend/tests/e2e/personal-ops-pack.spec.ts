@@ -1,7 +1,26 @@
 import { expect, test, type Page } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
 
 import { csrfToken, login, serverStatePath } from './helpers'
+
+const serverStateMatchesPasswordFile = () => {
+  if (!fs.existsSync(serverStatePath)) return false
+  try {
+    const state = JSON.parse(fs.readFileSync(serverStatePath, 'utf8')) as {
+      dbDir?: string
+      password?: string
+    }
+    if (!state.dbDir || !state.password) return false
+
+    const passwordPath = path.join(state.dbDir, 'initial-admin.txt')
+    if (!fs.existsSync(passwordPath)) return false
+
+    return fs.readFileSync(passwordPath, 'utf8').trim() === state.password
+  } catch {
+    return false
+  }
+}
 
 const chooseSelectOption = async (page: Page, testId: string, value: string) => {
   const select = page.getByTestId(testId)
@@ -38,11 +57,13 @@ test('personal ops pack doctor presets delivery and client diagnosis smoke', asy
   await expect.poll(() => {
     if (!fs.existsSync(serverStatePath)) return false
     return fs.statSync(serverStatePath).mtimeMs >= startedAt - 30_000
-  }).toBe(true)
+      || serverStateMatchesPasswordFile()
+  }, { timeout: 30_000 }).toBe(true)
 
   await login(page)
 
-  await page.goto('')
+  await page.goto('settings')
+  await page.getByRole('tab', { name: 'Maintenance' }).click()
   await expect(page.getByText('Config Doctor').first()).toBeVisible()
   await page.getByRole('button', { name: 'Run Doctor' }).first().click()
   await expect(page.getByText(/Build sing-box config|Dry config check|sing-box core/).first()).toBeVisible()

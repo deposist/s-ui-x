@@ -76,6 +76,11 @@ func (c *CronJob) Start(loc *time.Location, trafficAge int) error {
 	if _, err := c.cron.AddJob("@every 20s", NewPaidSubPollJob()); err != nil {
 		return err
 	}
+	// IP TLS certificate auto-renewal (shortlived Let's Encrypt cert). Guarded
+	// internally: a no-op unless auto-renew is enabled and the cert nears expiry.
+	if _, err := c.cron.AddJob("@every 12h", NewCertRenewJob()); err != nil {
+		return err
+	}
 
 	c.cron.Start()
 

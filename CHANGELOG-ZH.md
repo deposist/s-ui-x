@@ -4,6 +4,30 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.8-beta3] - 2026-06-14 - IP 地址 TLS 证书（签发 + 自动续期）；Config Doctor 移至设置
+
+测试版：为无域名的裸 IP 地址签发并自动续期 Let's Encrypt TLS 证书，全程在进程内完成。
+增量更新——无需数据库迁移，无配置变更。
+
+- IP 地址 TLS 证书：设置 → Maintenance 中新增「IP certificate」卡片，通过 `go-acme/lego`
+  在进程内为裸 IP 签发 Let's Encrypt 证书（RFC 8738 `shortlived` 证书配置）——无需
+  `acme.sh`，在 Linux、Windows 与 Docker 上表现一致。HTTP-01 standalone，端口可配置
+  （默认 80）。可应用于面板自身的 HTTPS 监听器（面板重启以加载）或某个入站 TLS 配置
+  （热重载，不重启内核）。每 12 小时的任务会在剩余有效期不足 72 小时时（shortlived
+  证书约存活 6.7 天）以及目标 IP 变更时重新签发。证书/密钥存放于 `<db>/certs`（密钥
+  `0600`）；ACME 账户密钥静态加密，绝不对外暴露。目标 IP 在手动签发与自动续期时都会
+  校验，拒绝 private/loopback/link-local/CGNAT/元数据/保留 网段（不做 DNS 解析）；签发
+  为特权操作并记入审计。
+- Config Doctor 移至设置 → Maintenance，两种布局共用；此前的两处副本（Nexus 主页概览
+  卡片与经典主页的内联卡片）均移除。只读干运行校验行为保持不变。
+- Nexus 主页概览精简：移除独立的 System Status 面板与 Config Doctor 卡片；IPv4/IPv6
+  地址移入实时流量 KPI 卡片，Recent events 显示 10 条（此前 6 条）。
+- 加固：自动续期在目标 IP 变更时重新签发；直接签发现在像设置页一样校验 ACME 邮箱
+  （通过 Go 标准库邮件解析器）与 challenge 端口；修复了会渲染为空白的未注册
+  `shield-check` 图标映射。
+
+完整发布说明：[`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md)。
+
 ## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack：Config Doctor、RU/ZH 路由/DNS 预设、订阅交付 UX、客户端诊断
 
 测试版：面向 RU/ZH 单面板管理员的运维与诊断层。增量更新——新增只读诊断端点与前端界面，

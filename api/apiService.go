@@ -43,6 +43,7 @@ type ApiService struct {
 	service.TelegramService
 	service.VersionService
 	service.DoctorService
+	service.IpCertificateService
 }
 
 type Option func(*ApiService)
@@ -93,6 +94,7 @@ func (a *ApiService) bindRuntime() {
 	}
 	a.TelegramService = service.TelegramService{Runtime: runtime}
 	a.DoctorService = service.DoctorService{Runtime: runtime}
+	a.IpCertificateService = service.IpCertificateService{Runtime: runtime, Settings: &a.SettingService}
 }
 
 const maxDatabaseImportBytes = 64 << 20

@@ -3,12 +3,12 @@
     <kpi-row
       :loading="dashboardLoading"
       :summary="kpiSummary"
+      :status="systemStatus"
       :traffic="trafficSparkSeries"
       :ws-state="ws.state"
     />
 
     <div class="nexus-overview__primary">
-      <config-doctor />
       <top-clients :clients="topClients" :loading="storeLoading" />
       <recent-events
         :events="auditEvents"
@@ -36,7 +36,6 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-import ConfigDoctor from '@/components/nexus/overview/ConfigDoctor.vue'
 import KpiRow from '@/components/nexus/overview/KpiRow.vue'
 import ProtocolSummaries from '@/components/nexus/overview/ProtocolSummaries.vue'
 import RecentEvents from '@/components/nexus/overview/RecentEvents.vue'
@@ -182,7 +181,7 @@ const loadAuditEvents = async () => {
   }
 
   auditLoading.value = true
-  const msg = await HttpUtils.get('api/security/audit', { limit: 6 })
+  const msg = await HttpUtils.get('api/security/audit', { limit: 10 })
 
   if (msg.success) {
     auditEvents.value = mapAuditDisplayItems(auditEventsFromPayload(msg.obj))
@@ -252,7 +251,6 @@ onBeforeUnmount(() => {
   gap: var(--nexus-gap-4);
   min-width: 0;
   grid-template-columns:
-    minmax(280px, 1fr)
     minmax(0, 1.15fr)
     minmax(0, 1.25fr)
     minmax(300px, 1fr);
@@ -264,7 +262,7 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .nexus-overview__primary > :nth-child(4) {
+  .nexus-overview__primary > :nth-child(3) {
     grid-column: 1 / -1;
   }
 }
@@ -274,7 +272,7 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .nexus-overview__primary > :nth-child(4) {
+  .nexus-overview__primary > :nth-child(3) {
     grid-column: auto;
   }
 }

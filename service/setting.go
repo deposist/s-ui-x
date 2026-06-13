@@ -145,8 +145,36 @@ var defaultValueMap = map[string]string{
 	"paidSubOrderTTLMinutes":      "30",
 	"paidSubGreeting":             "",
 	"paidSubRefundRevoke":         "true",
-	"config":                      defaultConfig,
-	"version":                     "",
+	// IP TLS certificate (Let's Encrypt shortlived profile, RFC 8738) issued
+	// in-process via go-acme/lego. User-editable controls + machine-managed
+	// state (account key, issued paths, expiry). See IpCertificateService.
+	"ipCertEnabled":             "false",
+	"ipCertTargetIP":            "",
+	"ipCertEmail":               "",
+	"ipCertChallengePort":       "80",
+	"ipCertApplyTarget":         "panel",
+	"ipCertAccountKey":          "",
+	"ipCertAccountRegistration": "",
+	"ipCertLastIP":              "",
+	"ipCertCertPath":            "",
+	"ipCertKeyPath":             "",
+	"ipCertNotAfter":            "",
+	"ipCertLastIssue":           "",
+	"config":                    defaultConfig,
+	"version":                   "",
+}
+
+// ipCertInternalSettingKeys are machine-managed: written only by
+// IpCertificateService, never by the settings UI. They are stripped from
+// GetAllSetting and rejected by isEditableSettingKey.
+var ipCertInternalSettingKeys = []string{
+	"ipCertAccountKey",
+	"ipCertAccountRegistration",
+	"ipCertLastIP",
+	"ipCertCertPath",
+	"ipCertKeyPath",
+	"ipCertNotAfter",
+	"ipCertLastIssue",
 }
 
 type SettingService struct {
@@ -180,6 +208,10 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	delete(allSetting, "config")
 	delete(allSetting, "version")
 	delete(allSetting, "paidSubUpdateOffset") // internal bot cursor, not user-facing
+	for _, key := range ipCertInternalSettingKeys {
+		delete(allSetting, key)             // machine-managed IP cert state, not user-facing
+		delete(allSetting, key+"HasSecret") // and its encrypted-marker, if any
+	}
 
 	return &allSetting, nil
 }
@@ -777,9 +809,13 @@ func isEditableSettingKey(key string) bool {
 	switch key {
 	case "secret", "installSalt", "sessionGeneration", "config", "version", "paidSubUpdateOffset":
 		return false
-	default:
-		return true
 	}
+	for _, internal := range ipCertInternalSettingKeys {
+		if key == internal {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *SettingService) validateAll(settings map[string]string) error {
@@ -806,6 +842,9 @@ func (s *SettingService) validateAll(settings map[string]string) error {
 			return err
 		}
 		if err := validatePaidSubSettingInput(key, obj); err != nil {
+			return err
+		}
+		if err := validateIpCertSettingInput(key, obj); err != nil {
 			return err
 		}
 		if key == "forceCookieSecure" || key == "sessionSameSiteStrict" {
@@ -1301,6 +1340,50 @@ func validatePaidSubSettingInput(key string, value string) error {
 		if len([]rune(value)) > 4096 {
 			return common.NewError("paidSubGreeting is too long (max 4096)")
 		}
+	}
+	return nil
+}
+
+func validateIpCertSettingInput(key string, value string) error {
+	switch key {
+	case "ipCertEnabled":
+		if _, err := strconv.ParseBool(value); err != nil {
+			return common.NewError("invalid boolean setting: ", key)
+		}
+	case "ipCertTargetIP":
+		if value == "" {
+			return nil
+		}
+		if err := validateIssuableIP(value); err != nil {
+			return err
+		}
+	case "ipCertEmail":
+		if err := validateIpCertEmail(value, false); err != nil {
+			return err
+		}
+	case "ipCertChallengePort":
+		if err := validateIntRange(key, value, 1, 65535); err != nil {
+			return err
+		}
+	case "ipCertApplyTarget":
+		if err := validateIpCertApplyTarget(value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validateIpCertApplyTarget accepts "panel" or "inbound:<numericTlsId>".
+func validateIpCertApplyTarget(value string) error {
+	if value == "" || value == "panel" {
+		return nil
+	}
+	rest, ok := strings.CutPrefix(value, "inbound:")
+	if !ok {
+		return common.NewError("ipCertApplyTarget must be 'panel' or 'inbound:<id>'")
+	}
+	if id, err := strconv.Atoi(rest); err != nil || id <= 0 {
+		return common.NewError("ipCertApplyTarget inbound id must be a positive integer")
 	}
 	return nil
 }

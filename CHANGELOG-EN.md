@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.8-beta3] - 2026-06-14 - IP-address TLS certificates (issue + auto-renew); Config Doctor moves to Settings
+
+Beta: issue and auto-renew a Let's Encrypt TLS certificate for a bare IP address
+(no domain needed), done entirely in-process. Additive — no database migration,
+no configuration changes.
+
+- IP-address TLS certificates: a new "IP certificate" card in Settings →
+  Maintenance issues a Let's Encrypt cert for a bare IP (RFC 8738 `shortlived`
+  profile) in-process via `go-acme/lego` — no `acme.sh`, identical on Linux,
+  Windows and Docker. HTTP-01 standalone on a configurable port (default 80).
+  Apply it to the panel HTTPS listener (panel restarts to load it) or to an
+  inbound TLS profile (hot-reload, no core restart). A 12-hourly job re-issues
+  when under 72h of validity remain (shortlived certs live ~6.7 days) and when
+  the target IP changes. Cert/key live under `<db>/certs` (key `0600`); the ACME
+  account key is encrypted at rest and never exposed. The target IP is validated
+  against private/loopback/link-local/CGNAT/metadata/reserved ranges (no DNS) on
+  both manual issue and auto-renew; issuing is privileged and audited.
+- Config Doctor moves to Settings → Maintenance, shared by both layouts; the two
+  previous copies (the Nexus Home overview card and the classic Home inline card)
+  are removed. Same read-only dry-check behaviour.
+- Nexus Home overview streamlined: the standalone System Status panel and the
+  Config Doctor card are gone; IPv4/IPv6 addresses move into the live-traffic KPI
+  tile and Recent events shows 10 entries (was 6).
+- Hardening: auto-renew re-issues on a target-IP change; a direct issue now
+  validates the ACME email (via the Go stdlib mail parser) and the challenge port
+  like the settings page; a missing `shield-check` icon mapping that would have
+  rendered blank is fixed.
+
+Full release notes: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md).
+
 ## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack: Config Doctor, RU/ZH routing/DNS presets, subscription delivery UX, client diagnosis
 
 Beta: an operations and diagnostics layer for RU/ZH single-panel admins.

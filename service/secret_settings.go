@@ -39,6 +39,7 @@ var (
 		"paidSubProxyURL":          {},
 		"paidSubProxyUsername":     {},
 		"paidSubProxyPassword":     {},
+		"ipCertAccountKey":         {},
 	}
 )
 
@@ -260,6 +261,21 @@ func (s *SettingService) encryptSettingValue(key string, value string) (string, 
 		return "", err
 	}
 	return box.EncryptString(value, key)
+}
+
+// setEncryptedString encrypts value under key and persists it. The matching
+// getString transparently decrypts because key is in encryptedSettingKeys. An
+// empty value is stored verbatim (cleared). Used for machine-managed secrets
+// (e.g. the ACME account key) that bypass the bulk Save path.
+func (s *SettingService) setEncryptedString(key string, value string) error {
+	if value == "" {
+		return s.saveSetting(key, "")
+	}
+	encrypted, err := s.encryptSettingValue(key, value)
+	if err != nil {
+		return err
+	}
+	return s.saveSetting(key, encrypted)
 }
 
 func (s *SettingService) decryptSettingValue(key string, value string) (string, error) {
