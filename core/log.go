@@ -16,26 +16,6 @@ import (
 	"github.com/sagernet/sing/service/filemanager"
 )
 
-type PlatformWriter struct{}
-
-func (p PlatformWriter) DisableColors() bool {
-	return true
-}
-func (p PlatformWriter) WriteMessage(level log.Level, message string) {
-	switch level {
-	case log.LevelInfo:
-		suiLog.CoreInfo(message)
-	case log.LevelWarn:
-		suiLog.CoreWarning(message)
-	case log.LevelPanic:
-	case log.LevelFatal:
-	case log.LevelError:
-		suiLog.CoreError(message)
-	default:
-		suiLog.CoreDebug(message)
-	}
-}
-
 func NewFactory(options log.Options) (log.Factory, error) {
 	logOptions := options.Options
 

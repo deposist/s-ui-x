@@ -72,6 +72,21 @@ func TestValidateIssuableIP(t *testing.T) {
 	}
 }
 
+// TestValidateIssuableIPExportedWrapper pins that the exported wrapper delegates
+// to the package-private validator with identical results, so callers outside
+// the service package get the same SSRF guard (public accepted, private/loopback/
+// metadata/malformed rejected).
+func TestValidateIssuableIPExportedWrapper(t *testing.T) {
+	if err := ValidateIssuableIP("8.8.8.8"); err != nil {
+		t.Errorf("ValidateIssuableIP(public) = %v, want nil", err)
+	}
+	for _, ip := range []string{"169.254.169.254", "127.0.0.1", "10.0.0.1", "not-an-ip", ""} {
+		if err := ValidateIssuableIP(ip); err == nil {
+			t.Errorf("ValidateIssuableIP(%q) = nil, want error", ip)
+		}
+	}
+}
+
 func TestIpCertInternalKeysNotEditable(t *testing.T) {
 	// Machine-managed keys (account key, issued paths, expiry) must never be
 	// writable through the settings save path.

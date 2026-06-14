@@ -202,7 +202,3 @@ func (a *APP) RestartApp() {
 		logger.Warning("failed to restart app: ", err)
 	}
 }
-
-func (a *APP) GetCore() *core.Core {
-	return a.core
-}

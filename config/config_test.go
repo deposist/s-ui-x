@@ -45,3 +45,25 @@ func TestIsSafeLogOutputPath(t *testing.T) {
 		}
 	}
 }
+
+// TestGetSecret pins the secret-derivation contract: an explicit SUI_SECRET is
+// honored verbatim, and an empty/absent one falls back to a deterministic,
+// non-empty name:db-folder derivation (no randomness, stable across calls).
+func TestGetSecret(t *testing.T) {
+	t.Setenv("SUI_SECRET", "top-secret-value")
+	if got := GetSecret(); got != "top-secret-value" {
+		t.Fatalf("GetSecret() with SUI_SECRET = %q, want %q", got, "top-secret-value")
+	}
+
+	t.Setenv("SUI_SECRET", "")
+	fallback := GetSecret()
+	if fallback == "" {
+		t.Fatal("GetSecret() fallback is empty")
+	}
+	if want := GetName() + ":" + GetDBFolderPath(); fallback != want {
+		t.Fatalf("GetSecret() fallback = %q, want %q", fallback, want)
+	}
+	if again := GetSecret(); again != fallback {
+		t.Fatalf("GetSecret() fallback not deterministic: %q vs %q", again, fallback)
+	}
+}

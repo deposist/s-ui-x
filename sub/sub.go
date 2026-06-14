@@ -262,7 +262,3 @@ func (s *Server) Stop() error {
 	s.cancel()
 	return nil
 }
-
-func (s *Server) GetCtx() context.Context {
-	return s.ctx
-}
