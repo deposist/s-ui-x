@@ -22,6 +22,26 @@
   <img width="1024" alt="s-ui-x panel screenshots" src="https://github.com/deposist/s-ui-x/blob/main/docs/screen1.png" />
 </p>
 
+<p align="center">
+  <img width="1024" alt="Support S-UI-X development" src="docs/support-s-ui-x.png" />
+</p>
+
+## Support S-UI-X
+
+S-UI-X is maintained as an open-source project. Donations help fund continued
+development, security hardening, testing, and release work.
+
+- WEB: [https://web.tribute.tg/d/LRJ](https://web.tribute.tg/d/LRJ)
+- Telegram: [https://t.me/tribute/app?startapp=dLRJ](https://t.me/tribute/app?startapp=dLRJ)
+
+| Network | Address |
+| ------- | ------- |
+| TON | `UQB5-DZ3q5vjXGf3_tVUeOHPNuXMLh8lfY0MPW3uGzjdOzke` |
+| ETH | `0x0e67e1b4363a163c36943Ef4F9227c3126bB952B` |
+| SOL | `BtFm5E1BrUjpoaDNwv3emc2qbyvqkn6ECnDzwhgRn7Df` |
+| TRX | `TFqEbp1Z82ZQebzDdsW1MbytMvVsHJGpPd` |
+| BTC | `bc1qn86mfmsnackfwvjd4czjaalv75sh830fws7xc9` |
+
 ## English
 
 Advanced Web panel built on `SagerNet/Sing-Box`.
