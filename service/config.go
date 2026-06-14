@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/deposist/s-ui-x/config"
 	"github.com/deposist/s-ui-x/core"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
@@ -372,6 +373,9 @@ func (s *ConfigService) dispatchSave(tx *gorm.DB, obj string, act string, data j
 		plan.mergeEndpointChange(change)
 		return objs, plan, false, nil
 	case "config":
+		if err := validateConfigLogOutput(data); err != nil {
+			return nil, plan, false, err
+		}
 		changed, err := s.SettingService.ConfigBlobChanged(tx, data)
 		if err != nil {
 			return nil, plan, false, err
@@ -392,6 +396,33 @@ func (s *ConfigService) dispatchSave(tx *gorm.DB, obj string, act string, data j
 	default:
 		return nil, plan, false, common.NewError("unknown object: ", obj)
 	}
+}
+
+// validateConfigLogOutput rejects unsafe sing-box log.output paths before the
+// config blob is persisted, so the core (often running as root) cannot be
+// pointed at an arbitrary file on disk. See config.IsSafeLogOutputPath.
+func validateConfigLogOutput(data json.RawMessage) error {
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(data, &top); err != nil {
+		// Not a JSON object: it cannot carry a log.output value, so there is
+		// nothing to validate; the existing save/assembly path handles
+		// malformed config.
+		return nil
+	}
+	logRaw, ok := top["log"]
+	if !ok {
+		return nil
+	}
+	var logBlock struct {
+		Output string `json:"output"`
+	}
+	if err := json.Unmarshal(logRaw, &logBlock); err != nil {
+		return err
+	}
+	if !config.IsSafeLogOutputPath(logBlock.Output) {
+		return common.NewError("log.output must be a relative path within the panel directory; absolute paths and '..' are not allowed")
+	}
+	return nil
 }
 
 func (s *ConfigService) coreInstance() *core.Core {
