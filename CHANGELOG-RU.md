@@ -5,6 +5,39 @@
 Это русскоязычный changelog. Английская версия — в `CHANGELOG-EN.md`,
 китайская — в `CHANGELOG-ZH.md`.
 
+## [Не выпущено] — исправление badCSR; выпуск IP-сертификата переносится в терминальное меню (пункт 20)
+
+Исправляет критическую ошибку построения CSR, из-за которой Let's Encrypt
+отклонял каждую попытку выпуска IP-сертификата. Переносит процесс выпуска из
+веб-интерфейса в терминальное меню управления. Фоновое задание автоперевыпуска
+в панели сохранено; с исправлением CSR оно теперь работает корректно.
+Миграций базы нет.
+
+- **Исправление: badCSR.** `Obtain(ObtainRequest{Domains:[ip]})` копировал IP
+  в `Subject.CommonName` CSR; RFC 8738 требует пустого CN и IP только в
+  `SubjectAltName.iPAddress`. Исправлено: новый метод `buildIpCSR(ip)` строит
+  CSR через `certcrypto.CreateCSR{Domain:"", SAN:[ip]}` и выпускает через
+  `ObtainForCSR`, формируя корректный ACME-идентификатор `Type:"ip"`.
+- **Выпуск в терминале.** Карточка «IP certificate» в Settings → Maintenance
+  удалена. Новое: пункт 20 меню s-ui.sh → опция 5 — останавливает панель
+  (освобождает порт 80 и монопольный доступ к БД), запускает `sui ip-cert issue`,
+  перезапускает панель. Выполняет `source /etc/s-ui/secretbox.env`, чтобы CLI
+  разделял `SUI_SECRETBOX_KEY` с работающей панелью.
+- **Новая подкоманда CLI:** `sui ip-cert <issue|renew|status|disable>` с
+  флагами `-ip`, `-email`, `-port`, `-no-renew`.
+- **Веб-фича удалена.** `POST /api/ip-cert/issue`, `GET /api/ip-cert/status`,
+  `IpCertificateCard.vue`, `types/ipcert.ts`, блок i18n `ipCert` (en/ru)
+  и маппинг иконки `shield-check` — всё удалено.
+- **Автоперевыпуск сохранён.** Фоновое задание `@every 12h` (`certRenewJob`)
+  не изменено и теперь корректно перевыпускает shortlived-сертификаты до
+  порога в 72 часа.
+- **Тесты.** Новый `ip_certificate_acme_test.go` проверяет пустой CN, верный
+  IP SAN и валидную ECDSA-подпись. Новый
+  `TestIssueForCLIAppliesToPanelWithoutRuntime` подтверждает безопасность пути
+  CLI без Runtime.
+
+Полные примечания к релизу: [`docs/releases/unreleased.md`](docs/releases/unreleased.md).
+
 ## [1.5.8-beta3] — 2026-06-14 — TLS-сертификаты для IP-адреса (выпуск + автоперевыпуск); Config Doctor переезжает в Settings
 
 Бета: выпуск и автоперевыпуск TLS-сертификата Let's Encrypt для голого

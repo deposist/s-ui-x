@@ -216,6 +216,51 @@ func TestIssueNowReturnsApplyFailedButPersists(t *testing.T) {
 	}
 }
 
+// TestIssueForCLIAppliesToPanelWithoutRuntime exercises the CLI issuance path:
+// it must obtain, persist, and point the panel HTTPS cert settings at the new
+// files WITHOUT a live Runtime (a one-shot CLI process has none) and WITHOUT
+// scheduling a panel restart. A nil Runtime here would panic if the code path
+// tried to restart, so this also asserts the no-restart contract.
+func TestIssueForCLIAppliesToPanelWithoutRuntime(t *testing.T) {
+	initSettingTestDB(t)
+	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
+	notAfter := now.Add(160 * time.Hour)
+	certPEM, keyPEM := makeSelfSignedCertPEM(t, notAfter)
+	issuer := &fakeIssuer{certPEM: certPEM, keyPEM: keyPEM, accountKeyOut: "ACCOUNT-KEY-PEM"}
+
+	svc := &IpCertificateService{
+		Settings: &SettingService{},
+		acme:     issuer,
+		now:      func() time.Time { return now },
+		// Runtime intentionally nil: the CLI has no runtime and must not restart.
+	}
+
+	status, err := svc.IssueForCLI(context.Background(), "93.184.216.34", "admin@example.com", 80)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !status.Issued || status.TargetIP != "93.184.216.34" {
+		t.Fatalf("unexpected status: %+v", status)
+	}
+
+	set := &SettingService{}
+	certPath, _ := set.GetIpCertCertPath()
+	keyPath, _ := set.GetIpCertKeyPath()
+	if certPath == "" || keyPath == "" {
+		t.Fatal("cert/key paths not persisted")
+	}
+	if webCert, _ := set.GetCertFile(); webCert != certPath {
+		t.Fatalf("webCertFile = %q, want %q", webCert, certPath)
+	}
+	if webKey, _ := set.GetKeyFile(); webKey != keyPath {
+		t.Fatalf("webKeyFile = %q, want %q", webKey, keyPath)
+	}
+	// The CLI always targets the panel; the cron reads this back on renewal.
+	if at, _ := set.GetIpCertApplyTarget(); at != "panel" {
+		t.Fatalf("applyTarget = %q, want panel", at)
+	}
+}
+
 func mustSet(t *testing.T, s *SettingService, key, value string) {
 	t.Helper()
 	if err := s.setString(key, value); err != nil {

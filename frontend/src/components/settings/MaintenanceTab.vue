@@ -1,8 +1,6 @@
 <template>
   <ConfigDoctor class="mb-4" />
 
-  <IpCertificateCard class="mb-4" />
-
   <v-row density="comfortable">
     <v-col cols="12" sm="6" md="4">
       <v-btn
@@ -25,7 +23,6 @@
 
 <script setup lang="ts">
 import ConfigDoctor from '@/components/settings/ConfigDoctor.vue'
-import IpCertificateCard from '@/components/settings/IpCertificateCard.vue'
 import Backup from '@/layouts/modals/Backup.vue'
 import { ref } from 'vue'
 

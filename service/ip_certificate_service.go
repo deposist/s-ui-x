@@ -55,58 +55,12 @@ func (s *IpCertificateService) clock() time.Time {
 
 // IssueNow obtains a fresh certificate for ip and applies it to applyTarget.
 // hostname is the request host used for inbound link regeneration ("" is fine
-// for the panel target and for cron-driven renewals).
+// for the panel target and for cron-driven renewals). Used by the renewal cron
+// running inside the live panel, so a "panel" target also triggers a panel
+// restart to reload the web certificate.
 func (s *IpCertificateService) IssueNow(ctx context.Context, ip, email string, port int, applyTarget, hostname string) (IpCertStatus, error) {
-	if err := validateIssuableIP(ip); err != nil {
-		return IpCertStatus{}, err
-	}
-	if err := validateIpCertApplyTarget(applyTarget); err != nil {
-		return IpCertStatus{}, err
-	}
-	if err := validateIpCertEmail(email, false); err != nil {
-		return IpCertStatus{}, err
-	}
-	if port <= 0 {
-		port = 80
-	}
-	if err := validateIpCertPort(port); err != nil {
-		return IpCertStatus{}, err
-	}
-
-	set := s.settings()
-	accountKey, err := set.getIpCertAccountKey()
+	certPath, keyPath, err := s.obtainAndPersist(ctx, ip, email, port, applyTarget)
 	if err != nil {
-		return IpCertStatus{}, err
-	}
-	registrationJSON, err := set.getIpCertAccountRegistration()
-	if err != nil {
-		return IpCertStatus{}, err
-	}
-
-	result, err := s.issuer().Obtain(ctx, acmeRequest{
-		IP:               ip,
-		Email:            email,
-		ChallengePort:    port,
-		AccountKeyPEM:    accountKey,
-		RegistrationJSON: registrationJSON,
-	})
-	if err != nil {
-		return IpCertStatus{}, common.NewError("ip cert: issuance failed: ", err.Error())
-	}
-
-	certPath, keyPath, err := writeCertFiles(ip, result.CertPEM, result.KeyPEM)
-	if err != nil {
-		return IpCertStatus{}, err
-	}
-	notAfter, err := parseCertNotAfter(result.CertPEM)
-	if err != nil {
-		return IpCertStatus{}, err
-	}
-
-	if err := s.persistIssued(ipCertIssued{
-		ip: ip, email: email, port: port, applyTarget: applyTarget,
-		result: result, certPath: certPath, keyPath: keyPath, notAfter: notAfter,
-	}); err != nil {
 		return IpCertStatus{}, err
 	}
 
@@ -118,6 +72,88 @@ func (s *IpCertificateService) IssueNow(ctx context.Context, ip, email string, p
 	}
 
 	return s.GetStatus()
+}
+
+// IssueForCLI obtains a certificate from a one-shot CLI process and points the
+// panel HTTPS cert settings at the new files. Unlike IssueNow it never restarts
+// the panel — a CLI invocation has no live runtime, and the management script
+// (s-ui.sh) stops the panel before issuance and starts it afterwards, which is
+// what reloads the web certificate. The apply target is always the panel.
+func (s *IpCertificateService) IssueForCLI(ctx context.Context, ip, email string, port int) (IpCertStatus, error) {
+	certPath, keyPath, err := s.obtainAndPersist(ctx, ip, email, port, "panel")
+	if err != nil {
+		return IpCertStatus{}, err
+	}
+
+	if err := s.setPanelCertSettings(certPath, keyPath); err != nil {
+		// Certificate is issued and persisted; report the apply failure but keep
+		// the stored state so the cron/CLI can re-apply later.
+		status, _ := s.GetStatus()
+		return status, common.NewError("ip cert: issued but apply failed: ", err.Error())
+	}
+
+	return s.GetStatus()
+}
+
+// obtainAndPersist validates the request, obtains the certificate through the
+// ACME issuer, writes the cert/key files, and persists the issued state plus the
+// (possibly newly created) ACME account. It returns the on-disk cert/key paths
+// so the caller can apply them. It performs no apply itself.
+func (s *IpCertificateService) obtainAndPersist(ctx context.Context, ip, email string, port int, applyTarget string) (certPath, keyPath string, err error) {
+	if err := validateIssuableIP(ip); err != nil {
+		return "", "", err
+	}
+	if err := validateIpCertApplyTarget(applyTarget); err != nil {
+		return "", "", err
+	}
+	if err := validateIpCertEmail(email, false); err != nil {
+		return "", "", err
+	}
+	if port <= 0 {
+		port = 80
+	}
+	if err := validateIpCertPort(port); err != nil {
+		return "", "", err
+	}
+
+	set := s.settings()
+	accountKey, err := set.getIpCertAccountKey()
+	if err != nil {
+		return "", "", err
+	}
+	registrationJSON, err := set.getIpCertAccountRegistration()
+	if err != nil {
+		return "", "", err
+	}
+
+	result, err := s.issuer().Obtain(ctx, acmeRequest{
+		IP:               ip,
+		Email:            email,
+		ChallengePort:    port,
+		AccountKeyPEM:    accountKey,
+		RegistrationJSON: registrationJSON,
+	})
+	if err != nil {
+		return "", "", common.NewError("ip cert: issuance failed: ", err.Error())
+	}
+
+	certPath, keyPath, err = writeCertFiles(ip, result.CertPEM, result.KeyPEM)
+	if err != nil {
+		return "", "", err
+	}
+	notAfter, err := parseCertNotAfter(result.CertPEM)
+	if err != nil {
+		return "", "", err
+	}
+
+	if err := s.persistIssued(ipCertIssued{
+		ip: ip, email: email, port: port, applyTarget: applyTarget,
+		result: result, certPath: certPath, keyPath: keyPath, notAfter: notAfter,
+	}); err != nil {
+		return "", "", err
+	}
+
+	return certPath, keyPath, nil
 }
 
 // ipCertIssued bundles everything persisted after a successful issuance.

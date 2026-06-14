@@ -4,6 +4,34 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [未发布] - badCSR 修复；IP 证书签发移至终端菜单（第 20 项）
+
+修复了导致 Let's Encrypt 拒绝每次 IP 地址证书签发的关键 CSR 构造错误。
+将签发流程从 Web 界面迁移至终端管理菜单。面板内的自动续期定时任务保持不变；
+修复 CSR 后现可正常运行。无需数据库迁移。
+
+- **修复：badCSR。** `Obtain(ObtainRequest{Domains:[ip]})` 将 IP 字符串复制到了
+  CSR 的 Subject.CommonName；RFC 8738 要求 CN 为空，IP 仅出现在
+  `SubjectAltName.iPAddress` 中。修复方案：新增 `buildIpCSR(ip)` 辅助函数，
+  通过 `certcrypto.CreateCSR{Domain:"", SAN:[ip]}` 构建 CSR，并经由
+  `ObtainForCSR` 签发，生成正确的 `Type:"ip"` ACME 标识符。
+- **终端签发。** 设置 → Maintenance 中的「IP certificate」卡片已移除。新增：
+  s-ui.sh 第 20 项 → 选项 5 — 停止面板（释放端口 80 及数据库独占访问），
+  执行 `sui ip-cert issue`，重启面板。source `/etc/s-ui/secretbox.env`，
+  使 CLI 与运行中的面板共享 `SUI_SECRETBOX_KEY`。
+- **新 CLI 子命令：** `sui ip-cert <issue|renew|status|disable>`，
+  支持 `-ip`、`-email`、`-port`、`-no-renew` 参数。
+- **Web 功能已移除。** `POST /api/ip-cert/issue`、`GET /api/ip-cert/status`、
+  `IpCertificateCard.vue`、`types/ipcert.ts`、`ipCert` i18n 块（en/ru）
+  及 `shield-check` 图标映射均已删除。
+- **自动续期保留。** 面板内 `@every 12h` 定时任务（`certRenewJob`）不变，
+  现可在 72 小时阈值前正确续签 shortlived 证书。
+- **测试。** 新增 `ip_certificate_acme_test.go`，验证 CN 为空、IP SAN 正确、
+  ECDSA 签名有效。新增 `TestIssueForCLIAppliesToPanelWithoutRuntime`，
+  确认无 Runtime 的 CLI 路径安全可靠。
+
+完整发布说明：[`docs/releases/unreleased.md`](docs/releases/unreleased.md)。
+
 ## [1.5.8-beta3] - 2026-06-14 - IP 地址 TLS 证书（签发 + 自动续期）；Config Doctor 移至设置
 
 测试版：为无域名的裸 IP 地址签发并自动续期 Let's Encrypt TLS 证书，全程在进程内完成。

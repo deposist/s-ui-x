@@ -25,7 +25,8 @@ func shouldRenew(notAfter, now time.Time) bool {
 	return notAfter.Sub(now) < ipCertRenewThreshold
 }
 
-// ValidateIssuableIP is the exported wrapper used by the API layer.
+// ValidateIssuableIP is the exported wrapper around the package-private
+// validator, kept for callers outside the service package.
 func ValidateIssuableIP(raw string) error { return validateIssuableIP(raw) }
 
 // validateIssuableIP rejects anything that is not a public IP literal Let's
@@ -82,6 +83,16 @@ func validateIpCertPort(port int) error {
 
 func (s *SettingService) GetIpCertEnabled() (bool, error) {
 	return s.getBool("ipCertEnabled")
+}
+
+// SetIpCertEnabled toggles cron auto-renewal. The CLI enables it on a successful
+// issue ("issue and forget") and exposes an explicit disable.
+func (s *SettingService) SetIpCertEnabled(v bool) error {
+	value := "false"
+	if v {
+		value = "true"
+	}
+	return s.setString("ipCertEnabled", value)
 }
 
 func (s *SettingService) GetIpCertTargetIP() (string, error) {

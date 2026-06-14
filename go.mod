@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sagernet/sing v0.8.10
-	github.com/sagernet/sing-box v1.13.12
+	github.com/sagernet/sing-box v1.13.13
 	github.com/shirou/gopsutil/v4 v4.26.2
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.52.0
@@ -150,7 +150,7 @@ require (
 	github.com/sagernet/sing-shadowsocks v0.2.8 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.1 // indirect
 	github.com/sagernet/sing-shadowtls v0.2.1-0.20250503051639-fcd445d33c11 // indirect
-	github.com/sagernet/sing-tun v0.8.9 // indirect
+	github.com/sagernet/sing-tun v0.8.10 // indirect
 	github.com/sagernet/sing-vmess v0.2.8-0.20250909125414-3aed155119a1 // indirect
 	github.com/sagernet/smux v1.5.50-sing-box-mod.1 // indirect
 	github.com/sagernet/tailscale v1.92.4-sing-box-1.13-mod.7 // indirect

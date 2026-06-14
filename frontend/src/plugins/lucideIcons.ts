@@ -71,7 +71,6 @@ import {
   Send,
   Server,
   Settings,
-  ShieldCheck,
   SlidersHorizontal,
   Sun,
   SunMoon,
@@ -111,7 +110,6 @@ export const iconMap: Record<string, Component> = {
   'file-text': FileText,
   'sliders-horizontal': SlidersHorizontal,
   settings: Settings,
-  'shield-check': ShieldCheck,
   // Topbar / global controls
   menu: Menu,
   languages: Languages,

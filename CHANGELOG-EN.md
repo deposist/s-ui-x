@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [Unreleased] - badCSR fix; IP cert issuance moves to terminal menu (item 20)
+
+Fixes a critical CSR construction bug that caused Let's Encrypt to reject every
+IP-address certificate issuance. Moves the issuance workflow out of the web UI
+and into the terminal management menu. The in-panel auto-renewal cron is
+preserved; with the CSR fix it now works correctly. No database migration.
+
+- **Fix: badCSR.** `Obtain(ObtainRequest{Domains:[ip]})` copied the IP string
+  into the CSR Subject.CommonName; RFC 8738 requires an empty CN with the IP
+  only in `SubjectAltName.iPAddress`. Fixed: a new `buildIpCSR(ip)` helper
+  builds a CSR with `certcrypto.CreateCSR{Domain:"", SAN:[ip]}` and issues
+  via `ObtainForCSR`, producing the correct `Type:"ip"` ACME identifier.
+- **Terminal issuance.** The Settings → Maintenance "IP certificate" card is
+  removed. New: s-ui.sh item 20 → option 5 — stops the panel (freeing port 80
+  and exclusive DB access), runs `sui ip-cert issue`, restarts the panel.
+  Sources `/etc/s-ui/secretbox.env` so the CLI shares `SUI_SECRETBOX_KEY`
+  with the running panel.
+- **New CLI subcommand:** `sui ip-cert <issue|renew|status|disable>` with
+  flags `-ip`, `-email`, `-port`, `-no-renew`.
+- **Web feature removed.** `POST /api/ip-cert/issue`, `GET /api/ip-cert/status`,
+  `IpCertificateCard.vue`, `types/ipcert.ts`, the `ipCert` i18n block (en/ru),
+  and the `shield-check` icon mapping are all deleted.
+- **Auto-renewal preserved.** The `@every 12h` in-panel cron (`certRenewJob`)
+  is unchanged and now correctly re-issues shortlived certs before the 72-hour
+  threshold.
+- **Tests.** New `ip_certificate_acme_test.go` checks empty CN, correct IP SAN,
+  and valid ECDSA signature. New `TestIssueForCLIAppliesToPanelWithoutRuntime`
+  confirms the nil-runtime CLI path is safe.
+
+Full release notes: [`docs/releases/unreleased.md`](docs/releases/unreleased.md).
+
 ## [1.5.8-beta3] - 2026-06-14 - IP-address TLS certificates (issue + auto-renew); Config Doctor moves to Settings
 
 Beta: issue and auto-renew a Let's Encrypt TLS certificate for a bare IP address

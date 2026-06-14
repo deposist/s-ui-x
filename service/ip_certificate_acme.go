@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto"
+	"crypto/x509"
 	"encoding/json"
 	"os"
 	"strconv"
@@ -120,10 +121,22 @@ func (legoIssuer) Obtain(ctx context.Context, req acmeRequest) (acmeResult, erro
 		registrationJSON = string(marshalled)
 	}
 
-	resource, err := client.Certificate.Obtain(certificate.ObtainRequest{
-		Domains: []string{req.IP},
-		Profile: leShortlivedProfile,
-		Bundle:  true,
+	// Build the CSR ourselves so the IP lands in the subjectAltName with an
+	// EMPTY Common Name. lego's Certificate.Obtain copies the single "domain"
+	// into the CSR Subject.CommonName, which Let's Encrypt rejects for IP
+	// identifiers with "badCSR :: CSR contains IP address in Common Name"
+	// (RFC 8738 requires the IP only in the SAN). ObtainForCSR instead infers
+	// the IP identifier from the CSR's IPAddresses SAN.
+	leafKey, csr, err := buildIpCSR(req.IP)
+	if err != nil {
+		return acmeResult{}, err
+	}
+
+	resource, err := client.Certificate.ObtainForCSR(certificate.ObtainForCSRRequest{
+		CSR:        csr,
+		PrivateKey: leafKey,
+		Profile:    leShortlivedProfile,
+		Bundle:     true,
 	})
 	if err != nil {
 		return acmeResult{}, err
@@ -172,4 +185,30 @@ func buildIpCertUser(req acmeRequest) (*ipCertUser, string, error) {
 		user.registration = &reg
 	}
 	return user, accountKeyPEM, nil
+}
+
+// buildIpCSR creates an EC256 leaf key and a CSR carrying the target IP as the
+// sole subjectAltName with an EMPTY Subject Common Name. The empty CN is what
+// keeps Let's Encrypt from rejecting the order with "CSR contains IP address in
+// Common Name": for IP identifiers (RFC 8738) the address must appear only in
+// the SAN. certcrypto.CreateCSR routes a SAN entry that parses as an IP into the
+// CSR IPAddresses, and lego's ObtainForCSR derives the ACME "ip" identifier from
+// there.
+func buildIpCSR(ip string) (crypto.PrivateKey, *x509.CertificateRequest, error) {
+	leafKey, err := certcrypto.GeneratePrivateKey(certcrypto.EC256)
+	if err != nil {
+		return nil, nil, err
+	}
+	csrDER, err := certcrypto.CreateCSR(leafKey, certcrypto.CSROptions{
+		Domain: "", // empty Common Name — IP must not be the CN
+		SAN:    []string{strings.TrimSpace(ip)},
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	csr, err := x509.ParseCertificateRequest(csrDER)
+	if err != nil {
+		return nil, nil, err
+	}
+	return leafKey, csr, nil
 }

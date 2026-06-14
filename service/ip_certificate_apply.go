@@ -34,17 +34,26 @@ func (s *IpCertificateService) applyToTarget(target, certPath, keyPath, hostname
 }
 
 // applyToPanel points the panel cert settings at the managed files and
-// schedules a panel restart so web.go reloads them.
+// schedules a panel restart so web.go reloads them. Used from inside the live
+// panel (the renewal cron); the CLI path uses setPanelCertSettings without the
+// restart.
 func (s *IpCertificateService) applyToPanel(certPath, keyPath string) error {
-	set := s.settings()
-	if err := set.setString("webCertFile", certPath); err != nil {
-		return err
-	}
-	if err := set.setString("webKeyFile", keyPath); err != nil {
+	if err := s.setPanelCertSettings(certPath, keyPath); err != nil {
 		return err
 	}
 	panel := &PanelService{Runtime: s.Runtime}
 	return panel.RestartPanel(ipCertPanelRestartDelay)
+}
+
+// setPanelCertSettings points the panel HTTPS cert settings at the managed
+// files without restarting anything. The panel re-reads webCertFile/webKeyFile
+// only on a full restart, so the caller is responsible for restarting the panel.
+func (s *IpCertificateService) setPanelCertSettings(certPath, keyPath string) error {
+	set := s.settings()
+	if err := set.setString("webCertFile", certPath); err != nil {
+		return err
+	}
+	return set.setString("webKeyFile", keyPath)
 }
 
 // applyToInboundTls patches the chosen TLS row's server block with the managed

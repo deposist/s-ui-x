@@ -110,6 +110,7 @@ t() {
             ssl_revoke)          echo "吊销证书"; return ;;
             ssl_force_renew)     echo "强制续签"; return ;;
             ssl_self_signed)     echo "自签名证书"; return ;;
+            ssl_ip)              echo "为 IP 地址签发证书 (Let's Encrypt)"; return ;;
 
             menu_title)          echo "S-UI 管理脚本"; return ;;
             menu_exit)           echo "退出"; return ;;
@@ -308,6 +309,8 @@ t() {
         ru:ssl_force_renew)     echo "Принудительно продлить";;
         en:ssl_self_signed)     echo "Self-signed certificate";;
         ru:ssl_self_signed)     echo "Самоподписанный сертификат";;
+        en:ssl_ip)              echo "Issue a certificate for an IP address (Let's Encrypt)";;
+        ru:ssl_ip)              echo "Выпустить сертификат для IP-адреса (Let's Encrypt)";;
 
         en:menu_title)          echo "S-UI management script";;
         ru:menu_title)          echo "Скрипт управления S-UI";;
@@ -967,6 +970,7 @@ ssl_cert_issue_main() {
     echo -e "${green}\t2.${plain} $(t ssl_revoke)"
     echo -e "${green}\t3.${plain} $(t ssl_force_renew)"
     echo -e "${green}\t4.${plain} $(t ssl_self_signed)"
+    echo -e "${green}\t5.${plain} $(t ssl_ip)"
     read -p "$(t select_option)" choice
     case "$choice" in
         1) ssl_cert_issue ;;
@@ -981,8 +985,76 @@ ssl_cert_issue_main() {
             read -p "Domain to force-renew / Введите домен SSL-сертификата для принудительного продления: " domain
             ~/.acme.sh/acme.sh --renew -d "${domain}" --force ;;
         4) generate_self_signed_cert ;;
+        5) ssl_cert_issue_ip ;;
         *) echo "$(t invalid_choice)" ;;
     esac
+}
+
+# ssl_cert_issue_ip drives the in-process IP-address certificate issuance exposed
+# by the panel binary (`sui ip-cert`). Unlike the acme.sh flows above this needs
+# no external tooling: lego is embedded in the binary. The panel is stopped so
+# the HTTP-01 challenge port is free and so the binary has exclusive DB access,
+# then restarted to load the new certificate into the web listener.
+ssl_cert_issue_ip() {
+    local bin="/usr/local/s-ui/sui"
+    if [[ ! -x "${bin}" ]]; then
+        LOGE "S-UI binary not found at ${bin}; install S-UI first / Бинарник S-UI не найден, сначала установите S-UI."
+        before_show_menu
+        return 1
+    fi
+
+    local ip=""
+    read -p "IP address / IP-адрес: " ip
+    ip="$(echo -n "${ip}" | tr -d '[:space:]')"
+    if [[ -z "${ip}" ]]; then
+        LOGE "No IP address entered / IP-адрес не введён."
+        before_show_menu
+        return 1
+    fi
+
+    local email=""
+    read -p "ACME account email (optional) / Email для ACME-аккаунта (необязательно): " email
+
+    local WebPort=80
+    read -p "HTTP-01 challenge port (default 80) / Порт проверки HTTP-01 (по умолчанию 80): " WebPort
+    [[ -z "${WebPort}" ]] && WebPort=80
+    if [[ ! "${WebPort}" =~ ^[0-9]+$ ]] || (( WebPort < 1 || WebPort > 65535 )); then
+        LOGE "Invalid port; using 80 / Некорректный порт, используется 80."
+        WebPort=80
+    fi
+
+    echo -e "${yellow}The panel is stopped to free port ${WebPort} during validation, then restarted."
+    echo -e "Панель будет остановлена для освобождения порта ${WebPort} на время проверки, затем перезапущена.${plain}"
+
+    # Load the panel's secretbox key so the CLI reads/writes the encrypted ACME
+    # account exactly as the running panel does.
+    if [[ -f "${SECRETBOX_ENV_FILE}" ]]; then
+        set -a
+        # shellcheck disable=SC1090
+        . "${SECRETBOX_ENV_FILE}"
+        set +a
+    fi
+
+    # Restore the panel to its prior run state afterwards.
+    local was_running=1
+    check_status s-ui
+    [[ $? == 0 ]] && was_running=0
+
+    stop s-ui 0
+
+    "${bin}" ip-cert issue -ip "${ip}" -email "${email}" -port "${WebPort}"
+    local rc=$?
+
+    if [[ ${was_running} == 0 ]]; then
+        start s-ui 0
+    fi
+
+    if [[ ${rc} == 0 ]]; then
+        LOGI "IP certificate issued and applied to the panel HTTPS listener / Сертификат для IP выпущен и применён к HTTPS-панели."
+    else
+        LOGE "IP certificate issuance failed (exit ${rc}) / Не удалось выпустить сертификат для IP (код ${rc})."
+    fi
+    before_show_menu
 }
 
 ssl_cert_issue() {

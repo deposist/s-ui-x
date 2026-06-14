@@ -78,10 +78,6 @@ func (a *APIHandler) registerGroupedRoutes(g *gin.RouterGroup) {
 	doctor.POST("/run", a.ApiService.RunDoctor)
 	doctor.POST("/client", a.ApiService.DiagnoseClient)
 
-	ipCert := g.Group("/ip-cert")
-	ipCert.POST("/issue", a.ApiService.IssueIpCert)
-	ipCert.GET("/status", a.ApiService.GetIpCertStatus)
-
 	security := g.Group("/security")
 	security.GET("/audit", a.ApiService.GetSecurityAudit)
 
