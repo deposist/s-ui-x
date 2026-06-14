@@ -40,6 +40,21 @@ the CSR fix it now works correctly. No database migration.
 - **Tests.** New `ip_certificate_acme_test.go` checks empty CN, correct IP SAN,
   and valid ECDSA signature. New `TestIssueForCLIAppliesToPanelWithoutRuntime`
   confirms the nil-runtime CLI path is safe.
+- **Performance: `GET /load` ~3.7× faster.** `SettingService.GetAllSetting`
+  opened a ~90-statement default-seeding write transaction on *every* call,
+  serializing the panel's busiest read path on SQLite's single writer and
+  dominating `/load` CPU under load (profiled at ~85% of the endpoint). It now
+  skips seeding once all default keys exist; the returned map is byte-identical
+  and concurrent first-init stays exactly-once (issue #19). `BenchmarkAPI_Load`:
+  ~4.86 ms → ~1.30 ms/op, allocations −37%.
+- **Internal cleanup.** Removed proven-dead code (10 unreachable functions plus
+  an orphaned variable) flagged by `deadcode`/`staticcheck`. The three
+  security helpers that looked dead (`config.GetSecret`, `ValidateIssuableIP`,
+  `ssrf.IsInfrastructureAddr`) are kept and pinned with new contract tests.
+- **Generation test coverage.** Added determinism and link↔json round-trip
+  tests, a byte-exact subscription golden test for the database-driven
+  `GetSubs` path, and benchmark anchors for link and Clash generation. No
+  behavior change.
 
 Full release notes: [`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md).
 

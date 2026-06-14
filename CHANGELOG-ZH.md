@@ -34,6 +34,17 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
 - **测试。** 新增 `ip_certificate_acme_test.go`，验证 CN 为空、IP SAN 正确、
   ECDSA 签名有效。新增 `TestIssueForCLIAppliesToPanelWithoutRuntime`，
   确认无 Runtime 的 CLI 路径安全可靠。
+- **性能：`GET /load` 提速约 3.7×。** `SettingService.GetAllSetting` 过去在*每次*
+  调用时都会打开一个约 90 条语句的默认值播种写事务，在 SQLite 单写入者上串行化了
+  面板最繁忙的读取路径，并在负载下占据了 `/load` 的大部分 CPU（性能分析约占该端点
+  的 85%）。现在当所有默认键已存在时即跳过播种；返回的 map 字节一致，并发首次初始化
+  仍为 exactly-once（issue #19）。`BenchmarkAPI_Load`：~4.86 ms → ~1.30 ms/op，
+  分配 −37%。
+- **内部清理。** 删除了 `deadcode`/`staticcheck` 标记的确证死代码（10 个不可达函数
+  及 1 个孤立变量）。三个看似死代码的安全辅助函数（`config.GetSecret`、
+  `ValidateIssuableIP`、`ssrf.IsInfrastructureAddr`）予以保留，并以新的契约测试固定。
+- **生成测试覆盖。** 新增确定性与 link↔json 往返测试、面向数据库驱动 `GetSubs`
+  路径的字节精确订阅 golden 测试，以及链接与 Clash 生成的基准锚点。行为无变化。
 
 完整发布说明：[`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md)。
 
