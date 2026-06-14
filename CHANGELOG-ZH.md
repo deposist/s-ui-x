@@ -4,12 +4,17 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
-## [未发布] - badCSR 修复；IP 证书签发移至终端菜单（第 20 项）
+## [1.5.8-beta4] - 2026-06-14 - 内置 sing-box v1.13.13；IP 证书 badCSR 修复（终端签发）
 
-修复了导致 Let's Encrypt 拒绝每次 IP 地址证书签发的关键 CSR 构造错误。
-将签发流程从 Web 界面迁移至终端管理菜单。面板内的自动续期定时任务保持不变；
-修复 CSR 后现可正常运行。无需数据库迁移。
+将内置 sing-box 内核更新至 v1.13.13，并修复了导致 Let's Encrypt 拒绝每次
+IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面迁移至终端管理菜单。
+面板内的自动续期定时任务保持不变；修复 CSR 后现可正常运行。无需数据库迁移。
 
+- **内置 sing-box 更新至 v1.13.13**（自 v1.13.12）——上游错误修复
+  （direct outbound 中的 TUN loopback 处理、ping 超时修复、构建修复）。
+  上游在发布后移动了 `v1.13.13` 标签，因此 `go.mod` 保留 `require v1.13.13`
+  但通过 `replace` 指向修复后的发布提交；代理缓存的原始提交在 Windows 上无法编译。
+  连接/统计跟踪器契约已针对 v1.13.13 重新验证（无变化）。
 - **修复：badCSR。** `Obtain(ObtainRequest{Domains:[ip]})` 将 IP 字符串复制到了
   CSR 的 Subject.CommonName；RFC 8738 要求 CN 为空，IP 仅出现在
   `SubjectAltName.iPAddress` 中。修复方案：新增 `buildIpCSR(ip)` 辅助函数，
@@ -30,7 +35,7 @@
   ECDSA 签名有效。新增 `TestIssueForCLIAppliesToPanelWithoutRuntime`，
   确认无 Runtime 的 CLI 路径安全可靠。
 
-完整发布说明：[`docs/releases/unreleased.md`](docs/releases/unreleased.md)。
+完整发布说明：[`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md)。
 
 ## [1.5.8-beta3] - 2026-06-14 - IP 地址 TLS 证书（签发 + 自动续期）；Config Doctor 移至设置
 

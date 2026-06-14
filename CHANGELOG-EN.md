@@ -5,13 +5,20 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
-## [Unreleased] - badCSR fix; IP cert issuance moves to terminal menu (item 20)
+## [1.5.8-beta4] - 2026-06-14 - Embedded sing-box v1.13.13; IP-certificate badCSR fix (terminal issuance)
 
-Fixes a critical CSR construction bug that caused Let's Encrypt to reject every
-IP-address certificate issuance. Moves the issuance workflow out of the web UI
-and into the terminal management menu. The in-panel auto-renewal cron is
-preserved; with the CSR fix it now works correctly. No database migration.
+Updates the embedded sing-box core to v1.13.13 and fixes a critical CSR
+construction bug that caused Let's Encrypt to reject every IP-address
+certificate issuance. Moves the issuance workflow out of the web UI and into
+the terminal management menu. The in-panel auto-renewal cron is preserved; with
+the CSR fix it now works correctly. No database migration.
 
+- **Embedded sing-box updated to v1.13.13** (from v1.13.12) — upstream bug
+  fixes (TUN loopback in the direct outbound, ping-timeout fix, build fixes).
+  Upstream moved the `v1.13.13` tag after publishing, so `go.mod` keeps
+  `require v1.13.13` but `replace`s it with the fixed release commit; the
+  original proxy-cached commit fails to compile on Windows. The connection/
+  stats tracker contract was revalidated against v1.13.13 (unchanged).
 - **Fix: badCSR.** `Obtain(ObtainRequest{Domains:[ip]})` copied the IP string
   into the CSR Subject.CommonName; RFC 8738 requires an empty CN with the IP
   only in `SubjectAltName.iPAddress`. Fixed: a new `buildIpCSR(ip)` helper
@@ -34,7 +41,7 @@ preserved; with the CSR fix it now works correctly. No database migration.
   and valid ECDSA signature. New `TestIssueForCLIAppliesToPanelWithoutRuntime`
   confirms the nil-runtime CLI path is safe.
 
-Full release notes: [`docs/releases/unreleased.md`](docs/releases/unreleased.md).
+Full release notes: [`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md).
 
 ## [1.5.8-beta3] - 2026-06-14 - IP-address TLS certificates (issue + auto-renew); Config Doctor moves to Settings
 

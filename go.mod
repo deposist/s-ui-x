@@ -200,3 +200,12 @@ require (
 )
 
 replace github.com/quic-go/quic-go => github.com/quic-go/quic-go v0.57.1
+
+// sing-box v1.13.13 was re-tagged after publishing: the original tag commit
+// (55260b5, cached immutably by proxy.golang.org) ships a Windows-only build
+// break in dns/transport/local/resolv_windows.go (calls the removed sing-tun
+// MyInterface()). Upstream fixed it and moved the v1.13.13 tag to 78b2e12, but
+// the Go proxy still serves the buggy commit for the bare tag. Pin v1.13.13 to
+// the fixed release commit so Windows builds compile and everyone resolves the
+// same immutable code.
+replace github.com/sagernet/sing-box v1.13.13 => github.com/sagernet/sing-box v1.13.13-0.20260603083344-78b2e12fbdd8
