@@ -109,6 +109,39 @@ func TestGetAllSettingConcurrentDefaultInitializationIssue19(t *testing.T) {
 	}
 }
 
+// TestGetAllSettingDoesNotReseedOnSteadyState pins the GET /load hot-path
+// optimization: once every default key exists, GetAllSetting must not re-run
+// the seed transaction. It previously issued an INSERT ... WHERE NOT EXISTS for
+// every default key on every call (~90 writes), serializing the read path on
+// SQLite's single writer; a CPU profile attributed ~85% of /load to it.
+func TestGetAllSettingDoesNotReseedOnSteadyState(t *testing.T) {
+	s := initSettingTestDB(t)
+	if _, err := s.GetAllSetting(); err != nil { // first call seeds defaults
+		t.Fatal(err)
+	}
+
+	db := database.GetDB()
+	const cbName = "test_count_seed_inserts"
+	var inserts int
+	if err := db.Callback().Raw().Before("gorm:raw").Register(cbName, func(tx *gorm.DB) {
+		if strings.Contains(strings.ToUpper(tx.Statement.SQL.String()), "INSERT") {
+			inserts++
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Callback().Raw().Remove(cbName) })
+
+	for i := 0; i < 3; i++ {
+		if _, err := s.GetAllSetting(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if inserts != 0 {
+		t.Fatalf("GetAllSetting issued %d INSERT statement(s) after defaults were seeded; the read path must not re-seed", inserts)
+	}
+}
+
 func TestSaveConfigCreatesMissingConfigSetting(t *testing.T) {
 	settingService := initSettingTestDB(t)
 	tx := database.GetDB().Begin()

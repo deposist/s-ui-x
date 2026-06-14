@@ -217,8 +217,23 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 }
 
 func (s *SettingService) ensureDefaultSettings(db *gorm.DB) error {
+	keys := defaultSettingKeys()
+	// Fast path: once every default key is present, skip the seed transaction
+	// entirely so GetAllSetting stays a pure read on the steady-state hot path
+	// (e.g. GET /load). Previously this opened a ~90-statement write
+	// transaction (INSERT ... WHERE NOT EXISTS per default key) on every call,
+	// which serializes on SQLite's single writer and dominated /load CPU under
+	// concurrency. The seed below is unchanged and still idempotent, so the
+	// concurrent first-init path (issue #19) keeps its exactly-once semantics.
+	var present int64
+	if err := db.Model(model.Setting{}).Where("key IN ?", keys).Count(&present).Error; err != nil {
+		return err
+	}
+	if int(present) == len(keys) {
+		return nil
+	}
 	return db.Transaction(func(tx *gorm.DB) error {
-		for _, key := range defaultSettingKeys() {
+		for _, key := range keys {
 			value, _ := defaultSettingValue(key)
 			if err := insertSettingIfMissing(tx, key, value); err != nil {
 				return err
