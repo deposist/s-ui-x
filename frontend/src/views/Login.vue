@@ -15,13 +15,19 @@
                 class="mt-2"
                 hide-details
                 variant="solo"
+                :label="$t('menu.language')"
                 :items="languages"
                 v-model="$i18n.locale"
                 @update:modelValue="changeLocale">
                 <template v-slot:append>
                   <v-menu>
                     <template v-slot:activator="{ props }">
-                      <v-btn icon v-bind="props">
+                      <v-btn
+                        :aria-label="$t('menu.theme')"
+                        icon
+                        :title="$t('menu.theme')"
+                        v-bind="props"
+                      >
                         <v-icon>mdi-theme-light-dark</v-icon>
                       </v-btn>
                     </template>

@@ -19,6 +19,7 @@
         :key="column.key"
         :aria-sort="ariaSort(column)"
         :class="`nexus-thead__cell nexus-thead__cell--${column.align ?? 'start'}`"
+        :data-column-key="column.key"
         :style="column.width ? { width: column.width } : undefined"
       >
         <button
@@ -27,18 +28,20 @@
           type="button"
           @click="emit('sort', column.key)"
         >
-          <span>{{ $t(column.labelKey) }}</span>
+          <span>{{ labelFor(column) }}</span>
           <span aria-hidden="true" :class="arrowClass(column)" class="nexus-thead__arrow" />
         </button>
-        <span v-else>{{ $t(column.labelKey) }}</span>
+        <span v-else>{{ labelFor(column) }}</span>
       </th>
 
-      <th v-if="hasActions" class="nexus-thead__actions">{{ $t('actions.action') }}</th>
+      <th v-if="hasActions" class="nexus-thead__actions" data-column-key="actions">{{ $t('actions.action') }}</th>
     </tr>
   </thead>
 </template>
 
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n'
+
 import type { Column, SortState } from './dataTableColumns'
 
 const props = defineProps<{
@@ -56,7 +59,16 @@ const emit = defineEmits<{
   'toggle-all': []
 }>()
 
+const { t } = useI18n()
+
 const isSorted = (column: Column) => props.sort?.key === column.key
+
+const labelFor = (column: Column): string => {
+  if (column.label) return column.label
+  if (column.labelKey) return t(column.labelKey)
+
+  return column.key
+}
 
 const ariaSort = (column: Column): 'ascending' | 'descending' | 'none' | undefined => {
   if (!column.sortable) return undefined

@@ -4,6 +4,46 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.8] - 2026-06-15 - 稳定版 1.5.8：完整免重启应用、Personal Ops Pack、IP 证书、sing-box v1.13.13
+
+1.5.8 线的首个稳定版，整合 1.5.8-beta1..beta4，并包含最终的 Nexus 界面打磨。
+无需手动数据库迁移。
+
+- **所有受管对象免重启应用。** 入站、出站、端点与服务保存时会在运行中的 sing-box
+  核心内热替换被修改对象，而不是重启核心。构建时捕获的适配器引用仍会保守地升级为
+  完整重启；路由规则与 `route.final` 引用保持热更新。受管 shadowsocks 修改也会重建
+  绑定的 `ssm-api` 服务。
+- **被引用标签保护。** 删除或重命名仍被引用的出站、端点或受管入站会被拒绝，并返回
+  所有引用位置，避免下一次核心启动因悬空引用失败。未变更的 sing-box 设置保存不再重启
+  核心，应用与重启路径也已串行化。
+- **Personal Ops Pack。** 新增 Config Doctor、客户端诊断、RU/ZH 路由与 DNS 预设库，
+  以及按平台组织的订阅 Delivery 对话框。诊断为只读，会对生成的 sing-box 配置执行
+  dry-check，不启动也不重启运行中的核心。
+- **设置维护页清理。** Config Doctor 移至 Settings -> Maintenance，两种布局共用；
+  Nexus 首页概览更精简：IP 地址进入实时流量 KPI，Recent events 显示 10 条。
+- **IP 地址 TLS 证书。** 面板可通过进程内 `go-acme/lego` 为裸 IP 签发并自动续期真实的
+  Let's Encrypt shortlived 证书，包含目标 IP 校验、审计记录，并可应用到面板 HTTPS 监听器
+  或入站 TLS 配置。
+- **终端签发与 badCSR 修复。** IP 证书签发从 Web UI 移至 `s-ui.sh` 和新的
+  `sui ip-cert <issue|renew|status|disable>` CLI。CSR 现在保持 Common Name 为空，
+  IP 仅写入 SubjectAltName，修复 Let's Encrypt `badCSR` 拒绝并使自动续期正常工作。
+- **内置 sing-box v1.13.13。** 内置核心从 v1.13.12 更新到 v1.13.13。由于上游发布后移动
+  标签，模块固定到修复后的发布提交。
+- **性能与代码健康。** `GET /load` 通过跳过冗余默认设置播种写入提速约 3.7x；删除死代码；
+  安全辅助函数以契约测试固定；生成路径增加确定性、往返、golden 与 benchmark 覆盖。
+- **稳定版 Nexus 打磨。** 移动端 topbar 将操作收进紧凑菜单，搜索不再与控件重叠，
+  dense tables 在移动端横向滚动，overview 面板共用 primitives，Settings/Rules/DNS/
+  Audit/Login/Admins 获得间距、操作行、日期/时间与无障碍修复。
+- **警告不再显示为核心错误。** ERROR/FATAL 日志显示为 error toast，WARN/WARNING 显示为
+  warning toast，INFO 不再产生错误通知；`warning` 翻译键已覆盖所有支持语言。
+
+相对 v1.5.7 的破坏性变更：
+
+- 删除或重命名仍被引用的出站、端点或受管入站现在会被阻止，直到引用被移除或指向其他对象。
+- IP 证书签发不再从 Web UI 提供；请使用终端菜单或 `sui ip-cert`。
+
+完整发布说明：[`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md)。
+
 ## [1.5.8-beta4] - 2026-06-14 - 内置 sing-box v1.13.13；IP 证书 badCSR 修复（终端签发）
 
 将内置 sing-box 内核更新至 v1.13.13，并修复了导致 Let's Encrypt 拒绝每次

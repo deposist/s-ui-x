@@ -169,13 +169,12 @@ const loadData = async () => {
     const payload = Array.isArray(msg.obj) ? msg.obj : []
     payload.forEach((u:any) => {
       const lastLogin = String(u.lastLogin ?? '').split(" ")
-      const localLastLogin = lastLogin.length > 2 ? dateFormatted(Date.parse(lastLogin[0] + " " + lastLogin[1])) : "- -"
-      const loginDateTime = localLastLogin.split(" ")
+      const loginTs = lastLogin.length > 2 ? Date.parse(lastLogin[0] + " " + lastLogin[1]) : NaN
       users.value.push({
         id: Number(u.id),
         username: String(u.username ?? ''),
-        loginDate: loginDateTime[0],
-        loginTime: loginDateTime[1],
+        loginDate: isNaN(loginTs) ? '-' : dateFormatted(loginTs),
+        loginTime: isNaN(loginTs) ? '-' : timeFormatted(loginTs),
         ip: lastLogin[2]?? "-",
         isCurrent: Boolean(u.isCurrent),
       })
@@ -185,8 +184,12 @@ const loadData = async () => {
 
 const dateFormatted = (dt: number): string => {
   const locale = i18n.global.locale.value.replace('zh', 'zh-')
-  const date = new Date(dt)
-  return date.toLocaleString(locale)
+  return new Date(dt).toLocaleDateString(locale)
+}
+
+const timeFormatted = (dt: number): string => {
+  const locale = i18n.global.locale.value.replace('zh', 'zh-')
+  return new Date(dt).toLocaleTimeString(locale)
 }
 
 const editModal = ref({

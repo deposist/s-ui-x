@@ -43,7 +43,12 @@
 
     <v-divider />
 
-    <v-list class="nexus-sidebar__navigation" nav>
+    <v-list
+      :aria-label="$t('menu.navigation')"
+      class="nexus-sidebar__navigation"
+      nav
+      role="navigation"
+    >
       <template v-for="group in groups" :key="group.labelKey ?? 'dashboard'">
         <v-list-subheader
           v-if="group.labelKey && !collapsed"

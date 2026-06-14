@@ -30,6 +30,7 @@ export default {
     },
   },
   success: "успех",
+  warning: "предупреждение",
   failed: "ошибка",
   enable: "Включить",
   disable: "Отключить",

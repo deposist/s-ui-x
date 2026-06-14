@@ -1,10 +1,8 @@
 <template>
-  <article class="nexus-overview-panel">
-    <panel-header :title="$t('nexus.overview.system.title')">
+  <overview-panel :title="$t('nexus.overview.system.title')">
       <template #action>
         <status-badge :label="statusLabel" :tone="statusTone" />
       </template>
-    </panel-header>
 
     <dense-list class="nexus-system-status__list">
       <li>
@@ -49,8 +47,7 @@
         <strong>{{ wsLabel }}</strong>
       </li>
     </dense-list>
-
-  </article>
+  </overview-panel>
 </template>
 
 <script lang="ts" setup>
@@ -58,8 +55,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import DenseList from '@/components/nexus/primitives/DenseList.vue'
-import PanelHeader from '@/components/nexus/primitives/PanelHeader.vue'
 import StatusBadge from '@/components/nexus/primitives/StatusBadge.vue'
+import OverviewPanel from './OverviewPanel.vue'
 import type { WsConnectionState } from '@/store/ws'
 import {
   formatOverviewDuration,
@@ -110,16 +107,6 @@ const capacityLabel = (metric: OverviewCapacityMetric): string => {
 </script>
 
 <style scoped>
-.nexus-overview-panel {
-  background: var(--nexus-surface-1);
-  border: 1px solid var(--nexus-border);
-  border-radius: var(--nexus-radius-lg);
-  display: grid;
-  gap: var(--nexus-gap-3);
-  min-width: 0;
-  padding: var(--nexus-gap-4);
-}
-
 .nexus-system-status__list :deep(li) {
   display: grid;
   grid-template-columns: minmax(96px, 0.72fr) minmax(0, 1fr);

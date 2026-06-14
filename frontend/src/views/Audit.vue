@@ -87,15 +87,28 @@
           />
         </v-col>
         <v-col cols="auto">
-          <v-btn icon="lucide:rotate-cw" variant="tonal" :loading="loading" @click="resetAndLoad">
+          <v-btn
+            :aria-label="$t('actions.update')"
+            icon="lucide:rotate-cw"
+            :title="$t('actions.update')"
+            variant="tonal"
+            :loading="loading"
+            @click="resetAndLoad"
+          >
             <v-icon />
             <v-tooltip activator="parent" location="top" :text="$t('actions.update')" />
           </v-btn>
         </v-col>
         <v-col cols="auto">
-          <v-btn icon="lucide:filter-x" variant="text" @click="clearFilters">
+          <v-btn
+            :aria-label="$t('table.clearFilters')"
+            icon="lucide:filter-x"
+            :title="$t('table.clearFilters')"
+            variant="text"
+            @click="clearFilters"
+          >
             <v-icon />
-            <v-tooltip activator="parent" location="top" :text="$t('actions.del')" />
+            <v-tooltip activator="parent" location="top" :text="$t('table.clearFilters')" />
           </v-btn>
         </v-col>
       </v-row>
@@ -152,13 +165,27 @@
       </v-data-table>
       <v-row class="mt-2" align="center" justify="end">
         <v-col cols="auto">
-          <v-btn icon="lucide:chevron-left" variant="text" :disabled="cursorStack.length === 0 || loading" @click="previousPage">
+          <v-btn
+            :aria-label="$t('audit.previous')"
+            icon="lucide:chevron-left"
+            :title="$t('audit.previous')"
+            variant="text"
+            :disabled="cursorStack.length === 0 || loading"
+            @click="previousPage"
+          >
             <v-icon />
             <v-tooltip activator="parent" location="top" :text="$t('audit.previous')" />
           </v-btn>
         </v-col>
         <v-col cols="auto">
-          <v-btn icon="lucide:chevron-right" variant="text" :disabled="nextCursor === 0 || loading" @click="nextPage">
+          <v-btn
+            :aria-label="$t('audit.next')"
+            icon="lucide:chevron-right"
+            :title="$t('audit.next')"
+            variant="text"
+            :disabled="nextCursor === 0 || loading"
+            @click="nextPage"
+          >
             <v-icon />
             <v-tooltip activator="parent" location="top" :text="$t('audit.next')" />
           </v-btn>

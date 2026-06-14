@@ -5,6 +5,15 @@ import { i18n } from '@/locales'
 import { Inbound } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 
+type ActionableLogLevel = 'warning' | 'error'
+
+const actionableLogLevel = (log: string): ActionableLogLevel | undefined => {
+  if (/\b(?:ERROR|FATAL)\b/i.test(log)) return 'error'
+  if (/\bWARN(?:ING)?\b/i.test(log)) return 'warning'
+
+  return undefined
+}
+
 const Data = defineStore('Data', {
   state: () => ({ 
     lastLoad: 0,
@@ -28,11 +37,21 @@ const Data = defineStore('Data', {
       if(msg.success) {
         this.onlines = msg.obj.onlines
         if (msg.obj.lastLog) {
-          push.error({
-            title: i18n.global.t('error.core'),
-            duration: 5000,
-            message: msg.obj.lastLog
-          })
+          const logLevel = actionableLogLevel(String(msg.obj.lastLog))
+
+          if (logLevel === 'error') {
+            push.error({
+              title: i18n.global.t('error.core'),
+              duration: 8000,
+              message: msg.obj.lastLog
+            })
+          } else if (logLevel === 'warning') {
+            push.warning({
+              title: i18n.global.t('warning'),
+              duration: 6000,
+              message: msg.obj.lastLog
+            })
+          }
         }
         
         if (msg.obj.config) {

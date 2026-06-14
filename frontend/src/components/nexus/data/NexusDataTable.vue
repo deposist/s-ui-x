@@ -2,10 +2,10 @@
   <div class="nexus-data-table">
     <table-skeleton v-if="loading" :columns="skeletonColumns" :rows="6" />
 
-    <template v-else-if="sortedItems.length === 0">
+    <div v-else-if="sortedItems.length === 0" class="nexus-data-table__empty">
       <slot v-if="$slots.empty" name="empty" />
       <empty-state v-else :title="emptyTitle ?? $t('table.noData')" />
-    </template>
+    </div>
 
     <template v-else>
       <dense-table>
@@ -48,6 +48,7 @@
                 v-for="column in columns"
                 :key="column.key"
                 :class="`nexus-data-table__cell nexus-data-table__cell--${column.align ?? 'start'}`"
+                :data-column-key="column.key"
               >
                 <slot
                   :item="item"
@@ -56,7 +57,7 @@
                 >{{ item[column.key] }}</slot>
               </td>
 
-              <td v-if="$slots.actions" class="nexus-data-table__actions">
+              <td v-if="$slots.actions" class="nexus-data-table__actions" data-column-key="actions">
                 <slot name="actions" :item="item" />
               </td>
             </tr>
@@ -213,6 +214,21 @@ defineExpose({ clearSelection: selection.clear })
 .nexus-data-table__actions { text-align: end; white-space: nowrap; }
 .nexus-data-table__select,
 .nexus-data-table__expand { width: 44px; }
+
+.nexus-data-table__empty {
+  align-items: center;
+  background: var(--nexus-surface-1);
+  border: 1px solid var(--nexus-border);
+  border-radius: var(--nexus-radius-lg);
+  display: grid;
+  justify-items: center;
+  min-height: 176px;
+  padding: var(--nexus-gap-5);
+}
+
+.nexus-data-table__empty :deep(.nexus-empty--compact) {
+  justify-content: center;
+}
 
 .nexus-data-table__expansion > td {
   background: var(--nexus-surface-0);

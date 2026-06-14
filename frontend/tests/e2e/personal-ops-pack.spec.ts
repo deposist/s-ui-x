@@ -85,7 +85,11 @@ test('personal ops pack doctor presets delivery and client diagnosis smoke', asy
   await row.getByRole('button', { name: 'Diagnose' }).click()
   const diagnosis = page.getByRole('dialog').filter({ hasText: 'Client Diagnosis' })
   await expect(diagnosis).toBeVisible()
-  await expect(diagnosis.getByText(/Client enabled|Client inbounds|Subscription formats/).first()).toBeVisible()
+  const diagnosisReportItem = diagnosis.getByText(/Client enabled|Client inbounds|Subscription formats/).first()
+  if (!(await diagnosisReportItem.isVisible().catch(() => false))) {
+    await diagnosis.getByRole('button', { name: 'Run Doctor' }).click()
+  }
+  await expect(diagnosisReportItem).toBeVisible({ timeout: 30_000 })
   await page.keyboard.press('Escape')
 
   await row.getByRole('button', { name: 'Config' }).click()

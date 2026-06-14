@@ -5,6 +5,62 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.8] - 2026-06-15 - stable 1.5.8: full no-restart apply, Personal Ops Pack, IP certificates, sing-box v1.13.13
+
+First stable release of the 1.5.8 line, consolidating 1.5.8-beta1..beta4 plus
+the final Nexus polish pass. No manual database migration.
+
+- **No-restart apply for every managed object.** Inbounds, outbounds, endpoints,
+  and services now hot-replace the changed object in the running sing-box core
+  instead of restarting it. Captured adapter references still escalate to a full
+  restart, while route-rule and `route.final` references stay hot. Managed
+  shadowsocks edits also recreate the bound `ssm-api` service.
+- **Referenced-tag guard.** Deleting or renaming a referenced outbound,
+  endpoint, or managed inbound is rejected with an error listing every
+  referencing site, preventing the next core start from failing on a dangling
+  reference. Unchanged sing-box settings saves no longer restart the core, and
+  apply/restart paths are serialized.
+- **Personal Ops Pack.** Config Doctor, client diagnosis, RU/ZH routing and DNS
+  preset galleries, and a platform-aware subscription Delivery dialog were
+  added. Diagnostics are read-only and dry-check the generated sing-box config
+  without starting or restarting the running core.
+- **Settings maintenance cleanup.** Config Doctor moved into Settings ->
+  Maintenance and is shared by both layouts; the Nexus Home overview was
+  streamlined with IPs in the live-traffic KPI and 10 recent events.
+- **IP-address TLS certificates.** The panel can issue and auto-renew real
+  Let's Encrypt shortlived certificates for bare IP addresses via in-process
+  `go-acme/lego`, with target-IP validation, audit logging, and support for
+  applying to the panel HTTPS listener or an inbound TLS profile.
+- **Terminal issuance and badCSR fix.** IP-certificate issuance moved out of the
+  web UI into `s-ui.sh` and the new `sui ip-cert <issue|renew|status|disable>`
+  CLI. CSR construction now leaves Common Name empty and puts the IP only in
+  SubjectAltName, fixing Let's Encrypt `badCSR` rejections and making auto-renew
+  work correctly.
+- **Embedded sing-box v1.13.13.** The embedded core moved from v1.13.12 to
+  v1.13.13. The module pins the fixed release commit because upstream moved the
+  tag after publishing.
+- **Performance and code health.** `GET /load` is about 3.7x faster by skipping
+  redundant default-setting seed writes; dead code was removed; security helpers
+  are pinned by contract tests; generation paths gained determinism, round-trip,
+  golden, and benchmark coverage.
+- **Stable Nexus polish.** Mobile topbar actions collapse into a compact menu,
+  search no longer overlaps controls, dense tables scroll horizontally on mobile,
+  overview panels share common primitives, and Settings/Rules/DNS/Audit/Login/
+  Admins received spacing, action-row, date/time, and accessibility fixes.
+- **Warnings are no longer surfaced as core errors.** ERROR/FATAL logs show error
+  toasts, WARN/WARNING logs show warning toasts, and INFO logs no longer produce
+  false "Sing-Box Error" notifications. The `warning` key is present in every
+  supported locale.
+
+Breaking changes vs v1.5.7:
+
+- Deleting or renaming a referenced outbound, endpoint, or managed inbound is
+  now blocked until the reference is removed or pointed elsewhere.
+- IP-certificate issuance is no longer available from the web UI; use the
+  terminal menu or `sui ip-cert`.
+
+Full release notes: [`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md).
+
 ## [1.5.8-beta4] - 2026-06-14 - Embedded sing-box v1.13.13; IP-certificate badCSR fix (terminal issuance)
 
 Updates the embedded sing-box core to v1.13.13 and fixes a critical CSR

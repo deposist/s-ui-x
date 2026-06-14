@@ -27,6 +27,7 @@ export default {
     },
   },
   success: "成功",
+  warning: "警告",
   failed: "失敗",
   enable: "啟用",
   disable: "禁用",

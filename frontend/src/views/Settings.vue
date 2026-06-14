@@ -1,6 +1,6 @@
 <template>
   <page-header v-if="nexus" :title="$t('pages.settings')" />
-  <v-card :loading="loading" :flat="nexus">
+  <v-card :loading="loading" :flat="nexus" :class="{ 'settings-nexus-card': nexus }">
     <v-tabs
     v-model="tab"
     color="primary"
@@ -14,7 +14,13 @@
     <v-tab value="t5">{{ $t('setting.maintenance') }}</v-tab>
   </v-tabs>
   <v-card-text>
-    <v-row v-if="tab !== 't5'" align="center" justify="center" style="margin-bottom: 10px;">
+    <v-row
+      v-if="tab !== 't5'"
+      align="center"
+      class="settings-actions"
+      :class="{ 'settings-actions--nexus': nexus }"
+      justify="center"
+    >
       <v-col cols="auto">
         <v-btn color="primary" @click="save" :loading="loading" :disabled="!stateChange">
           {{ $t('actions.save') }}
@@ -419,3 +425,74 @@ const stateChange = computed(() => {
   return !FindDiff.deepCompare(settings.value,oldSettings.value)
 })
 </script>
+
+<style scoped>
+.settings-actions {
+  margin-block-end: 10px;
+}
+
+.settings-nexus-card {
+  background: var(--nexus-surface-1);
+  border: 1px solid var(--nexus-border);
+  border-radius: var(--nexus-radius-lg);
+}
+
+.settings-nexus-card :deep(.v-tabs) {
+  border-block-end: 1px solid var(--nexus-border);
+}
+
+.settings-nexus-card :deep(.v-card-text) {
+  padding: var(--nexus-gap-5);
+  padding-block-start: var(--nexus-gap-4);
+}
+
+.settings-nexus-card :deep(.v-window) {
+  padding-block-start: var(--nexus-gap-2);
+}
+
+.settings-nexus-card :deep(.v-row) {
+  row-gap: var(--nexus-gap-2);
+}
+
+.settings-nexus-card :deep(.v-col) {
+  min-width: 0;
+}
+
+.settings-nexus-card :deep(.v-field) {
+  overflow: visible;
+}
+
+.settings-nexus-card :deep(.v-field-label) {
+  max-width: calc(100% - var(--nexus-gap-4));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-actions--nexus {
+  gap: var(--nexus-gap-2);
+  margin-block-end: var(--nexus-gap-4);
+}
+
+.settings-actions--nexus :deep(.v-col) {
+  padding: var(--nexus-gap-1);
+}
+
+@media (max-width: 600px) {
+  .settings-nexus-card :deep(.v-card-text) {
+    padding: var(--nexus-gap-3);
+  }
+
+  .settings-actions--nexus {
+    justify-content: stretch !important;
+  }
+
+  .settings-actions--nexus :deep(.v-col) {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .settings-actions--nexus :deep(.v-btn) {
+    width: 100%;
+  }
+}
+</style>

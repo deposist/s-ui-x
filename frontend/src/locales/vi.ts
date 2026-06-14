@@ -27,6 +27,7 @@ export default {
     },
   },
   success: "Thành công",
+  warning: "Cảnh báo",
   failed: "Thất bại",
   enable: "Kích hoạt",
   disable: "Vô hiệu hóa",

@@ -154,18 +154,18 @@ const preview = computed<ApplyPresetResult>(() => {
 .preset-gallery {
   background: rgb(var(--v-theme-surface));
   border: 1px solid rgb(var(--v-theme-on-surface) / 12%);
-  border-radius: 8px;
+  border-radius: var(--nexus-radius-lg, 8px);
   display: grid;
-  gap: 12px;
-  margin-block: 12px 18px;
+  gap: var(--nexus-gap-3, 12px);
+  margin-block: var(--nexus-gap-3, 12px) var(--nexus-gap-4, 18px);
   min-width: 0;
-  padding: 14px;
+  padding: var(--nexus-gap-4, 14px);
 }
 
 .preset-gallery__header {
   align-items: flex-start;
   display: flex;
-  gap: 12px;
+  gap: var(--nexus-gap-3, 12px);
   justify-content: space-between;
   min-width: 0;
 }
@@ -189,7 +189,7 @@ const preview = computed<ApplyPresetResult>(() => {
 .preset-gallery__sources {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--nexus-gap-2, 8px);
   min-width: 0;
 }
 
@@ -206,8 +206,8 @@ const preview = computed<ApplyPresetResult>(() => {
 
 .preset-gallery__preview {
   background: rgb(var(--v-theme-on-surface) / 4%);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: var(--nexus-radius-md, 8px);
+  padding: var(--nexus-gap-2, 10px) var(--nexus-gap-3, 12px);
 }
 
 .preset-gallery__preview strong {

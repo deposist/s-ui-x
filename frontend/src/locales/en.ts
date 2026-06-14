@@ -30,6 +30,7 @@ export default {
     },
   },
   success: "success",
+  warning: "warning",
   failed: "failed",
   enable: "Enable",
   disable: "Disable",

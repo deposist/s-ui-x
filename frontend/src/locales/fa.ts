@@ -27,6 +27,7 @@ export default {
     },
   },
   success: "موفق",
+  warning: "هشدار",
   failed: "خطا",
   enable: "فعال",
   disable: "غیرفعال",

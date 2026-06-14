@@ -14,6 +14,7 @@
   border: 1px solid var(--nexus-border);
   border-radius: var(--nexus-radius-md);
   min-width: 0;
+  scrollbar-width: thin;
   overflow-x: auto;
 }
 
@@ -51,5 +52,56 @@
 
 .nexus-dense-table__table :deep(tbody tr:last-child td) {
   border-block-end: 0;
+}
+
+@media (max-width: 700px) {
+  .nexus-dense-table {
+    -webkit-overflow-scrolling: touch;
+    box-shadow: inset -14px 0 18px -18px var(--nexus-text-muted);
+    overscroll-behavior-x: contain;
+  }
+
+  .nexus-dense-table__table {
+    min-width: max(720px, 100%);
+    table-layout: auto;
+  }
+
+  .nexus-dense-table__table :deep(th),
+  .nexus-dense-table__table :deep(td) {
+    min-width: 96px;
+    overflow-wrap: normal;
+    white-space: nowrap;
+    word-break: normal;
+  }
+
+  .nexus-dense-table__table :deep(td) {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nexus-dense-table__table :deep([data-column-key="actor"]),
+  .nexus-dense-table__table :deep([data-column-key="dateTime"]),
+  .nexus-dense-table__table :deep([data-column-key="download_detour"]),
+  .nexus-dense-table__table :deep([data-column-key="event"]),
+  .nexus-dense-table__table :deep([data-column-key="resource"]),
+  .nexus-dense-table__table :deep([data-column-key="server"]),
+  .nexus-dense-table__table :deep([data-column-key="tag"]) {
+    min-width: 144px;
+  }
+
+  .nexus-dense-table__table :deep([data-column-key="actions"]) {
+    background: var(--nexus-surface-2);
+    box-shadow: -1px 0 0 var(--nexus-border);
+    min-width: 104px;
+    position: sticky;
+    right: 0;
+    z-index: 2;
+  }
+
+  .nexus-dense-table__table :deep(.nexus-thead__actions) {
+    background: var(--nexus-surface-1);
+    z-index: 3;
+  }
 }
 </style>

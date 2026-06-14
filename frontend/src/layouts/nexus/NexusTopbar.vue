@@ -13,12 +13,16 @@
 
     <div class="nexus-topbar__header">
       <template v-if="pageHeader.active">
-        <div class="nexus-topbar__titles">
+        <div v-if="!compactActions || !pageHeader.searchable" class="nexus-topbar__titles">
           <span class="nexus-topbar__page">{{ pageHeader.title }}</span>
           <span v-if="pageHeader.subtitle" class="nexus-topbar__sub">{{ pageHeader.subtitle }}</span>
         </div>
-        <v-spacer />
-        <div v-if="pageHeader.searchable" class="nexus-topbar__search">
+        <v-spacer v-if="!compactActions || !pageHeader.searchable" />
+        <div
+          v-if="pageHeader.searchable"
+          class="nexus-topbar__search"
+          :class="{ 'nexus-topbar__search--compact': compactActions }"
+        >
           <v-text-field
             :aria-label="$t('table.search')"
             clearable
@@ -36,43 +40,29 @@
     </div>
 
     <template #append>
-      <v-menu>
+      <v-menu v-if="compactActions">
         <template #activator="{ props }">
           <v-btn
-            :aria-label="$t('menu.language')"
-            icon
-            :title="$t('menu.language')"
+            :aria-label="$t('actions.action')"
+            icon="lucide:more-vertical"
+            :title="$t('actions.action')"
             variant="text"
             v-bind="props"
-          >
-            <v-icon icon="lucide:languages" />
-          </v-btn>
+          />
         </template>
-        <v-list>
+        <v-list density="compact" min-width="240">
+          <v-list-subheader>{{ $t('menu.language') }}</v-list-subheader>
           <v-list-item
             v-for="language in languages"
             :key="language.value"
             :active="isActiveLocale(language.value)"
+            prepend-icon="lucide:languages"
             @click="changeLocale(language.value)"
           >
             <v-list-item-title>{{ language.title }}</v-list-item-title>
           </v-list-item>
-        </v-list>
-      </v-menu>
-
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn
-            :aria-label="$t('menu.theme')"
-            icon
-            :title="$t('menu.theme')"
-            variant="text"
-            v-bind="props"
-          >
-            <v-icon icon="lucide:sun-moon" />
-          </v-btn>
-        </template>
-        <v-list>
+          <v-divider />
+          <v-list-subheader>{{ $t('menu.theme') }}</v-list-subheader>
           <v-list-item
             v-for="item in themes"
             :key="item.value"
@@ -82,34 +72,101 @@
           >
             <v-list-item-title>{{ $t(`theme.${item.value}`) }}</v-list-item-title>
           </v-list-item>
-        </v-list>
-      </v-menu>
-
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn
-            :aria-label="$t('nexus.palette.label')"
-            icon
-            :title="$t('nexus.palette.label')"
-            variant="text"
-            v-bind="props"
-          >
-            <v-icon icon="lucide:palette" />
-          </v-btn>
-        </template>
-        <v-list>
+          <v-divider />
+          <v-list-subheader>{{ $t('nexus.palette.label') }}</v-list-subheader>
           <v-list-item
             v-for="item in palettes"
             :key="item"
             :active="palette === item"
+            prepend-icon="lucide:palette"
             @click="setPalette(item)"
           >
             <v-list-item-title>{{ $t(`nexus.palette.options.${item}`) }}</v-list-item-title>
           </v-list-item>
+
+          <template v-if="uiModeEnabled">
+            <v-divider />
+            <v-list-item :prepend-icon="quickIcon" :title="quickLabel" @click="toggleMode" />
+          </template>
         </v-list>
       </v-menu>
 
-      <ui-mode-control variant="quick" />
+      <template v-else>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              :aria-label="$t('menu.language')"
+              icon
+              :title="$t('menu.language')"
+              variant="text"
+              v-bind="props"
+            >
+              <v-icon icon="lucide:languages" />
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item
+              v-for="language in languages"
+              :key="language.value"
+              :active="isActiveLocale(language.value)"
+              @click="changeLocale(language.value)"
+            >
+              <v-list-item-title>{{ language.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              :aria-label="$t('menu.theme')"
+              icon
+              :title="$t('menu.theme')"
+              variant="text"
+              v-bind="props"
+            >
+              <v-icon icon="lucide:sun-moon" />
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item
+              v-for="item in themes"
+              :key="item.value"
+              :active="isActiveTheme(item.value)"
+              :prepend-icon="item.icon"
+              @click="changeTheme(item.value)"
+            >
+              <v-list-item-title>{{ $t(`theme.${item.value}`) }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn
+              :aria-label="$t('nexus.palette.label')"
+              icon
+              :title="$t('nexus.palette.label')"
+              variant="text"
+              v-bind="props"
+            >
+              <v-icon icon="lucide:palette" />
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item
+              v-for="item in palettes"
+              :key="item"
+              :active="palette === item"
+              @click="setPalette(item)"
+            >
+              <v-list-item-title>{{ $t(`nexus.palette.options.${item}`) }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <ui-mode-control variant="quick" />
+      </template>
     </template>
   </v-app-bar>
 </template>
@@ -118,10 +175,14 @@
 import UiModeControl from '@/components/UiModeControl.vue'
 import { pageHeader, topbarSearch } from '@/components/nexus/primitives/pageHeaderPortal'
 import { languages, setI18nLocale } from '@/locales'
+import { isNexusEnabled } from '@/uiMode/featureGate'
 import { UI_PALETTES, useUiPalette } from '@/uiMode/palette'
+import type { UiMode } from '@/uiMode/types'
+import { useUiMode } from '@/uiMode/useUiMode'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { useLocale, useTheme } from 'vuetify'
+import { useDisplay, useLocale, useTheme } from 'vuetify'
 
 defineProps<{
   showNavigationToggle: boolean
@@ -134,10 +195,23 @@ const emit = defineEmits<{
 }>()
 
 const theme = useTheme()
+const { smAndDown } = useDisplay()
 const vuetifyLocale = useLocale()
-const { locale: i18nLocale } = useI18n()
+const { locale: i18nLocale, t } = useI18n()
 const { palette, setPalette } = useUiPalette()
+const { mode, setMode } = useUiMode()
 const palettes = UI_PALETTES
+const compactActions = computed(() => smAndDown.value)
+const uiModeEnabled = isNexusEnabled()
+const nexusMode: UiMode = 'nexus'
+const classicMode: UiMode = 'classic'
+const nextMode = computed<UiMode>(() => mode.value === nexusMode ? classicMode : nexusMode)
+const quickIcon = computed(() =>
+  mode.value === nexusMode ? 'lucide:layout-dashboard' : 'lucide:layout-panel-left',
+)
+const quickLabel = computed(() =>
+  t('nexus.mode.switchTo', { mode: t(`nexus.mode.options.${nextMode.value}`) }),
+)
 
 const changeLocale = async (nextLocale: string) => {
   const selectedLocale = await setI18nLocale(nextLocale)
@@ -165,6 +239,8 @@ const isActiveTheme = (value: string) => {
 
   return currentTheme === value
 }
+
+const toggleMode = () => setMode(nextMode.value)
 </script>
 
 <style scoped>
@@ -173,6 +249,10 @@ const isActiveTheme = (value: string) => {
    * translucent shade, so the colour is exact, not "close". */
   background: var(--nexus-surface-1);
   border-block-end: 1px solid var(--nexus-border);
+}
+
+.nexus-topbar :deep(.v-toolbar__append) {
+  flex: 0 0 auto;
 }
 
 /* Renders the active page's section header (title + stats + search) from shared
@@ -218,9 +298,29 @@ const isActiveTheme = (value: string) => {
   min-width: 160px;
 }
 
+.nexus-topbar__search--compact {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Reference search input: filled #202020 surface, cyan focus. */
 .nexus-topbar__search :deep(.v-field) {
   background: var(--nexus-elevated);
   border-radius: var(--nexus-radius-sm);
+}
+
+@media (max-width: 600px) {
+  .nexus-topbar__header {
+    gap: var(--nexus-gap-2);
+    padding-inline-start: 0;
+  }
+
+  .nexus-topbar__page {
+    font-size: 1rem;
+  }
+
+  .nexus-topbar__sub {
+    display: none;
+  }
 }
 </style>

@@ -47,7 +47,7 @@
   />
 
   <page-toolbar v-if="nexus">
-    <template #actions>
+    <template #secondary-actions>
       <v-btn color="primary" prepend-icon="lucide:plus" variant="flat" @click="showRuleModal(-1)">{{ $t('rule.add') }}</v-btn>
       <v-btn prepend-icon="lucide:plus" variant="text" @click="showRulesetModal(-1)">{{ $t('ruleset.add') }}</v-btn>
       <v-menu :close-on-content-click="false" location="bottom center">
@@ -59,6 +59,8 @@
           <v-list-item link prepend-icon="lucide:download" :title="$t('rule.import.title')" @click="showImportRulesets" />
         </v-list>
       </v-menu>
+    </template>
+    <template #primary-actions>
       <v-btn variant="tonal" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
         {{ $t('actions.save') }}
       </v-btn>
@@ -494,7 +496,7 @@ const rulesetColumns: Column<any>[] = [
 ]
 
 const ruleColumns: Column<any>[] = [
-  { key: '_index', labelKey: '#' },
+  { key: '_index', label: '#' },
   { key: 'type', labelKey: 'type' },
   { key: 'action', labelKey: 'admin.action' },
   { key: 'outbound', labelKey: 'objects.outbound' },

@@ -4,8 +4,10 @@ export type SortableValue = string | number | boolean | null | undefined
 
 export interface Column<T = Record<string, unknown>> {
   key: string
-  // i18n key (or literal) the table resolves for the header label.
-  labelKey: string
+  // i18n key the table resolves for the header label.
+  labelKey?: string
+  // Literal label for headers that should not go through i18n.
+  label?: string
   sortable?: boolean
   align?: 'start' | 'center' | 'end'
   width?: string
