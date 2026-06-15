@@ -46,7 +46,7 @@ development, security hardening, testing, and release work.
 
 Advanced Web panel built on `SagerNet/Sing-Box`.
 
-**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current build: `v1.5.8-beta3`; latest stable: `v1.5.7-hotfix1`).
+**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.8`).
 
 **This fork keeps the original project structure and updates the user-facing documentation and installation links for this repository. You can use the scripts from this repository directly, or fork and build the project yourself.**
 
@@ -59,7 +59,7 @@ The full per-release notes live in the language-specific changelog files:
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Current release notes: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md)
+- Current release notes: [`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
@@ -141,18 +141,15 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Run `install-windows.bat` as Administrator.
 4. Follow the installation wizard.
 
-## Install v1.5.8-beta3 (pre-release)
+## Install v1.5.8 Stable
 
-Beta on top of v1.5.7-hotfix1: adds in-process TLS certificates for bare IP
-addresses — issue a Let's Encrypt certificate for an IP with no domain (RFC 8738
-`shortlived` profile, HTTP-01 standalone on a configurable port) and have the
-panel auto-renew it every 12 hours, applied to the panel's HTTPS listener or an
-inbound TLS profile (hot-reload, no core restart). It also moves Config Doctor
-into Settings → Maintenance and streamlines the Nexus Home overview. Additive; no
-manual migration. For production, prefer the stable v1.5.7-hotfix1 below.
+Stable v1.5.8 consolidates the full v1.5.8-beta1..beta4 line: no-restart apply
+for all managed sing-box objects, Personal Ops Pack diagnostics, IP-address TLS
+certificates with terminal/CLI issuance, embedded sing-box v1.13.13, and final
+Nexus polish. No manual database migration.
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta3
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8
 ```
 
 Or from a local clone:
@@ -160,10 +157,10 @@ Or from a local clone:
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.8-beta3
+sudo bash install.sh v1.5.8
 ```
 
-## Install v1.5.7-hotfix1 Stable
+## Install v1.5.7-hotfix1 (previous stable)
 
 Hotfix on top of the stable v1.5.7 (recommended over plain v1.5.7): deleting a
 client whose row was already gone no longer fails with "record not found" —
@@ -457,7 +454,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 Продвинутая Web-панель, построенная на базе `SagerNet/Sing-Box`.
 
-**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая сборка: `v1.5.8-beta3`; последняя стабильная: `v1.5.7-hotfix1`).
+**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.8`).
 
 **Этот fork сохраняет структуру оригинального проекта и обновляет пользовательскую документацию и ссылки установки для этого репозитория. Вы можете напрямую использовать скрипты из этого репозитория или сделать fork и собрать проект самостоятельно.**
 
@@ -470,7 +467,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Release notes текущей версии: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md)
+- Release notes текущей версии: [`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md)
 
 README оставляет только установку и общий обзор проекта. Полная история
 релизов, breaking-заметки, гайд по обновлению и инструкции по откату находятся
@@ -552,19 +549,16 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Запустите `install-windows.bat` от имени администратора.
 4. Следуйте инструкциям мастера установки.
 
-## Установка v1.5.8-beta3 (пре-релиз)
+## Установка стабильной версии v1.5.8
 
-Бета поверх v1.5.7-hotfix1: добавляет in-process TLS-сертификаты для голых
-IP-адресов — выпуск сертификата Let's Encrypt для IP без домена (RFC 8738,
-профиль `shortlived`, HTTP-01 standalone на настраиваемом порту) и
-автоперевыпуск панелью каждые 12 часов, с применением к HTTPS-листенеру панели
-или к inbound TLS-профилю (горячая перезагрузка, без перезапуска ядра). Также
-переносит Config Doctor в Settings → Maintenance и делает обзор главной Nexus
-чище. Аддитивно; ручных миграций нет. Для продакшена рекомендуется стабильная
-v1.5.7-hotfix1 ниже.
+Стабильная v1.5.8 объединяет всю линейку v1.5.8-beta1..beta4: применение без
+рестарта для всех управляемых объектов sing-box, Personal Ops Pack с
+диагностикой, TLS-сертификаты для IP-адресов с выпуском из терминала/CLI,
+встроенный sing-box v1.13.13 и финальный polish Nexus. Ручная миграция базы не
+требуется.
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8-beta3
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8
 ```
 
 Или из локального клона:
@@ -572,10 +566,10 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.8-beta3
+sudo bash install.sh v1.5.8
 ```
 
-## Установка стабильной версии v1.5.7-hotfix1
+## Установка v1.5.7-hotfix1 (предыдущая стабильная версия)
 
 Хотфикс поверх стабильной v1.5.7 (рекомендуется вместо чистой v1.5.7): удаление
 клиента, строки которого уже нет, больше не падает с «record not found» —
