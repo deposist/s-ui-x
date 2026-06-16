@@ -5,6 +5,76 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.9-beta1] - 2026-06-16 - security & reliability hardening + settings UX from a full codebase audit
+
+Remediates the findings of a full codebase audit: 28 fixes across the Go
+backend, the Vue frontend, and the build/install scripts, with the
+deterministic toolchain (build, vet, staticcheck, gosec, govulncheck) clean and
+the affected Go packages and the full frontend suite green. The two most serious
+findings are integrity-class. The new stats index is created automatically on
+startup; no manual database migration and no configuration changes are required.
+
+- **Fix (integrity): half-applied transaction on a save panic.** The
+  subscription/out-JSON TLS assembler `addTls` panicked on operator-supplied
+  Reality/ECH blobs whose client and server halves were not in lockstep (nil-map
+  write, bare type assertions). Because `ConfigService.Save` branched
+  commit-versus-rollback only on the returned error, the panic committed a
+  half-applied transaction and left the running core out of sync with the
+  database. `addTls` is now total (nil-safe client map, comma-ok on every
+  assertion); `Save` recovers any panic into a transaction rollback. Regression
+  tests cover all panic vectors.
+- **Fix (security): root RCE via TLS-disabled installer downloads.** `install.sh`
+  and the `s-ui.sh` self-update fetched their artifacts — and, for install.sh,
+  the `.sha256` validating the tarball — with `wget --no-check-certificate`, so
+  an active man-in-the-middle could swap both the artifact and its checksum and
+  the verification would still pass. Certificate validation is restored on every
+  download; the self-update writes to a temp file and swaps it in atomically.
+- **Supply chain.** The prebuilt `libcronet` native library (`dlopen`ed in-process
+  by the root core) is pinned to an immutable cronet-go release tag and verified
+  by a per-architecture SHA-256 in the Dockerfile and `windows.yml`, instead of
+  a mutable `releases/latest` URL with no checksum. Docker base images are
+  digest-pinned; every GitHub Actions step across all workflows is pinned to a
+  full commit SHA. The `s-ui.sh` SSL menu hardens the acme.sh install
+  (`curl -fsSL --proto '=https'`) and no longer enables `--auto-upgrade`.
+- **Fix: migration abort on a config-less database.** The 1.2→1.3 migration read
+  the `config` settings row with `First()` and aborted with `record not found`
+  when no row existed (a panel managed only via the entity UIs), blocking
+  upgrades and backup restores; it now treats the missing row as a no-op.
+- **Fix: listen fallback widened a restricted bind to 0.0.0.0.** An unbindable
+  literal-IP listen address (e.g. after restoring a backup on a new host) fell
+  back to the all-interfaces wildcard, silently exposing a deliberately-narrowed
+  admin panel and subscription server. It now falls back to loopback
+  (`127.0.0.1`) only.
+- **Auth & correctness.** Logout is now a CSRF-protected POST (was a forgeable
+  GET); `ChangePass` rejects empty and duplicate usernames; a traffic-tariff
+  refund of an older order no longer overwrites the current billing window's
+  usage; a `resetDays=0` periodic-reset misconfiguration is clamped so counters
+  are not wiped every minute; the external-subscription SSRF filter now reuses
+  the central validator, closing the CGNAT and other reserved ranges it
+  previously let through.
+- **Concurrency & lifecycle.** A deplete-cron hot reload could race a full core
+  restart and panic inside sing-box — manager mutations now hold the core read
+  lock for their duration. An IP-certificate auto-renewal could report success
+  while silently skipping the panel restart that loads the new certificate; it
+  now uses a non-droppable restart.
+- **Performance.** Added a composite `stats(resource, tag, date_time)` index
+  matching the dashboard query; WebSocket events are marshalled once per
+  broadcast instead of once per connection; the subscription server now
+  gzip-compresses its payloads.
+- **Frontend / settings UX.** Every settings field across the panel (web and
+  subscription settings, the sing-box core Basics page, Telegram) now shows its
+  default/recommended value as a placeholder plus an (i) tooltip describing the
+  field. Strictly-enumerated fields became pickers: the timezone is an
+  autocomplete over the full IANA list, the Clash API default mode is a
+  dropdown, and payment currencies are a combobox. The misleading routing label
+  "Invalid IP Ranges" / "Invalid Source IPs" — which match private IP ranges,
+  not invalid ones — was corrected in every locale; the login form shows an
+  inline error instead of only a toast; and several hard-coded English strings
+  (Telegram transport labels, routing action cards) and KPI captions were moved
+  into i18n. Frontend-only; no API/database/configuration change.
+
+Full release notes: [`docs/releases/v1.5.9-beta1.md`](docs/releases/v1.5.9-beta1.md).
+
 ## [1.5.8] - 2026-06-15 - stable 1.5.8: full no-restart apply, Personal Ops Pack, IP certificates, sing-box v1.13.13
 
 First stable release of the 1.5.8 line, consolidating 1.5.8-beta1..beta4 plus

@@ -15,7 +15,7 @@
             <v-btn color="primary" @click="ruleData.rules.push(<dnsRule>{})" hide-details>{{ $t('actions.add') + " " + $t('objects.rule') }}</v-btn>
           </v-col>
         </v-row>
-        <v-card style="background-color: inherit; margin-bottom: 5px;" v-for="(r, index) in ruleData.rules" v-if="ruleData.type == 'logical'">
+        <v-card style="background-color: inherit; margin-bottom: 5px;" v-for="(r, index) in ruleData.rules" :key="ruleObjectKey(r)" v-if="ruleData.type == 'logical'">
           <v-card-subtitle>{{ $t('objects.rule') + ' ' + (Number(index)+1) }}
             <v-icon @click="ruleData.rules.splice(index,1)" icon="mdi-delete" v-if="ruleData.rules.length>1" />
           </v-card-subtitle>
@@ -137,6 +137,13 @@ import { logicalDnsRule, dnsRule, actionDnsRuleKeys } from '@/types/dns'
 import RuleOptions from '@/components/DnsRule.vue'
 import { i18n } from '@/locales'
 import FormShell from '@/components/nexus/drawers/FormShell.vue'
+
+// Stable identity key per sub-rule object (see Rule.vue): keys the v-for by object
+// identity instead of array index so a middle splice does not leave stale child
+// widget state. WeakMap keeps it out of the saved config.
+const dnsRuleObjectKeys = new WeakMap<object, number>()
+let dnsRuleObjectKeySeq = 0
+
 export default {
   props: ['visible', 'data', 'index', 'clients', 'inTags', 'serverTags', 'ruleSets'],
   emits: ['close', 'save'],
@@ -176,6 +183,15 @@ export default {
     }
   },
   methods: {
+    ruleObjectKey(r: any): number {
+      if (r == null || typeof r !== 'object') return -1
+      let k = dnsRuleObjectKeys.get(r)
+      if (k === undefined) {
+        k = ++dnsRuleObjectKeySeq
+        dnsRuleObjectKeys.set(r, k)
+      }
+      return k
+    },
     updateData() {
       if (this.$props.index != -1) {
         const newData = JSON.parse(this.$props.data)

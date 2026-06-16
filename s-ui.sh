@@ -810,13 +810,22 @@ show_log() {
 }
 
 update_shell() {
-    wget -O /usr/bin/s-ui -N --no-check-certificate https://github.com/deposist/s-ui-x/raw/main/s-ui.sh
-    if [[ $? != 0 ]]; then
+    local tmp_script
+    tmp_script="$(mktemp)"
+    # Keep TLS validation ON (github.com presents a valid certificate, so the
+    # transport is the integrity anchor) and download to a temp file first, then
+    # swap it into the root-executed path atomically only after a fully successful
+    # fetch — a failed/partial transfer must never leave a broken root script in
+    # /usr/bin/s-ui.
+    wget -O "${tmp_script}" https://github.com/deposist/s-ui-x/raw/main/s-ui.sh
+    if [[ $? != 0 || ! -s "${tmp_script}" ]]; then
+        rm -f "${tmp_script}"
         echo ""
         LOGE "$(t download_fail)"
         before_show_menu
     else
-        chmod +x /usr/bin/s-ui
+        chmod +x "${tmp_script}"
+        mv -f "${tmp_script}" /usr/bin/s-ui
         LOGI "$(t script_updated)" && exit 0
     fi
 }
@@ -955,7 +964,11 @@ enable_bbr() {
 install_acme() {
     cd ~
     LOGI "$(t installing_acme)"
-    curl https://get.acme.sh | sh
+    # Fail closed: -f rejects HTTP error bodies (a 404/partial page must never be
+    # piped into a root shell), --proto '=https' forbids a downgrade/redirect to
+    # plain http, and --tlsv1.2 sets a TLS floor. get.acme.sh is the vendor's
+    # canonical installer; this only hardens how it is fetched.
+    curl -fsS --proto '=https' --tlsv1.2 https://get.acme.sh | sh
     if [ $? -ne 0 ]; then
         LOGE "$(t acme_install_fail)"
         return 1
@@ -1120,7 +1133,7 @@ ssl_cert_issue() {
     ~/.acme.sh/acme.sh --installcert -d "${domain}" \
         --key-file "/root/cert/${domain}/privkey.pem" \
         --fullchain-file "/root/cert/${domain}/fullchain.pem"
-    ~/.acme.sh/acme.sh --upgrade --auto-upgrade
+    ~/.acme.sh/acme.sh --upgrade
     chmod 755 "$certPath"/*
     ls -lah "$certPath"/*
 }
@@ -1162,7 +1175,7 @@ ssl_cert_issue_CF() {
             ~/.acme.sh/acme.sh --installcert -d "${CF_Domain}" -d "*.${CF_Domain}" \
                 --fullchain-file "${certPath}/${CF_Domain}/fullchain.pem" \
                 --key-file "${certPath}/${CF_Domain}/privkey.pem"
-            ~/.acme.sh/acme.sh --upgrade --auto-upgrade
+            ~/.acme.sh/acme.sh --upgrade
             chmod 755 "${certPath}/${CF_Domain}"
             ls -lah "${certPath}/${CF_Domain}"
             show_menu

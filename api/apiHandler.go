@@ -1,8 +1,6 @@
 package api
 
 import (
-	"strings"
-
 	"github.com/deposist/s-ui-x/paidsub"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +8,9 @@ import (
 
 type APIHandler struct {
 	ApiService
-	apiv2         *APIv2Handler
-	csrfLoginPath string
+	apiv2           *APIv2Handler
+	csrfLoginPath   string
+	authExemptPaths map[string]struct{}
 }
 
 func NewAPIHandler(g *gin.RouterGroup, a2 *APIv2Handler, options ...Option) {
@@ -24,14 +23,30 @@ func NewAPIHandler(g *gin.RouterGroup, a2 *APIv2Handler, options ...Option) {
 
 func (a *APIHandler) initRouter(g *gin.RouterGroup) {
 	a.csrfLoginPath = a.cachedCSRFLoginPath()
+	a.authExemptPaths = a.cachedAuthExemptPaths()
 	g.Use(func(c *gin.Context) {
-		path := c.Request.URL.Path
-		if !strings.HasSuffix(path, "login") && !strings.HasSuffix(path, "logout") {
+		// Exempt by EXACT path (not a "login"/"logout" suffix), so a future route
+		// like /api/sociallogin can never accidentally inherit the auth bypass.
+		if _, exempt := a.authExemptPaths[c.Request.URL.Path]; !exempt {
 			checkLogin(c)
 		}
 	})
 	g.Use(a.csrfMiddleware)
 	a.registerGroupedRoutes(g)
+}
+
+// cachedAuthExemptPaths returns the exact full paths exempt from checkLogin:
+// /login (no session yet) and /logout (terminates a session, CSRF-protected as a
+// POST instead).
+func (a *APIHandler) cachedAuthExemptPaths() map[string]struct{} {
+	webPath, err := a.SettingService.GetWebPath()
+	if err != nil {
+		webPath = "/"
+	}
+	return map[string]struct{}{
+		joinURL(webPath, "api/login"):  {},
+		joinURL(webPath, "api/logout"): {},
+	}
 }
 
 func (a *APIHandler) registerGroupedRoutes(g *gin.RouterGroup) {
@@ -52,7 +67,10 @@ func (a *APIHandler) registerGroupedRoutes(g *gin.RouterGroup) {
 	g.POST("/logoutAllAdmins", a.ApiService.LogoutAllAdmins)
 
 	g.GET("/csrf", a.ApiService.GetCSRF)
-	g.GET("/logout", a.ApiService.Logout)
+	// Logout is a POST so the CSRF middleware protects it (a GET carries no CSRF
+	// token), preventing cross-site forced logout. It stays exempt from
+	// checkLogin via authExemptPaths.
+	g.POST("/logout", a.ApiService.Logout)
 	g.GET("/load", a.ApiService.LoadData)
 	for _, action := range []string{"inbounds", "outbounds", "endpoints", "services", "tls", "clients", "config"} {
 		action := action

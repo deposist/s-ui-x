@@ -538,6 +538,18 @@ func (s *ClientService) DepleteClients() (inboundIds []uint, err error) {
 	return inboundIds, nil
 }
 
+// clientResetPeriodDays returns a client's periodic-reset interval in days,
+// clamped to at least 1. The API save path persists model.Client verbatim, so an
+// apiv2/import caller can set auto_reset=true with reset_days=0 (the Vue UI forbids
+// it). Without the clamp NextReset == dt, and the @every-1m DepleteJob re-matches
+// and zeroes the client's traffic every minute, permanently defeating quota.
+func clientResetPeriodDays(resetDays int) int64 {
+	if resetDays < 1 {
+		return 1
+	}
+	return int64(resetDays)
+}
+
 func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 	var err error
 	var resetClients []*model.Client
@@ -575,7 +587,7 @@ func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 		return nil, err
 	}
 	for _, client := range resetClients {
-		client.NextReset = dt + (int64(client.ResetDays) * 86400)
+		client.NextReset = dt + (clientResetPeriodDays(client.ResetDays) * 86400)
 		client.DelayStart = false
 		if err := updateClientResetFields(tx, client.Id, map[string]interface{}{
 			"next_reset":  client.NextReset,
@@ -607,7 +619,7 @@ func (s *ClientService) ResetClients(tx *gorm.DB, dt int64) ([]uint, error) {
 			}
 			inboundIds = common.UnionUintArray(inboundIds, clientInboundIds)
 		}
-		client.NextReset = dt + (int64(client.ResetDays) * 86400)
+		client.NextReset = dt + (clientResetPeriodDays(client.ResetDays) * 86400)
 		client.TotalUp += client.Up
 		client.TotalDown += client.Down
 		client.Up = 0

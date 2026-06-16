@@ -15,7 +15,7 @@
             <v-btn color="primary" @click="ruleData.rules.push(<rule>{})" hide-details>{{ $t('actions.add') + " " + $t('objects.rule') }}</v-btn>
           </v-col>
         </v-row>
-        <v-card style="background-color: inherit; margin-bottom: 5px;" v-for="(r, index) in ruleData.rules" v-if="ruleData.type == 'logical'">
+        <v-card style="background-color: inherit; margin-bottom: 5px;" v-for="(r, index) in ruleData.rules" :key="ruleObjectKey(r)" v-if="ruleData.type == 'logical'">
           <v-card-subtitle>{{ $t('objects.rule') + ' ' + (Number(index)+1) }}
             <v-icon @click="ruleData.rules.splice(index,1)" icon="mdi-delete" v-if="ruleData.rules.length>1" />
           </v-card-subtitle>
@@ -56,7 +56,7 @@
             <v-switch color="primary" v-model="ruleData.invert" :label="$t('rule.invert')" hide-details></v-switch>
           </v-col>
         </v-row>
-        <v-card :subtitle="ruleData.action == 'bypass' ? 'Bypass' : 'Route'" v-if="['route', 'bypass'].includes(ruleData.action)">
+        <v-card :subtitle="ruleData.action == 'bypass' ? $t('rule.action.bypass') : $t('rule.action.route')" v-if="['route', 'bypass'].includes(ruleData.action)">
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-select
@@ -70,7 +70,7 @@
             </v-col>
           </v-row>
         </v-card>
-        <v-card subtitle="Route Option" v-if="['route', 'route-options', 'bypass'].includes(ruleData.action)">
+        <v-card :subtitle="$t('rule.action.routeOption')" v-if="['route', 'route-options', 'bypass'].includes(ruleData.action)">
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-text-field v-model="ruleData.override_address" :label="$t('types.direct.overrideAddr')" hide-details></v-text-field>
@@ -130,7 +130,7 @@
             </v-col>
           </v-row>
         </v-card>
-        <v-card subtitle="Reject" v-if="ruleData.action == 'reject'">
+        <v-card :subtitle="$t('rule.action.reject')" v-if="ruleData.action == 'reject'">
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-select
@@ -147,7 +147,7 @@
             </v-col>
           </v-row>
         </v-card>
-        <v-card subtitle="Sniff" v-if="ruleData.action == 'sniff'">
+        <v-card :subtitle="$t('rule.action.sniff')" v-if="ruleData.action == 'sniff'">
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-select
@@ -164,7 +164,7 @@
             </v-col>
           </v-row>
         </v-card>
-        <v-card subtitle="Resolve" v-if="ruleData.action == 'resolve'">
+        <v-card :subtitle="$t('rule.action.resolve')" v-if="ruleData.action == 'resolve'">
           <v-row>
             <v-col cols="12" sm="6" md="4">
               <v-select
@@ -188,6 +188,14 @@
 import { logicalRule, rule, actionKeys } from '@/types/rules'
 import RuleOptions from '@/components/Rule.vue'
 import FormShell from '@/components/nexus/drawers/FormShell.vue'
+
+// Stable identity key for each sub-rule object so the v-for is not keyed by array
+// index. Splicing out a middle rule then re-binds the remaining RuleOptions
+// instances by object identity (not position), avoiding stale child widget state.
+// A WeakMap keeps it off the rule object, so nothing leaks into the saved config.
+const ruleObjectKeys = new WeakMap<object, number>()
+let ruleObjectKeySeq = 0
+
 export default {
   props: ['visible', 'data', 'index', 'clients', 'inTags', 'outTags', 'rsTags'],
   emits: ['close', 'save'],
@@ -238,6 +246,15 @@ export default {
     }
   },
   methods: {
+    ruleObjectKey(r: any): number {
+      if (r == null || typeof r !== 'object') return -1
+      let k = ruleObjectKeys.get(r)
+      if (k === undefined) {
+        k = ++ruleObjectKeySeq
+        ruleObjectKeys.set(r, k)
+      }
+      return k
+    },
     updateData() {
       if (this.$props.index != -1) {
         const newData = JSON.parse(this.$props.data)

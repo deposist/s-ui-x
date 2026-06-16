@@ -4,6 +4,55 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.9-beta1] - 2026-06-16 - 全量代码库审计后的安全与可靠性加固 + 设置 UX
+
+修复了一次全量代码库审计发现的问题：在 Go 后端、Vue 前端及构建/安装脚本中共
+28 项修复，确定性工具链（build、vet、staticcheck、gosec、govulncheck）干净，
+受影响的 Go 包与全部前端测试套件均通过。两项最严重的问题属于完整性类。新增的
+stats 索引在启动时自动创建；无需手动数据库迁移，也无需更改配置。
+
+- **修复（完整性）：保存时 panic 导致半提交事务。** 订阅/out-JSON 的 TLS 组装器
+  `addTls` 在运营者提供的 Reality/ECH 块的客户端与服务端两半不一致时会 panic
+  （向 nil map 写入、裸类型断言）。由于 `ConfigService.Save` 仅依据返回的错误在
+  提交与回滚之间分支，该 panic 提交了半应用的事务，使运行中的内核与数据库失同步。
+  现在 `addTls` 是完备的（nil 安全的客户端 map、每处断言均用 comma-ok）；`Save`
+  将任何 panic 恢复为事务回滚。回归测试覆盖所有 panic 向量。
+- **修复（安全）：安装器禁用 TLS 的下载导致 root RCE。** `install.sh` 与
+  `s-ui.sh` 自更新使用 `wget --no-check-certificate` 拉取其制品——对 install.sh
+  还包括用于校验 tarball 的 `.sha256`——因此主动中间人可同时替换制品及其校验和，
+  而校验仍会通过。现已在每次下载时恢复证书校验；自更新先写入临时文件再原子换入。
+- **供应链。** 预构建的 `libcronet` 原生库（由 root 内核在进程内 `dlopen`）在
+  Dockerfile 与 `windows.yml` 中被固定到不可变的 cronet-go 发布标签，并按架构以
+  SHA-256 校验——不再使用无校验和的可变 `releases/latest` URL。Docker 基础镜像按
+  digest 固定；所有 workflow 中的每个 GitHub Actions 步骤均固定到完整 commit SHA。
+  `s-ui.sh` 的 SSL 菜单加固了 acme.sh 安装（`curl -fsSL --proto '=https'`），
+  并不再启用 `--auto-upgrade`。
+- **修复：无 config 行的数据库导致迁移中止。** 1.2→1.3 迁移用 `First()` 读取
+  `config` 设置行，当该行不存在时（仅通过实体 UI 管理的面板）以 `record not found`
+  中止，阻断升级与备份恢复；现将缺失的行视为 no-op。
+- **修复：监听回退将受限绑定扩大到 0.0.0.0。** 无法绑定的字面 IP 监听地址
+  （例如在新主机上恢复备份后）回退到全部接口的通配地址，悄然暴露了刻意收窄的
+  管理面板与订阅服务器。现仅回退到回环地址（`127.0.0.1`）。
+- **认证与正确性。** 登出现为 CSRF 保护的 POST（原为可伪造的 GET）；`ChangePass`
+  拒绝空用户名与重复用户名；对较旧订单的流量套餐退款不再覆盖当前计费窗口的用量；
+  `resetDays=0` 的周期重置配置错误被钳制，避免每分钟清零计数；外部订阅的 SSRF
+  过滤现复用中央校验器，封堵此前放行的 CGNAT 等保留网段。
+- **并发与生命周期。** deplete 定时任务的热重载可能与内核全量重启竞争并在 sing-box
+  内部 panic——管理器变更现在在其执行期间持有内核读锁。IP 证书自动续期可能在悄然
+  跳过加载新证书的面板重启的同时报告成功；现使用不可丢弃的重启。
+- **性能。** 新增与仪表盘查询匹配的复合索引 `stats(resource, tag, date_time)`；
+  WebSocket 事件每次广播仅序列化一次，而非每个连接一次；订阅服务器现以 gzip
+  压缩其响应。
+- **前端 / 设置 UX。** 面板的每个设置字段（Web 与订阅设置、sing-box 核心 Basics
+  页、Telegram）现以 placeholder 加 (i) 提示展示其默认/推荐值并说明该字段。取值
+  严格枚举的字段改为选择器：时区为基于完整 IANA 列表的 autocomplete，Clash API
+  默认模式为下拉框，支付货币为 combobox。误导性的路由标签「Invalid IP Ranges」/
+  「Invalid Source IPs」（它匹配的是私有 IP 段，而非无效地址）已在所有语言中更正；
+  登录表单改为内联错误提示而非仅 toast；若干硬编码英文字符串（Telegram 传输标签、
+  路由动作卡片）与 KPI 文案迁移至 i18n。仅前端；无 API/数据库/配置变更。
+
+完整 release notes：[`docs/releases/v1.5.9-beta1.md`](docs/releases/v1.5.9-beta1.md)。
+
 ## [1.5.8] - 2026-06-15 - 稳定版 1.5.8：完整免重启应用、Personal Ops Pack、IP 证书、sing-box v1.13.13
 
 1.5.8 线的首个稳定版，整合 1.5.8-beta1..beta4，并包含最终的 Nexus 界面打磨。

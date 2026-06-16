@@ -211,7 +211,7 @@
         </template>
         <template v-slot:item.online="{ item }">
           <div class="text-start">
-            <template v-if="isOnline(item.name).value">
+            <template v-if="onlineUsers.has(item.name)">
               <v-chip density="comfortable" size="small" color="success" variant="flat">{{ $t('online') }}</v-chip>
             </template>
             <template v-else>-</template>
@@ -307,9 +307,9 @@ const clients = computed((): any[] => {
   return Data().clients
 })
 
-const isOnline = (cname: string) => computed(() => {
-  return Data().onlines?.user ? Data().onlines.user.includes(cname) : false
-})
+// One reactive Set per render instead of a throwaway computed per table row:
+// O(1) membership lookup, no per-row reactive effect churn on each onlines update.
+const onlineUsers = computed(() => new Set<string>(Data().onlines?.user ?? []))
 
 const inbounds = computed((): any[] => {
   return Data().inbounds?? []

@@ -258,24 +258,40 @@ func (s *UserService) DeleteUser(actorUsername string, currentPass string, targe
 // caller passes the AUTHENTICATED session user's name (never a client-supplied
 // id), so an admin can only change their own account, not another admin's.
 func (s *UserService) ChangePass(username string, oldPass string, newUser string, newPass string) error {
-	db := database.GetDB()
-	user := &model.User{}
-	err := db.Model(model.User{}).Where("username = ?", username).First(user).Error
-	if err != nil || database.IsNotFound(err) {
-		return err
+	newUser = strings.TrimSpace(newUser)
+	if newUser == "" {
+		return common.NewError("username can not be empty")
 	}
-	ok, _ := common.CheckPassword(user.Password, oldPass)
-	if !ok {
-		return common.NewError("wrong user or password")
-	}
-	passwordHash, err := common.HashPassword(newPass)
-	if err != nil {
-		return err
-	}
-	user.Username = newUser
-	user.Password = passwordHash
-	user.ForcePasswordReset = false
-	return db.Save(user).Error
+	return database.GetDB().Transaction(func(tx *gorm.DB) error {
+		user := &model.User{}
+		if err := tx.Model(model.User{}).Where("username = ?", username).First(user).Error; err != nil {
+			return err
+		}
+		ok, _ := common.CheckPassword(user.Password, oldPass)
+		if !ok {
+			return common.NewError("wrong user or password")
+		}
+		// users.username has no UNIQUE constraint, so this app-level check is the
+		// only guard against renaming to a name already taken by a DIFFERENT user
+		// (which would produce an ambiguous, order-dependent login resolution).
+		if newUser != user.Username {
+			var count int64
+			if err := tx.Model(model.User{}).Where("username = ? AND id <> ?", newUser, user.Id).Count(&count).Error; err != nil {
+				return err
+			}
+			if count > 0 {
+				return common.NewError("user already exists")
+			}
+		}
+		passwordHash, err := common.HashPassword(newPass)
+		if err != nil {
+			return err
+		}
+		user.Username = newUser
+		user.Password = passwordHash
+		user.ForcePasswordReset = false
+		return tx.Save(user).Error
+	})
 }
 
 func (s *UserService) checkUserPassword(tx *gorm.DB, username string, password string) error {

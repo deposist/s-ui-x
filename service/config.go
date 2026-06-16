@@ -277,6 +277,14 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 	db := database.GetDB()
 	tx := db.Begin()
 	defer func() {
+		// A panic inside dispatchSave (e.g. a malformed entity blob) leaves the
+		// named return err == nil, which would otherwise take the commit branch
+		// and persist a half-applied transaction. Roll back first, then re-raise
+		// so gin.Recovery still surfaces a 500 but the DB stays consistent.
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
 		if err == nil {
 			if commitErr := tx.Commit().Error; commitErr != nil {
 				err = commitErr
@@ -288,6 +296,9 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 			if invalidateClientPolicyCache {
 				invalidateClientPolicyCacheAfterSave()
 			}
+			// Advance the change marker only after the tx actually committed,
+			// so a failed commit cannot make CheckChanges report phantom changes.
+			s.setLastUpdate(time.Now().Unix())
 			realtime.Publish(realtime.TopicConfigInvalidated, nil)
 			s.applyPostCommitCoreChanges(plan)
 		} else {

@@ -17,6 +17,7 @@ import (
 	"github.com/deposist/s-ui-x/service"
 	"github.com/deposist/s-ui-x/util/common"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,6 +63,10 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 		engine.Use(middleware.DomainValidator(subDomain))
 	}
 	engine.Use(middleware.SubSecurityHeaders())
+	// Subscription payloads (base64 link lists, sing-box JSON, Clash YAML) are
+	// highly compressible text that proxy clients re-fetch periodically; gzip
+	// them like the panel web server does. gin-contrib/gzip skips HEAD bodies.
+	engine.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	registeredFormats := map[string]string{}
 	if err := rememberSubscriptionPath(registeredFormats, subPath, "link"); err != nil {

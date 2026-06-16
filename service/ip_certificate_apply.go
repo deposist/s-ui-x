@@ -41,6 +41,14 @@ func (s *IpCertificateService) applyToPanel(certPath, keyPath string) error {
 	if err := s.setPanelCertSettings(certPath, keyPath); err != nil {
 		return err
 	}
+	// The cert settings are now written; the panel only re-reads them on a full
+	// restart. Use a BLOCKING restart so a collision with another in-flight
+	// operation cannot silently drop this restart (which would leave the live
+	// listener serving the old certificate while the renewal reports success and
+	// advances ipCertNotAfter, suppressing the next retry).
+	if manager := runtimeOrDefault(s.Runtime).restart(); manager != nil {
+		return manager.scheduleRestartBlocking(ipCertPanelRestartDelay)
+	}
 	panel := &PanelService{Runtime: s.Runtime}
 	return panel.RestartPanel(ipCertPanelRestartDelay)
 }

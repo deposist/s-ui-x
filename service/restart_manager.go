@@ -81,10 +81,44 @@ func (m *restartManager) ScheduleRestart(delay time.Duration) error {
 	if !m.begin() {
 		return nil
 	}
+	m.armRestartTimer(delay)
+	return nil
+}
 
-	// The timer callback may fire concurrently with this function, so the
-	// captured timer variable is published under the same mutex it is read
-	// with inside the callback.
+// scheduleRestartBlocking schedules a restart that must NOT be silently dropped
+// when it matters. Used by the IP-certificate renewal cron after the new cert
+// settings are written: a full restart is what reloads them.
+//
+//   - A SIGHUP restart is already pending (pendingTimer != nil): it will fire
+//     after our settings write and reload the cert, so this call is a safe no-op
+//     (matches the self-healing case).
+//   - Another op is in flight but no restart is pending (e.g. a core runBlocking
+//     sync): WAIT for it to finish, then arm the restart, so the panel restart is
+//     not silently dropped (which would keep serving the old certificate).
+//   - Nothing in flight: arm the restart immediately.
+func (m *restartManager) scheduleRestartBlocking(delay time.Duration) error {
+	if delay <= 0 {
+		delay = m.signalDelay
+	}
+	m.mu.Lock()
+	for m.inFlight {
+		if m.pendingTimer != nil {
+			m.mu.Unlock()
+			return nil
+		}
+		m.cond.Wait()
+	}
+	m.inFlight = true
+	m.mu.Unlock()
+	m.armRestartTimer(delay)
+	return nil
+}
+
+// armRestartTimer publishes the pending SIGHUP timer under the mutex. The caller
+// must already hold the in-flight slot (begin/beginBlocking). The timer callback
+// may fire concurrently, so the captured timer variable is read under the same
+// mutex it is published with.
+func (m *restartManager) armRestartTimer(delay time.Duration) {
 	m.mu.Lock()
 	var timer *time.Timer
 	timer = time.AfterFunc(delay, func() {
@@ -98,7 +132,6 @@ func (m *restartManager) ScheduleRestart(delay time.Duration) error {
 	})
 	m.pendingTimer = timer
 	m.mu.Unlock()
-	return nil
 }
 
 func (m *restartManager) cancelPending() {

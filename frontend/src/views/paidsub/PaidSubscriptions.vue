@@ -191,7 +191,7 @@
       <v-window-item value="payments">
         <v-row>
           <v-col cols="12" md="4">
-            <v-text-field v-model="settings.paidSubCurrency" :label="$t('paidSub.payments.currency')" maxlength="3" />
+            <v-combobox v-model="settings.paidSubCurrency" :items="currencies" :label="$t('paidSub.payments.currency')" />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field v-model="settings.paidSubOrderTTLMinutes" type="number" :label="$t('paidSub.payments.orderTtl')" />
@@ -423,7 +423,7 @@
         <v-text-field v-model="tariffEdit.description" :label="$t('paidSub.cols.description')" />
         <v-row>
           <v-col cols="6"><v-text-field v-model.number="tariffEdit.priceMajor" type="number" :label="$t('paidSub.tariffs.priceMajor')" /></v-col>
-          <v-col cols="6"><v-text-field v-model="tariffEdit.currency" :label="$t('paidSub.tariffs.currency')" maxlength="3" /></v-col>
+          <v-col cols="6"><v-combobox v-model="tariffEdit.currency" :items="currencies" :label="$t('paidSub.tariffs.currency')" /></v-col>
           <v-col cols="6"><v-text-field v-model.number="tariffEdit.starsAmount" type="number" :label="$t('paidSub.tariffs.starsAmount')" /></v-col>
           <v-col cols="6"><v-text-field v-model.number="tariffEdit.addDays" type="number" :label="$t('paidSub.tariffs.addDays')" /></v-col>
           <v-col cols="6"><v-text-field v-model.number="tariffEdit.addTrafficGB" type="number" :label="$t('paidSub.tariffs.addTrafficGB')" /></v-col>
@@ -686,6 +686,9 @@ const loadInbounds = async () => {
 }
 
 // ---- transport (proxy / outbound) ----
+// Common payment currencies offered as a dropdown; v-combobox still accepts a
+// provider-specific code not in this list. XTR = Telegram Stars.
+const currencies = ['RUB', 'USD', 'EUR', 'GBP', 'UAH', 'KZT', 'BYN', 'XTR']
 const transportModes = [
   { title: i18n.global.t('paidSub.transportModes.proxy'), value: 'proxy' },
   { title: i18n.global.t('paidSub.transportModes.outbound'), value: 'outbound' },

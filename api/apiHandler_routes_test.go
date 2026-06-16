@@ -28,6 +28,7 @@ func TestAPIHandlerRegistersLegacyActionRoutesExplicitly(t *testing.T) {
 	expected := map[string][]string{
 		http.MethodPost: {
 			"/api/login",
+			"/api/logout",
 			"/api/changePass",
 			"/api/addAdmin",
 			"/api/deleteAdmin",
@@ -56,7 +57,6 @@ func TestAPIHandlerRegistersLegacyActionRoutesExplicitly(t *testing.T) {
 		},
 		http.MethodGet: {
 			"/api/csrf",
-			"/api/logout",
 			"/api/load",
 			"/api/inbounds",
 			"/api/outbounds",

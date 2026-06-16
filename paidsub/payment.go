@@ -406,10 +406,10 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 				newVolume = 0
 			}
 			updates["volume"] = newVolume
-			// Symmetric with ApplyPaidOrder: restore the usage counters that the
-			// renewal reset, from the snapshot taken at apply time. Usage accrued
-			// between purchase and refund is intentionally forgiven (the refund
-			// restores the pre-purchase accounting state).
+			// Symmetric with ApplyPaidOrder: roll back the volume granted and the
+			// usage counters that the renewal reset, from the snapshot taken at
+			// apply time. Usage accrued between purchase and refund is intentionally
+			// forgiven (the refund restores the pre-purchase accounting state).
 			newTotalUp := client.TotalUp - order.GrantedUp
 			if newTotalUp < 0 {
 				newTotalUp = 0
@@ -418,10 +418,26 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 			if newTotalDown < 0 {
 				newTotalDown = 0
 			}
-			updates["up"] = order.GrantedUp
-			updates["down"] = order.GrantedDown
 			updates["total_up"] = newTotalUp
 			updates["total_down"] = newTotalDown
+			// Only restore the live up/down baseline when THIS is the most recent
+			// paid traffic order — its apply is what zeroed the current counters.
+			// For an older (non-latest) order a newer purchase already opened a
+			// fresh window, so the live up/down belong to that window and must not
+			// be clobbered with this order's stale snapshot (which would silently
+			// discard the usage accrued in the current window). Totals stay
+			// relative either way, so the ledger remains consistent.
+			var newerTrafficOrders int64
+			if err := tx.Model(&PaymentOrder{}).
+				Where("client_id = ? AND id > ? AND status = ?", order.ClientId, order.Id, StatusPaid).
+				Where("tariff_id IN (?)", tx.Model(&Tariff{}).Select("id").Where("add_traffic_bytes > 0")).
+				Count(&newerTrafficOrders).Error; err != nil {
+				return err
+			}
+			if newerTrafficOrders == 0 {
+				updates["up"] = order.GrantedUp
+				updates["down"] = order.GrantedDown
+			}
 		}
 		if len(updates) == 0 {
 			return nil
