@@ -817,7 +817,7 @@ update_shell() {
     # swap it into the root-executed path atomically only after a fully successful
     # fetch — a failed/partial transfer must never leave a broken root script in
     # /usr/bin/s-ui.
-    wget -O "${tmp_script}" https://github.com/deposist/s-ui-x/raw/main/s-ui.sh
+    wget --timeout=20 --tries=5 --retry-connrefused -O "${tmp_script}" https://github.com/deposist/s-ui-x/raw/main/s-ui.sh
     if [[ $? != 0 || ! -s "${tmp_script}" ]]; then
         rm -f "${tmp_script}"
         echo ""

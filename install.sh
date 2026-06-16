@@ -441,7 +441,7 @@ verify_download_checksum() {
     local checksum_url="$2"
     local checksum_name="${artifact_name}.sha256"
 
-    wget -N -O "/tmp/${checksum_name}" "${checksum_url}"
+    wget -N --timeout=20 --tries=5 --retry-connrefused -O "/tmp/${checksum_name}" "${checksum_url}"
     if [[ $? -ne 0 ]]; then
         echo -e "${red}$(t checksum_failed)${plain}"
         exit 1
@@ -464,7 +464,7 @@ install_s-ui() {
         fi
         echo -e "$(t fetching_latest "${last_version}")"
         url="https://github.com/deposist/s-ui-x/releases/download/${last_version}/${artifact_name}"
-        wget -N -O "/tmp/${artifact_name}" "${url}"
+        wget -N --timeout=20 --tries=5 --retry-connrefused -O "/tmp/${artifact_name}" "${url}"
         if [[ $? -ne 0 ]]; then
             echo -e "${red}$(t download_failed)${plain}"
             exit 1
@@ -475,7 +475,7 @@ install_s-ui() {
         [[ "${last_version}" != v* ]] && last_version="v${last_version}"
         url="https://github.com/deposist/s-ui-x/releases/download/${last_version}/${artifact_name}"
         echo -e "$(t installing_specific "${last_version}")"
-        wget -N -O "/tmp/${artifact_name}" "${url}"
+        wget -N --timeout=20 --tries=5 --retry-connrefused -O "/tmp/${artifact_name}" "${url}"
         if [[ $? -ne 0 ]]; then
             echo -e "${red}$(t download_failed_specific "${last_version}")${plain}"
             exit 1
