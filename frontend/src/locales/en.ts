@@ -5,6 +5,7 @@ export default {
       network: "Network",
       integrations: "Integrations",
       system: "System",
+      support: "Support",
     },
   },
   table: {
@@ -308,6 +309,18 @@ export default {
     migrateXui: "3x-ui Migration",
     paidSub: "Paid Subscriptions",
     settings: "Settings",
+    donations: "Donations",
+  },
+  donations: {
+    title: "Donations",
+    intro: "S-UI-X is maintained as an open-source project. Donations help fund continued development, security hardening, testing, and release work.",
+    imageAlt: "Support S-UI-X",
+    web: "Donate on the web",
+    telegram: "Donate via Telegram",
+    cryptoTitle: "Crypto wallets",
+    network: "Network",
+    address: "Address",
+    copy: "Copy address",
   },
   telegram: {
     title: "Telegram",

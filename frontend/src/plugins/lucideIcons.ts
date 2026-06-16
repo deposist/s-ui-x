@@ -34,6 +34,7 @@ import {
   Copy,
   CreditCard,
   Download,
+  ExternalLink,
   Eye,
   EyeOff,
   FileText,
@@ -41,6 +42,7 @@ import {
   FilterX,
   Gauge,
   Globe,
+  Heart,
   History,
   Inbox,
   Info,
@@ -110,6 +112,7 @@ export const iconMap: Record<string, Component> = {
   'file-text': FileText,
   'sliders-horizontal': SlidersHorizontal,
   settings: Settings,
+  heart: Heart,
   // Topbar / global controls
   menu: Menu,
   languages: Languages,
@@ -137,6 +140,7 @@ export const iconMap: Record<string, Component> = {
   // Row actions
   pencil: Pencil,
   copy: Copy,
+  'external-link': ExternalLink,
   'line-chart': LineChart,
   'trash-2': Trash2,
   'more-vertical': MoreVertical,

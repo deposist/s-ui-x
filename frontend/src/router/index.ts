@@ -96,6 +96,11 @@ const routes = [
         name: 'pages.settings',
         component: () => import('@/views/Settings.vue'),
       },
+      {
+        path: '/donations',
+        name: 'pages.donations',
+        component: () => import('@/views/Donations.vue'),
+      },
     ],
   },
 ]

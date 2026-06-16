@@ -63,6 +63,12 @@ export const nexusMenuGroups: NexusMenuGroup[] = [
       { title: 'pages.settings', icon: 'lucide:settings', path: '/settings' },
     ],
   },
+  {
+    labelKey: 'nav.groups.support',
+    items: [
+      { title: 'pages.donations', icon: 'lucide:heart', path: '/donations' },
+    ],
+  },
 ]
 
 // Flat projections preserved so existing consumers (and route-parity tests)

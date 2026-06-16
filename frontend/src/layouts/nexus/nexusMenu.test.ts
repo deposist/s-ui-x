@@ -36,15 +36,15 @@ describe('nexus grouped navigation integrity', () => {
     expect(paths).toEqual(expect.arrayContaining([
       '/', '/inbounds', '/clients', '/outbounds', '/endpoints', '/services',
       '/tls', '/rules', '/dns', '/telegram', '/paid-subscriptions',
-      '/admins', '/audit', '/basics', '/settings',
+      '/admins', '/audit', '/basics', '/settings', '/donations',
     ]))
-    expect(paths).toHaveLength(15)
+    expect(paths).toHaveLength(16)
   })
 
   it('labels every non-dashboard group with a nav.groups.* key', () => {
     const labelled = nexusMenuGroups.filter(group => group.labelKey)
 
-    expect(labelled).toHaveLength(4)
+    expect(labelled).toHaveLength(5)
     labelled.forEach(group => {
       expect(group.labelKey).toMatch(/^nav\.groups\./)
     })

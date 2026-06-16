@@ -65,6 +65,7 @@ const menu = [
   { title: 'pages.telegram', icon: 'mdi-send',  path: '/telegram' },
   { title: 'pages.audit', icon: 'mdi-shield-search',  path: '/audit' },
   { title: 'pages.settings', icon: 'mdi-cog',  path: '/settings' },
+  { title: 'pages.donations', icon: 'mdi-heart',  path: '/donations' },
 ]
 
 const Logout = async () => {

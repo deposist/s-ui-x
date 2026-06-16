@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.9-beta2] - 2026-06-16 - frontend CSS fixes + install/update download timeout
+
+Small follow-up to v1.5.9-beta1. No API, database, or configuration changes; the
+frontend suite is green.
+
+- **Fix (UI): unreadable hint tooltips in the dark theme.** The (i) SettingInfo
+  tooltips added in v1.5.9-beta1 were too muted to read in the Nexus dark theme
+  (it sets `surface-variant` but no `on-surface-variant`). All tooltips now use a
+  solid dark-background/light-text scheme that reads well in both themes.
+- **Fix (UI): truncated floating field labels.** `persistent-placeholder` plus an
+  append-inner (i) icon constrained the floating label, clipping short labels to
+  "Add…", "P…", "Do…". Floating labels now size to their content.
+- **Fix (install): installer/self-update could hang on a stalled mirror.**
+  `install.sh` (the tarball and its `.sha256`) and the `s-ui.sh` self-update ran
+  `wget` with no timeout, so one stuck `release-assets.githubusercontent.com` node
+  could block the install for ~15 minutes. Downloads now use
+  `--timeout=20 --tries=5 --retry-connrefused`.
+
 ## [1.5.9-beta1] - 2026-06-16 - security & reliability hardening + settings UX from a full codebase audit
 
 Remediates the findings of a full codebase audit: 28 fixes across the Go

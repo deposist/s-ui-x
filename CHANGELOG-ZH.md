@@ -4,6 +4,22 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.9-beta2] - 2026-06-16 - 前端 CSS 修复 + 安装/更新下载超时
+
+对 v1.5.9-beta1 的小幅跟进。无 API、数据库或配置变更；前端测试套件通过。
+
+- **修复（UI）：深色主题下提示气泡不可读。** v1.5.9-beta1 新增的 (i) SettingInfo
+  提示气泡在 Nexus 深色主题下过于暗淡而难以阅读（该主题设置了 `surface-variant`
+  但未设置 `on-surface-variant`）。现在所有气泡都采用实色深底/浅字方案，在浅色与
+  深色主题下均清晰可读。
+- **修复（UI）：浮动字段标签被截断。** `persistent-placeholder` 加上 append-inner
+  的 (i) 图标会限制浮动标签宽度，将较短标签截断为 “Add…”“P…”“Do…”。现在浮动标签
+  会根据内容自适应宽度。
+- **修复（安装）：安装/自更新可能在卡住的镜像上挂起。** `install.sh`（tarball 和
+  `.sha256`）以及 `s-ui.sh` 自更新调用 `wget` 时没有超时，因此一个卡住的
+  `release-assets.githubusercontent.com` 节点可能让安装阻塞约 15 分钟。现在下载使用
+  `--timeout=20 --tries=5 --retry-connrefused`。
+
 ## [1.5.9-beta1] - 2026-06-16 - 全量代码库审计后的安全与可靠性加固 + 设置 UX
 
 修复了一次全量代码库审计发现的问题：在 Go 后端、Vue 前端及构建/安装脚本中共
