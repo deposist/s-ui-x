@@ -4,14 +4,14 @@ A small follow‑up to v1.5.9‑beta1. No manual changes to the database, API, o
 
 ## 1. Frontend appearance fixes (CSS)
 
-Two visual regressions from the v1.5.9‑beta1 settings‑UX update have been fixed so the interface renders correctly:
+Two visual regressions from the v1.5.9‑beta1 settings‑UX update have been fixed so the interface renders as intended:
 
-* **Readable hint tooltips.** The new (i) field‑hint tooltips were almost unreadable in the dark theme — the text was too faint. Tooltips now use a solid dark background with light text and read well in both light and dark themes.
-* **Field labels no longer cut off.** Some input labels were truncated to fragments like “Add…”, “P…”, “Do…”. Floating field labels are now shown in full.
+* **Readable hint tooltips.** The new (i) field‑hint tooltips were almost unreadable in the dark theme — the auto‑derived text colour was too faint, as reported on the Settings and Telegram hints. Tooltips now use a solid dark background with light text and read clearly in both the light and dark themes.
+* **Field labels no longer cut off.** With a persistent placeholder and the (i) info icon, some input labels were truncated to fragments like “Add…”, “P…”, “Do…”. Floating field labels are now shown in full.
 
 ## 2. Faster, more reliable install and update
 
-* The installation and self‑update scripts could hang for up to ~15 minutes if a download mirror stalled. They now use a 20‑second timeout with automatic retries, so a stuck mirror is abandoned quickly and the download is retried against a working node.
+* **No more hangs on a stalled download mirror.** The install and self‑update scripts fetched their files without a timeout, so a single stuck mirror could block the whole install for up to ~15 minutes before failing. Downloads now use a 20‑second timeout with automatic retries, so a stuck mirror is abandoned quickly and the download is retried against a working node.
 
 ---
 
@@ -26,14 +26,14 @@ Two visual regressions from the v1.5.9‑beta1 settings‑UX update have been fi
 
 ## 1. Исправления внешнего вида фронтенда (CSS)
 
-Исправлены две визуальные регрессии из обновления UX настроек в v1.5.9‑beta1, чтобы интерфейс отображался корректно:
+Исправлены две визуальные регрессии из обновления UX настроек в v1.5.9‑beta1, чтобы интерфейс отображался как задумано:
 
-* **Читаемые подсказки‑тултипы.** Новые (i)‑подсказки к полям были почти нечитаемы в тёмной теме — текст был слишком блёклым. Теперь тултипы используют плотный тёмный фон со светлым текстом и хорошо читаются и в светлой, и в тёмной теме.
-* **Подписи полей больше не обрезаются.** Некоторые подписи полей обрезались до фрагментов вроде «Add…», «P…», «Do…». Теперь плавающие подписи полей отображаются полностью.
+* **Читаемые подсказки‑тултипы.** Новые (i)‑подсказки к полям были почти нечитаемы в тёмной теме — авто‑выведенный цвет текста был слишком блёклым (замечено на подсказках страниц «Настройки» и Telegram). Теперь тултипы используют плотный тёмный фон со светлым текстом и хорошо читаются и в светлой, и в тёмной теме.
+* **Подписи полей больше не обрезаются.** С постоянным placeholder и (i)‑иконкой некоторые подписи полей обрезались до фрагментов вроде «Add…», «P…», «Do…». Теперь плавающие подписи полей отображаются полностью.
 
 ## 2. Быстрее и надёжнее установка и обновление
 
-* Скрипты установки и самообновления могли зависать до ~15 минут, если зеркало загрузки застревало. Теперь они используют таймаут 20 секунд с автоматическими повторами, поэтому застрявшее зеркало быстро отбрасывается, а загрузка повторяется с рабочего узла.
+* **Больше никаких зависаний на застрявшем зеркале загрузки.** Скрипты установки и самообновления качали файлы без таймаута, поэтому один застрявший узел зеркала мог блокировать всю установку до ~15 минут перед ошибкой. Теперь загрузки используют таймаут 20 секунд с автоматическими повторами, так что застрявшее зеркало быстро отбрасывается, а загрузка повторяется с рабочего узла.
 
 ---
 
