@@ -1,22 +1,136 @@
-# Release Notes: v1.5.9-beta1
+# Release v1.5.9‑beta1: What’s New
 
-Release date: 2026-06-16
-**EN**
+## 1. Addressing critical security issues
 
-v1.5.9-beta1 is a security- and reliability-hardening release that remediates the findings of a full codebase audit — 28 fixes across the Go backend, the Vue frontend, and the build/install scripts, with the deterministic toolchain (build, vet, staticcheck, gosec, govulncheck) clean and the affected Go packages and the full frontend suite passing. The two most serious findings are integrity-class. First, the subscription/out-JSON TLS assembler (`addTls`) panicked on operator-supplied Reality/ECH blobs whose client and server halves were not in lockstep; because `ConfigService.Save` chose commit-versus-rollback solely from the returned error, a panic mid-save committed a half-applied transaction and left the running core out of sync with the database. `addTls` is now total — it initializes a nil client map and uses comma-ok on every type assertion — and `Save` now recovers any panic into a transaction rollback. Second, the `install.sh` bootstrap and the `s-ui.sh` self-update fetched their artifacts (and, for install.sh, the very `.sha256` meant to validate the tarball) over a TLS-verification-disabled channel, so an active man-in-the-middle could substitute both the artifact and its checksum and the verification would still pass — handing root code execution to an on-path attacker. Certificate validation is restored on every download, and the self-update now downloads to a temp file and swaps it in atomically.
+### Issue 1: Error in secure connection (TLS) setup
 
-The release closes a set of supply-chain gaps across the build and install paths. The prebuilt `libcronet` native library shipped in the Docker image and the Windows zip — `dlopen`ed in-process by the root core — is now pinned to an immutable cronet-go release tag and verified by a per-architecture SHA-256 before use, instead of being pulled from a mutable `releases/latest` URL with no checksum; the Docker base images are pinned by digest; every GitHub Actions step across all workflows is pinned to a full commit SHA; and the `s-ui.sh` SSL menu no longer pipes a remote installer straight into a root shell without TLS hardening, nor enables acme.sh's silent cron auto-upgrade. Two availability bugs are also fixed: a 1.2→1.3 database migration aborted with `record not found` on a panel that never persisted a raw `config` row (blocking upgrades and backup restores) and now treats the missing row as a no-op; and an unbindable restricted listen address (for example after restoring a backup on a new host) now falls back to loopback instead of silently widening the admin panel and subscription server to every interface, including public ones.
+Previously, the system had a bug: when configuring a secure connection, the program could suddenly “freeze” if the client‑side and server‑side settings didn’t match. This caused some settings to be saved while others weren’t, leading to a desynchronisation between the core application and the database.
 
-The remainder is correctness and performance hardening. The auto-logout endpoint is now a CSRF-protected POST instead of a forgeable GET; the admin username change now rejects empty and duplicate names; traffic-tariff refunds no longer overwrite the current billing window's usage when an older order is refunded; a periodic-reset misconfiguration that could wipe a client's counters every minute is clamped; and the external-subscription fetch path now reuses the central SSRF validator, closing the CGNAT and other reserved ranges it previously let through. A race between a deplete-cron hot reload and a full core restart, and an IP-certificate auto-renewal that could silently skip its panel restart, are both fixed. On the performance side, a composite stats index matches the dashboard query, WebSocket broadcasts are serialized once instead of once per connection, and the subscription server now gzip-compresses its payloads. The new stats index is created automatically on startup; no manual database migration and no configuration changes are required.
+**What’s been done:**
+* the program now handles mismatched settings correctly;
+* if an error occurs, all changes are rolled back — data remains consistent.
 
-This release also lands a frontend usability pass from the same audit. Every settings field across the panel — the web/subscription settings, the sing-box core Basics page, and the Telegram page — now shows its default or recommended value as a placeholder and an (i) tooltip describing the field, so an operator no longer has to guess sane values. Fields whose value set is strictly enumerated became proper pickers: the timezone is an autocomplete over the full IANA list, the Clash API default mode is a dropdown, and payment currencies are a combobox. A misleading routing label that read "Invalid IP Ranges" / "Invalid Source IPs" — the opposite of what the toggle does, which is match private IP ranges — was corrected in every locale; the login form now shows an inline error instead of only a transient toast; and several hard-coded English strings (the Telegram transport labels, the routing action cards) and dashboard KPI captions were moved into i18n. Frontend-only: no API, database, or configuration change.
+### Issue 2: Insecure file downloads
+
+Installation and update scripts downloaded files without verifying the connection’s authenticity. An attacker could intercept the traffic, replace the downloaded file, and even tamper with its checksum — the system would still accept the fake file as genuine. This could lead to malicious code execution with administrator privileges.
+
+**What’s been done:**
+* TLS certificate verification is now enforced for every file download;
+* files are downloaded to a temporary location and then replaced atomically — this eliminates the risk of file substitution during updates.
+
+## 2. Supply‑chain security enhancements
+
+To prevent component substitution during build and installation, the following measures have been implemented:
+
+* **Libcronet library** (used in Docker images and Windows archives) is no longer downloaded from the generic “latest releases” page. Instead, it’s fetched from a specific, immutable link pointing to a particular release. Before use, it’s verified via SHA‑256 checksum for each architecture.
+* **Docker images** now use fixed digests instead of mutable tags;
+* **GitHub Actions** (automated build and test workflows) are tied to specific code versions (via full commit SHA), not branches that can be updated;
+* **The s‑ui.sh script** no longer pipes a remote installer directly into a root shell without security checks. Silent background auto‑upgrade of acme.sh has also been disabled.
+
+## 3. Fixing availability issues
+
+* **Database migration error (from version 1.2 to 1.3).** Previously, migration could fail with a “record not found” error on a panel that never stored a raw config string. This blocked updates and backup restoration. Now, missing strings are handled gracefully — migration continues.
+* **Listening address issue.** After restoring from a backup on a new server, the program might try to use an address unavailable on that machine. Previously, it silently switched to all network interfaces — including public ones, which was dangerous. Now, in such cases, it falls back to the loopback interface.
+
+## 4. Correctness and performance improvements
+
+* **CSRF protection.** The auto‑logout endpoint now uses a secure POST method instead of the vulnerable GET method.
+* **Admin name change.** Empty and duplicate names are now rejected.
+* **Traffic plan refunds.** Refunding an older order no longer resets consumption for the current billing period.
+* **Periodic reset.** The risk of misconfiguration that could reset client counters every minute has been limited.
+* **Subscription loading.** The external subscription loading path now uses a central SSRF validator that blocks dangerous IP ranges (e.g., CGNAT).
+* **Race condition fixes.** Issues with concurrent hot reloads from deplete‑cron and full core restarts have been resolved.
+* **Auto‑renewal of IP certificate.** Fixed a bug where the panel restart could be silently skipped.
+
+### Performance improvements:
+* a composite `stats` index has been added — it matches dashboard queries;
+* WebSocket broadcasts are now serialized once (not per connection);
+* the subscription server now compresses responses using gzip;
+* the new `stats` index is created automatically at startup — no manual database migration is required.
+
+## 5. Frontend usability improvements (user interface)
+
+* **Settings tooltips.** Every settings field (web server, subscription server, sing‑box core page, Telegram page) now shows:
+  * a default or recommended value (placeholder);
+  * an info tooltip (i‑tooltip) with field description.
+* **Dropdown lists.** Fields with a limited set of values are now implemented as proper lists:
+  * time zone — autocomplete with the full IANA list;
+  * Clash API mode — dropdown list;
+  * payment currencies — combobox.
+* **Misleading labels fixed.** The routing label “Invalid IP Ranges” / “Invalid Source IPs” now correctly reflects its function (previously, it did the opposite of what the name implied).
+* **Login form.** Errors are now displayed inline (under the input field), not just in a popup toast.
+* **Localisation.** A number of hard‑coded English strings (Telegram transport labels, routing action cards, dashboard KPI labels) have been moved to the internationalisation system (i18n).
+
+---
+
+**Important:** no manual changes to the database, API, or configuration are required to use the new version.
+
 
 **RU**
 
-v1.5.9-beta1 — релиз усиления безопасности и надёжности, закрывающий находки полного аудита кодовой базы: 28 исправлений в Go-бэкенде, Vue-фронтенде и скриптах сборки/установки, при чистом детерминированном тулчейне (build, vet, staticcheck, gosec, govulncheck) и зелёных тестах затронутых Go-пакетов и всего фронтенда. Две самые серьёзные находки — класса целостности. Первая: сборщик TLS-блока для подписок/out-JSON (`addTls`) паниковал на заданных оператором Reality/ECH-блоках, у которых клиентская и серверная половины не были согласованы; а поскольку `ConfigService.Save` выбирал commit или rollback только по возвращённой ошибке, паника посреди сохранения коммитила полу-применённую транзакцию и оставляла работающее ядро рассинхронизированным с базой. Теперь `addTls` тотальна — инициализирует nil-мапу клиента и использует comma-ok на каждом приведении типа, — а `Save` перехватывает любую панику в откат транзакции. Вторая: bootstrap `install.sh` и самообновление `s-ui.sh` качали свои артефакты (а install.sh — и сам `.sha256`, призванный проверять tarball) по каналу с отключённой проверкой TLS, поэтому активный «человек посередине» мог подменить и артефакт, и его контрольную сумму, и проверка всё равно прошла бы, отдавая исполнение кода под root атакующему на пути. Проверка сертификата восстановлена на каждой загрузке, а самообновление теперь скачивает во временный файл и подменяет его атомарно.
+# Релиз v1.5.9‑beta1: что изменилось
 
-Релиз закрывает набор supply-chain брешей в путях сборки и установки. Предсобранная нативная библиотека `libcronet`, поставляемая в Docker-образе и Windows-архиве и загружаемая через `dlopen` в процесс root-ядра, теперь привязана к неизменяемому релизному тегу cronet-go и проверяется по SHA-256 для каждой архитектуры перед использованием — вместо загрузки с изменяемого URL `releases/latest` без контрольной суммы; базовые Docker-образы зафиксированы по digest; каждый шаг GitHub Actions во всех workflow'ах привязан к полному commit-SHA; а SSL-меню `s-ui.sh` больше не пайпит удалённый установщик прямо в root-shell без усиления TLS и не включает молчаливый cron-автоапгрейд acme.sh. Также исправлены две ошибки доступности: миграция базы 1.2→1.3 обрывалась ошибкой `record not found` на панели, которая никогда не сохраняла сырую строку `config` (блокируя обновления и восстановление из бэкапа), а теперь трактует отсутствие строки как no-op; а недоступный для bind ограниченный адрес прослушивания (например, после восстановления бэкапа на новой машине) теперь откатывается на loopback вместо молчаливого расширения админ-панели и сервера подписок на все интерфейсы, включая публичные.
+## 1. Устранение серьёзных проблем с безопасностью
 
-Остальное — усиление корректности и производительности. Эндпоинт авто-выхода теперь CSRF-защищённый POST вместо подделываемого GET; смена имени администратора теперь отклоняет пустые и дублирующиеся имена; возвраты трафиковых тарифов больше не затирают потребление текущего расчётного окна при возврате более старого заказа; ошибочная настройка периодического сброса, способная обнулять счётчики клиента каждую минуту, ограничена; а путь загрузки внешних подписок теперь переиспользует центральный SSRF-валидатор, закрывая диапазоны CGNAT и другие зарезервированные, которые раньше пропускались. Исправлены гонка между горячей перезагрузкой из deplete-cron и полным рестартом ядра, а также авто-перевыпуск IP-сертификата, способный молча пропустить рестарт панели. По производительности: композитный индекс stats соответствует запросу дашборда, WebSocket-рассылки сериализуются один раз вместо одного раза на соединение, а сервер подписок теперь сжимает ответы gzip. Новый индекс stats создаётся автоматически при старте; ручная миграция базы и изменения конфигурации не требуются.
+### Проблема 1: ошибка при работе с защищённым соединением (TLS)
 
-Релиз также включает проход по удобству фронтенда из того же аудита. Каждое поле настроек панели — настройки веб-/подписочного сервера, страница ядра sing-box (Basics) и страница Telegram — теперь показывает значение по умолчанию или рекомендуемое как placeholder и (i)-тултип с описанием поля, чтобы оператору не приходилось угадывать разумные значения. Поля со строго перечислимым набором значений стали полноценными списками: часовой пояс — autocomplete по полному списку IANA, режим Clash API по умолчанию — выпадающий список, валюты платежей — combobox. Вводящий в заблуждение лейбл маршрутизации «Invalid IP Ranges» / «Invalid Source IPs» — означавший противоположное тому, что делает переключатель (он матчит приватные диапазоны IP), — исправлен во всех локалях; форма входа теперь показывает inline-ошибку вместо только всплывающего тоста; а ряд захардкоженных английских строк (лейблы транспорта Telegram, карточки действий маршрутизации) и подписи KPI дашборда перенесены в i18n. Только фронтенд: правок API, базы данных или конфигурации не требуется.
+Раньше в системе была ошибка: при настройке защищённого соединения программа могла внезапно «зависнуть», если настройки на стороне клиента и сервера не совпадали. Из‑за этого часть настроек сохранялась, а часть — нет. В результате основная часть программы работала не так, как записано в базе данных — возникала рассинхронизация.
+
+**Что сделано:**
+* программа теперь корректно обрабатывает несовпадающие настройки;
+* если возникает ошибка, все изменения отменяются — данные остаются согласованными.
+
+### Проблема 2: небезопасная загрузка файлов
+
+Скрипты установки и обновления загружали файлы без проверки подлинности соединения. Злоумышленник мог перехватить трафик, подменить загружаемый файл и даже его контрольную сумму — система всё равно приняла бы поддельный файл за настоящий. Это могло привести к запуску вредоносного кода с правами администратора.
+
+**Что сделано:**
+* теперь при загрузке файлов всегда проверяется подлинность соединения (TLS);
+* файлы скачиваются во временный файл, а затем заменяются атомарно — это исключает подмену в процессе обновления.
+
+## 2. Защита цепочки поставок (supply‑chain security)
+
+Чтобы исключить подмену компонентов при сборке и установке, были приняты следующие меры:
+
+* **Библиотека libcronet** (используется в Docker‑образах и Windows‑архивах) теперь загружается не с общей страницы последних релизов, а по конкретной, неизменной ссылке на определённый релиз. Перед использованием её проверяют по контрольной сумме (SHA‑256) для каждой архитектуры.
+* **Docker‑образы** теперь используют фиксированные идентификаторы (digest), а не теги, которые могут меняться.
+* **GitHub Actions** (автоматизированные процессы сборки и тестирования) привязаны к конкретным версиям кода (по полному идентификатору коммита), а не к веткам, которые могут обновляться.
+* **Скрипт s‑ui.sh** больше не передаёт удалённый установщик напрямую в командную оболочку с правами администратора без проверки безопасности. Также отключён автоматический фоновый апгрейд acme.sh.
+
+## 3. Исправление ошибок доступности
+
+* **Ошибка при обновлении базы данных (с версии 1.2 до 1.3).** Раньше миграция могла прерваться с ошибкой «запись не найдена» на панели, которая никогда не сохраняла сырую строку конфигурации. Это блокировало обновления и восстановление из резервной копии. Теперь отсутствие строки обрабатывается корректно — миграция продолжается.
+* **Проблема с адресом прослушивания.** После восстановления из бэкапа на новом сервере программа могла пытаться использовать адрес, который недоступен на этой машине. Раньше она молча переключалась на все сетевые интерфейсы, включая публичные, что опасно. Теперь в таком случае она переключается на локальный интерфейс (loopback).
+
+## 4. Улучшения корректности и производительности
+
+* **Защита от CSRF‑атак.** Эндпоинт автоматического выхода теперь использует безопасный метод POST вместо уязвимого GET.
+* **Смена имени администратора.** Запрещены пустые и дублирующиеся имена.
+* **Возвраты трафиковых тарифов.** При возврате старого заказа больше не обнуляется потребление текущего расчётного периода.
+* **Периодический сброс.** Ограничена возможность ошибочной настройки, которая могла обнулять счётчики клиента каждую минуту.
+* **Загрузка подписок.** Путь загрузки внешних подписок теперь использует центральный валидатор, который блокирует опасные диапазоны IP‑адресов (например, CGNAT).
+* **Исправление гонок.** Устранены проблемы с одновременной перезагрузкой и перезапуском ядра.
+* **Автоперевыпуск IP‑сертификата.** Исправлена ошибка, из‑за которой мог пропускаться перезапуск панели.
+
+### Улучшения производительности:
+* добавлен композитный индекс `stats`, который соответствует запросам дашборда;
+* WebSocket‑рассылки теперь сериализуются один раз (а не для каждого соединения);
+* сервер подписок сжимает ответы с помощью gzip;
+* новый индекс `stats` создаётся автоматически при старте — ручная миграция базы не требуется.
+
+## 5. Улучшения удобства фронтенда (пользовательского интерфейса)
+
+* **Подсказки в настройках.** Каждое поле настроек панели (веб‑сервер, сервер подписок, страница ядра sing‑box, страница Telegram) теперь показывает:
+  * значение по умолчанию или рекомендуемое значение (placeholder);
+  * подсказку (i‑тултип) с описанием поля.
+* **Выпадающие списки.** Поля с ограниченным набором значений теперь реализованы как полноценные списки:
+  * часовой пояс — автозаполнение по полному списку IANA;
+  * режим Clash API — выпадающий список;
+  * валюты платежей — комбинированный список (combobox).
+* **Исправлены вводящие в заблуждение надписи.** Лейбл маршрутизации «Invalid IP Ranges» / «Invalid Source IPs» теперь правильно отражает свою функцию (раньше он делал противоположное тому, что подразумевалось в названии).
+* **Форма входа.** Ошибки теперь отображаются прямо под полем ввода (inline), а не только во всплывающем уведомлении.
+* **Локализация.** Ряд жёстко прописанных английских строк (лейблы Telegram, карточки действий маршрутизации, подписи KPI дашборда) перенесены в систему многоязычной поддержки (i18n).
+
+---
+
+**Важно:** для использования новой версии не требуется вносить ручные изменения в базу данных, API или конфигурацию.
