@@ -5,21 +5,15 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
-## [1.5.9-beta5] - 2026-06-17 - cleaner Nexus form spacing
+## [1.5.9-beta5] - 2026-06-17 - cleaner forms in the default interface
 
 A small follow-up to v1.5.9-beta4. No database, API, or configuration changes
-are required; the frontend builds and the full frontend test suite are green.
+are required.
 
-- **Fix (UI): cramped/overlapping form fields in the Nexus (default) UI.** Every
-  field in the Nexus drawers uses `hide-details`, which strips the buffer Vuetify
-  reserves below a field, so stacked rows collapsed together and an outlined
-  field's floating label crowded the field, heading, or tab strip above it
-  (most visible on the Add Client tabs and the Failover editor, but present in
-  most forms). Each field now gets a consistent top margin in `EntityDrawer` and
-  the tab-strip gap was widened; the Failover editor's probe fields were
-  re-arranged so the "Failback confirmations" label is no longer truncated.
-  Verified across the Outbound, Inbound, TLS, and Client drawers with Playwright
-  screenshots.
+- **Fix (UI): cramped, overlapping fields in the default interface.** The add and
+  edit forms were packed too tightly, so a field's label could touch or overlap
+  the field, heading, or tab above it — most noticeable when adding a client or a
+  failover group. Every form now has proper spacing and reads cleanly throughout.
 
 Full release notes: [`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md).
 
