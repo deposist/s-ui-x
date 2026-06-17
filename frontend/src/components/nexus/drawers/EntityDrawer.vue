@@ -176,7 +176,16 @@ const onModel = (value: boolean) => {
    the first field row; without a gap the first row's floating labels (Group,
    …) clip into the tab strip. Add breathing room below any tab strip. */
 .nexus-drawer__body :deep(.v-tabs) {
-  margin-block-end: var(--nexus-gap-3);
+  margin-block-end: var(--nexus-gap-4);
+}
+
+/* Every field in the nexus drawers uses hide-details, which strips the ~22px
+   details buffer Vuetify normally reserves below a field. Without it, stacked
+   rows collapse together and an outlined field's floating label (which sits on
+   the top border) crowds the field, heading, or tab strip directly above it.
+   Give every field a little top breathing room so labels always stay clear. */
+.nexus-drawer__body :deep(.v-input) {
+  margin-block-start: var(--nexus-gap-2);
 }
 
 .nexus-drawer__footer {

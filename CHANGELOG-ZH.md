@@ -4,6 +4,21 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.9-beta5] - 2026-06-17 - 优化 Nexus 表单间距
+
+对 v1.5.9-beta4 的小幅跟进。无需变更数据库、API 或配置；前端可正常构建，全部前端
+测试套件通过。
+
+- **修复（UI）：Nexus（默认）界面表单字段过于拥挤/相互重叠。** Nexus 抽屉中的每个
+  字段都使用 `hide-details`，这会去掉 Vuetify 在字段下方预留的缓冲，于是相邻行挤
+  在一起，描边字段的浮动标签会压到上方的字段、标题或标签栏（在 Add Client 标签页
+  和 Failover 编辑器上最明显，但大多数表单都存在）。现在在 `EntityDrawer` 中为每个
+  字段统一加了顶部外边距，并加宽了标签栏下方的间距；Failover 编辑器的探测字段也重新
+  排布，使 “Failback confirmations” 标签不再被截断。已通过 Playwright 截图在
+  Outbound、Inbound、TLS 与 Client 抽屉上验证。
+
+完整发布说明：[`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md)。
+
 ## [1.5.9-beta4] - 2026-06-17 - 修复 Nexus 界面中的故障转移组编辑器
 
 对 v1.5.9-beta3 的小幅跟进。无需变更数据库、API 或配置；受影响的前端可正常构建，

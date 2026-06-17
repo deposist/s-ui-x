@@ -1,0 +1,25 @@
+# Release v1.5.9-beta5: What's New
+
+A small follow-up to v1.5.9-beta4. No manual changes to the database, API, or configuration are required.
+
+## 1. Cleaner form layout in the default (Nexus) interface
+
+Add/edit panels across the default interface were too cramped: a field's label could sit right against the field, heading, or tab above it and overlap — most visible on the **Add Client** tabs and the **Failover group** editor, but present in most forms. Every field now has consistent vertical breathing room, so labels stay clear and the forms read cleanly. The Failover group editor's probe fields were also re-arranged so the *Failback confirmations* label is no longer cut off.
+
+---
+
+**Important:** no manual changes to the database, API, or configuration are required.
+
+---
+
+# Релиз v1.5.9-beta5: что нового
+
+Небольшое дополнение к v1.5.9-beta4. Ручные изменения в базе данных, API или конфигурации не требуются.
+
+## 1. Аккуратная вёрстка форм в основном интерфейсе (Nexus)
+
+Панели добавления/редактирования в основном интерфейсе были слишком плотными: подпись поля могла вплотную прилегать к полю, заголовку или вкладкам над ней и перекрываться — заметнее всего на вкладках **Add Client** и в редакторе **группы отказоустойчивости**, но это касалось большинства форм. Теперь у каждого поля единообразный вертикальный отступ, подписи не наезжают, формы читаются чисто. Поля проверки в редакторе группы отказоустойчивости также переразложены, чтобы подпись *Failback confirmations* больше не обрезалась.
+
+---
+
+**Важно:** для использования новой версии не требуется вносить ручные изменения в базе данных, API или конфигурации.

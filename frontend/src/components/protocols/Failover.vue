@@ -28,7 +28,7 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12" sm="6">
+      <v-col cols="12">
         <v-text-field
           v-model="probeTarget"
           :label="$t('types.failover.probeTarget')"
@@ -37,7 +37,7 @@
           hide-details
         ></v-text-field>
       </v-col>
-      <v-col cols="6" sm="3">
+      <v-col cols="12" sm="6">
         <v-text-field
           v-model.number="interval"
           :label="$t('types.failover.interval')"
@@ -47,7 +47,7 @@
           hide-details
         ></v-text-field>
       </v-col>
-      <v-col cols="6" sm="3">
+      <v-col cols="12" sm="6">
         <v-text-field
           v-model.number="hysteresis"
           :label="$t('types.failover.hysteresis')"
