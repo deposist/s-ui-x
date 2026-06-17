@@ -39,7 +39,12 @@
       </template>
 
       <template #col.server="{ item }">
-        <span v-if="item.server" class="nexus-mono">{{ item.server }}</span>
+        <template v-if="item.type === 'failover'">
+          <span v-if="failoverActive(item.tag)" class="nexus-mono outbounds-nexus__active">→ {{ failoverActive(item.tag) }}</span>
+          <nexus-badge v-if="failoverAllDown(item.tag)" :label="$t('types.failover.allDown')" variant="secondary" class="ml-1" />
+          <span v-if="!failoverActive(item.tag) && !failoverAllDown(item.tag)" class="outbounds-nexus__muted">—</span>
+        </template>
+        <span v-else-if="item.server" class="nexus-mono">{{ item.server }}</span>
         <span v-else class="outbounds-nexus__muted">—</span>
       </template>
 
@@ -102,8 +107,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import api from '@/plugins/api'
 
 import type { Column } from '@/components/nexus/data/dataTableColumns'
 import NexusDataTable from '@/components/nexus/data/NexusDataTable.vue'
@@ -154,6 +161,38 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { confirm } = useConfirm()
 const search = ref('')
+
+// Failover groups expose their currently-active member + all-down state via a
+// lightweight polled endpoint (the failover manager owns the live selection).
+const failoverByTag = ref<Record<string, { active: string; allDown: boolean }>>({})
+const failoverActive = (tag: string): string => failoverByTag.value[tag]?.active || ''
+const failoverAllDown = (tag: string): boolean => failoverByTag.value[tag]?.allDown === true
+
+let failoverTimer: ReturnType<typeof setInterval> | undefined
+
+const fetchFailover = async () => {
+  if (!props.outbounds.some(item => item.type === 'failover')) {
+    failoverByTag.value = {}
+    return
+  }
+  try {
+    const resp = await api.get('api/failover-status')
+    const list = (resp?.data?.obj ?? []) as Array<{ tag: string; active: string; allDown: boolean }>
+    const next: Record<string, { active: string; allDown: boolean }> = {}
+    for (const entry of list) next[entry.tag] = { active: entry.active, allDown: entry.allDown }
+    failoverByTag.value = next
+  } catch {
+    // Silent: keep the last known state, no error toast on a background poll.
+  }
+}
+
+onMounted(() => {
+  fetchFailover()
+  failoverTimer = setInterval(fetchFailover, 5000)
+})
+onUnmounted(() => {
+  if (failoverTimer) clearInterval(failoverTimer)
+})
 
 const subtitle = computed(() => {
   const total = props.outbounds.length
@@ -217,6 +256,11 @@ const handleAction = async (key: string, item: OutboundRow) => {
 
 .outbounds-nexus__muted {
   color: var(--nexus-text-muted);
+}
+
+.outbounds-nexus__active {
+  color: var(--nexus-text-primary);
+  font-weight: 600;
 }
 
 .outbounds-nexus__delay {

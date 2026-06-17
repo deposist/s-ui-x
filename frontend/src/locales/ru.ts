@@ -998,6 +998,19 @@ export default {
       tolerance: "Толерантность",
       urlTestOptions: "Параметры URLTest"
     },
+    failover: {
+      title: "Группа отказоустойчивости",
+      members: "Исходящие-участники (в порядке приоритета)",
+      primary: "Основной",
+      backup: "Резервный",
+      addMember: "Добавить участника",
+      probeTarget: "Адрес проверки (домен или IP)",
+      interval: "Интервал проверки",
+      hysteresis: "Подтверждений для возврата",
+      enabled: "Автопереключение включено",
+      activeNow: "Активен",
+      allDown: "Все участники недоступны"
+    },
     ts: {
       options: "Параметры Tailscale",
       stateDir: "Каталог состояния",

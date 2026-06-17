@@ -83,7 +83,7 @@ func scanOutboundRowsForTag(rows []model.Outbound, tag string, excludeId uint) [
 				Locator: fmt.Sprintf("outbound %q (detour)", row.Tag),
 			})
 		}
-		if row.Type != "selector" && row.Type != "urltest" {
+		if row.Type != "selector" && row.Type != "urltest" && row.Type != FailoverType {
 			continue
 		}
 		if members, _ := opts["outbounds"].([]any); containsTag(members, tag) {

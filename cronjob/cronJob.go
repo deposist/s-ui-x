@@ -52,6 +52,11 @@ func (c *CronJob) Start(loc *time.Location, trafficAge int) error {
 	if _, err := c.cron.AddJob("@every 2s", NewObservabilitySamplerJob()); err != nil {
 		return err
 	}
+	// Outbound auto-failover: probe members and switch the active member. The
+	// 5s base tick is a heartbeat; each group is gated on its own interval.
+	if _, err := c.cron.AddJob("@every 5s", NewFailoverJob()); err != nil {
+		return err
+	}
 	// Telegram scheduled report dynamic replanning
 	reportScheduler := NewTelegramReportScheduler(c.cron)
 	reportScheduler.Run()

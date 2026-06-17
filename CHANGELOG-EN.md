@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.9-beta3] - 2026-06-17 - in-panel web update + automatic outbound failover
+
+Two new capabilities since v1.5.9-beta2. No manual database, API, or
+configuration changes are required; the affected Go packages and the full
+frontend test suite are green.
+
+- **Feat (maintenance): update the panel from the web UI.** **Settings →
+  Maintenance** gains a *Panel updates* card — pick a channel (*Main* tracks
+  stable, *Beta* tracks the newest including pre-releases), check for updates, and
+  update in one click. The panel downloads the selected version, verifies it
+  against the release's published SHA-256 over verified HTTPS, replaces itself,
+  and restarts on the new version, with the previous binary backed up and an
+  automatic rollback if a freshly-installed version repeatedly fails to start.
+  Admin-only with password re-entry; every check and update attempt — including
+  rejected ones — is audited, and the password is never logged. Only newer
+  versions are offered (no downgrades).
+- **Feat (routing): automatic strict-priority outbound failover.** A new
+  `failover` outbound type holds an ordered member list (the first is the
+  primary, the rest are backups). An in-process manager probes each member over
+  HTTPS (operator-chosen target host/IP and interval, default 30s) and switches
+  the active member via the sing-box selector: immediate failover when the active
+  member stops responding, hysteresis-gated failback to the highest-priority
+  member once it recovers, and a direct/hold-senior fallback when every member is
+  down. Use the group as **Routing → Default Outbound** or in any rule — it
+  behaves like any outbound — and the Outbounds list shows the currently-active
+  member. No schema migration (the group assembles to a sing-box selector; a
+  non-authoritative `failover_state` observability table is created idempotently
+  at startup).
+
+Full release notes: [`docs/releases/v1.5.9-beta3.md`](docs/releases/v1.5.9-beta3.md).
+
 ## [1.5.9-beta2] - 2026-06-16 - frontend CSS fixes + install/update download timeout
 
 Small follow-up to v1.5.9-beta1. No API, database, or configuration changes; the

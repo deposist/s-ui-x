@@ -111,6 +111,10 @@ func (a *APP) Init() error {
 	if err := paidsub.EnsureSchema(database.GetDB()); err != nil {
 		logger.Warning("failed to ensure paidsub schema: ", err)
 	}
+	// Outbound failover observability table (non-authoritative; idempotent).
+	if err := service.EnsureFailoverSchema(database.GetDB()); err != nil {
+		logger.Warning("failed to ensure failover_state schema: ", err)
+	}
 
 	return nil
 }

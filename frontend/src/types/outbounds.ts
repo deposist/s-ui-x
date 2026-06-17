@@ -21,6 +21,7 @@ export const OutTypes = {
   SSH: 'ssh',
   Selector: 'selector',
   URLTest: 'urltest',
+  Failover: 'failover',
 }
 
 type OutType = typeof OutTypes[keyof typeof OutTypes]
@@ -238,6 +239,17 @@ export interface URLTest extends OutboundBasics {
   interrupt_exist_connections?: boolean
 }
 
+export interface Failover extends OutboundBasics {
+  outbounds: string[]
+  interrupt_exist_connections?: boolean
+  failover: {
+    enabled?: boolean
+    probe_target?: string
+    interval?: string
+    hysteresis?: number
+  }
+}
+
 // Create interfaces dynamically based on OutTypes keys
 type InterfaceMap = {
   [Key in keyof typeof OutTypes]: {
@@ -268,6 +280,7 @@ const defaultValues: Record<OutType, Outbound> = {
   ssh: { type: OutTypes.SSH },
   selector: { type: OutTypes.Selector },
   urltest: { type: OutTypes.URLTest },
+  failover: { type: OutTypes.Failover, outbounds: [], failover: { enabled: true, probe_target: '', interval: '30s', hysteresis: 2 } },
 }
 
 export function createOutbound<T extends Outbound>(type: string,json?: Partial<T>): Outbound {

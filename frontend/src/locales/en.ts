@@ -998,6 +998,19 @@ export default {
       tolerance: "Tolerance",
       urlTestOptions: "URLTest Options"
     },
+    failover: {
+      title: "Failover Group",
+      members: "Member outbounds (priority order)",
+      primary: "Primary",
+      backup: "Backup",
+      addMember: "Add member",
+      probeTarget: "Probe target (domain or IP)",
+      interval: "Probe interval",
+      hysteresis: "Failback confirmations",
+      enabled: "Auto-failover enabled",
+      activeNow: "Active",
+      allDown: "All members down"
+    },
     ts: {
       options: "Tailscale Options",
       stateDir: "State Directory",

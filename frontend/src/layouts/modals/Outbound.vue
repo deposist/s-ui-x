@@ -64,6 +64,7 @@
               <Ssh v-if="outbound.type == outTypes.SSH" :data="outbound" />
               <Selector v-if="outbound.type == outTypes.Selector" :data="outbound" :tags="tags" />
               <UrlTest v-if="outbound.type == outTypes.URLTest" :data="outbound" :tags="tags" />
+              <Failover v-if="outbound.type == outTypes.Failover" :data="outbound" :tags="tags" />
 
               <Transport v-if="Object.hasOwn(outbound,'transport')" :data="outbound" />
               <OutTLS v-if="Object.hasOwn(outbound,'tls')" :outbound="outbound" />
@@ -130,6 +131,7 @@ import Tor from '@/components/protocols/Tor.vue'
 import Ssh from '@/components/protocols/Ssh.vue'
 import Selector from '@/components/protocols/Selector.vue'
 import UrlTest from '@/components/protocols/UrlTest.vue'
+import Failover from '@/components/protocols/Failover.vue'
 import HttpUtils from '@/plugins/httputil'
 import AnyTls from '@/components/protocols/AnyTls.vue'
 import Data from '@/store/modules/data'
@@ -144,8 +146,8 @@ export default {
       link: "",
       loading: false,
       outTypes: OutTypes,
-      NoDial: [OutTypes.Selector, OutTypes.URLTest],
-      NoServer: [OutTypes.Direct, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor],
+      NoDial: [OutTypes.Selector, OutTypes.URLTest, OutTypes.Failover],
+      NoServer: [OutTypes.Direct, OutTypes.Selector, OutTypes.URLTest, OutTypes.Tor, OutTypes.Failover],
     }
   },
   methods: {
@@ -212,6 +214,6 @@ export default {
   components: { Dial, Multiplex, Transport, OutTLS,
     Direct, Socks, Http, Shadowsocks, Vmess, Trojan,
     Wireguard, Hysteria, Naive, ShadowTls, Vless, Tuic,
-    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest }
+    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest, Failover }
 }
 </script>
