@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.9-beta6] - 2026-06-18 - WireGuard endpoint editor opens reliably
+
+A small follow-up to v1.5.9-beta5. No database, API, or configuration changes
+are required.
+
+- **Fix (UI): the WireGuard endpoint editor could open empty.** Adding a WireGuard
+  endpoint sometimes showed only the type and tag, with none of the key, address,
+  port, or peer fields, because the editor rendered before its key data was ready.
+  The editor now has that data from the start and loads all of its fields
+  reliably every time.
+
+Full release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md).
+
 ## [1.5.9-beta5] - 2026-06-17 - cleaner forms in the default interface
 
 A small follow-up to v1.5.9-beta4. No database, API, or configuration changes

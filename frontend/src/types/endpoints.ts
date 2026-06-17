@@ -72,7 +72,7 @@ export type Endpoint = InterfaceMap[keyof InterfaceMap]
 
 // Create defaultValues object dynamically
 const defaultValues: Record<EpType, Endpoint> = {
-  wireguard: { type: EpTypes.Wireguard, address: ['10.0.0.2/32','fe80::2/128'], private_key: '', listen_port: 0 },
+  wireguard: { type: EpTypes.Wireguard, address: ['10.0.0.2/32','fe80::2/128'], private_key: '', listen_port: 0, peers: [], ext: { keys: [] } },
   warp: { type: EpTypes.Warp, address: [], private_key: '', listen_port: 0, mtu: 1420, peers: [{ address: '', port: 0, public_key: ''}] },
   tailscale: { type: EpTypes.Tailscale, domain_resolver: 'local' },
 }
