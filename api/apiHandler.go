@@ -99,6 +99,13 @@ func (a *APIHandler) registerGroupedRoutes(g *gin.RouterGroup) {
 	security := g.Group("/security")
 	security.GET("/audit", a.ApiService.GetSecurityAudit)
 
+	// Panel self-update (Maintenance). Inherits the group's session + CSRF auth
+	// (SR-001/SR-008); apply additionally requires step-up re-auth (SR-010).
+	update := g.Group("/update")
+	update.GET("/status", a.ApiService.UpdateStatus)
+	update.POST("/check", a.ApiService.UpdateCheck)
+	update.POST("/apply", a.ApiService.UpdateApply)
+
 	telegram := g.Group("/telegram")
 	telegram.POST("/test", a.ApiService.TestTelegram)
 	telegram.POST("/backup", a.ApiService.BackupToTelegram)

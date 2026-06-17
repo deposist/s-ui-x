@@ -42,6 +42,7 @@ type ApiService struct {
 	service.ObservabilityService
 	service.TelegramService
 	service.VersionService
+	service.PanelUpdateService
 	service.DoctorService
 }
 
@@ -92,6 +93,7 @@ func (a *ApiService) bindRuntime() {
 		ServerService: service.ServerService{Runtime: runtime},
 	}
 	a.TelegramService = service.TelegramService{Runtime: runtime}
+	a.PanelUpdateService = service.PanelUpdateService{Runtime: runtime}
 	a.DoctorService = service.DoctorService{Runtime: runtime}
 }
 

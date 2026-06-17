@@ -97,6 +97,7 @@ var defaultValueMap = map[string]string{
 	"ipShowRaw":                   "false",
 	"ipHistoryRetentionDays":      "30",
 	"observabilityMemoryCapMB":    "32",
+	"updateChannel":               "main",
 	"telegramEnabled":             "false",
 	"telegramBotToken":            "",
 	"telegramChatID":              "",
@@ -264,6 +265,22 @@ func insertSettingIfMissing(tx *gorm.DB, key string, value string) error {
 func (s *SettingService) ResetSettings() error {
 	db := database.GetDB()
 	return db.Where("1 = 1").Delete(model.Setting{}).Error
+}
+
+// GetUpdateChannel returns the persisted self-update channel, defaulting to
+// "main" when unset or invalid. Channel constants and validation live in the
+// config package (config.UpdateChannelMain / config.NormalizeUpdateChannel).
+func (s *SettingService) GetUpdateChannel() string {
+	value, err := s.getString("updateChannel")
+	if err != nil {
+		return config.UpdateChannelMain
+	}
+	return config.NormalizeUpdateChannel(value)
+}
+
+// SetUpdateChannel persists the self-update channel after validating it.
+func (s *SettingService) SetUpdateChannel(channel string) error {
+	return s.setString("updateChannel", config.NormalizeUpdateChannel(channel))
 }
 
 func (s *SettingService) getSetting(key string) (*model.Setting, error) {

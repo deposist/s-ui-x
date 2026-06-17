@@ -51,10 +51,18 @@ tests/baseline/*
 
 # Local Claude Code instructions/state (not for public repo)
 CLAUDE.md
+AGENTS.md
 .claude/
 
 # Kiro local specs (not for public repo)
 .kiro/
+
+# Spec Kit / local dev tooling and design docs (not for public repo)
+specs/
+.specify/
+.codegraph/
+.continue/
+.agents/
 
 # Local 3x-ui import fixtures with real production data
 test-db/
