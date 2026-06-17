@@ -4,6 +4,19 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.9-beta4] - 2026-06-17 - 修复 Nexus 界面中的故障转移组编辑器
+
+对 v1.5.9-beta3 的小幅跟进。无需变更数据库、API 或配置；受影响的前端可正常构建，
+全部前端测试套件通过（含针对 Nexus 编辑器的 Playwright 检查）。
+
+- **修复（UI）：Nexus（默认）界面中缺失故障转移组编辑器。** v1.5.9-beta3 新增的
+  `failover` 出站类型此前只接入了经典出站弹窗，未接入 Nexus 抽屉
+  （`OutboundDrawer.vue`），因此在默认界面选择 *Failover* 会打开空编辑器，并仍然
+  渲染服务器地址/端口字段。现在 Nexus 抽屉会挂载 Failover 编辑器并为该组隐藏
+  服务器/端口字段——已通过针对 Nexus 界面的 Playwright e2e 实测验证。
+
+完整发布说明：[`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md)。
+
 ## [1.5.9-beta3] - 2026-06-17 - 网页内面板更新 + 出站自动故障转移
 
 自 v1.5.9-beta2 起的两项新能力。无需手动变更数据库、API 或配置；受影响的 Go 包

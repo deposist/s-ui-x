@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.9-beta4] - 2026-06-17 - failover group editor fix in the Nexus UI
+
+A small follow-up to v1.5.9-beta3. No database, API, or configuration changes
+are required; the affected frontend builds and the full frontend test suite are
+green (incl. a Playwright check of the Nexus editor).
+
+- **Fix (UI): the Failover group editor was missing in the Nexus (default) UI.**
+  The `failover` outbound type added in v1.5.9-beta3 was wired into the classic
+  outbound modal but not into the Nexus drawer (`OutboundDrawer.vue`), so
+  selecting *Failover* in the default UI opened an empty editor and still rendered
+  the server/port fields. The Nexus drawer now mounts the Failover editor and
+  hides server/port for the group — verified live with a Playwright e2e against
+  the Nexus UI.
+
+Full release notes: [`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md).
+
 ## [1.5.9-beta3] - 2026-06-17 - in-panel web update + automatic outbound failover
 
 Two new capabilities since v1.5.9-beta2. No manual database, API, or

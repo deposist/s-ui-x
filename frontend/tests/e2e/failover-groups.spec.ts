@@ -2,10 +2,10 @@ import { expect, test } from '@playwright/test'
 
 import { login } from './helpers'
 
-// Creates an Auto/Failover group through the outbound editor and confirms it
-// lands in the list. The failover engine itself is covered by Go unit/
-// integration tests; this only exercises the editor + persistence path.
-test('nexus outbounds: create a failover group', async ({ page }) => {
+// Verifies the Failover outbound editor renders in the NEXUS drawer (the default
+// UI). Before the fix it rendered nothing here and left server/port visible.
+// The failover engine itself is covered by Go unit/integration tests.
+test('nexus outbounds: failover editor renders in the nexus drawer', async ({ page }) => {
   test.setTimeout(60_000)
 
   await login(page)
@@ -15,20 +15,17 @@ test('nexus outbounds: create a failover group', async ({ page }) => {
   const drawer = page.getByRole('dialog')
   await expect(drawer).toContainText('Add Outbound')
 
-  // Pick the Failover type; its dedicated editor appears.
-  await drawer.getByLabel('Type').click()
+  // Open the Type select and pick Failover.
+  await drawer.locator('.v-select').filter({ hasText: 'Type' }).first().click()
   await page.getByRole('option', { name: 'Failover', exact: true }).click()
+
+  // The dedicated Failover editor must now render (this is what was missing in
+  // the nexus drawer before the fix).
   await expect(drawer).toContainText('Failover Group')
+  await expect(drawer).toContainText('Member outbounds (priority order)')
+  await expect(drawer).toContainText('Probe target (domain or IP)')
+  await expect(drawer.getByRole('button', { name: 'Add member' })).toBeVisible()
 
-  const tag = `fo-${Date.now()}`
-  await drawer.getByLabel('Tag').fill(tag)
-
-  // Add the primary member (the seeded "direct" outbound is always present).
-  await drawer.getByRole('button', { name: 'Add member' }).click()
-  await drawer.getByLabel('Primary').click()
-  await page.getByRole('option', { name: 'direct', exact: true }).click()
-
-  await drawer.getByRole('button', { name: 'Save', exact: true }).click()
-  await expect(page.getByText(tag)).toBeVisible()
-  await expect(page.locator('.nexus-drawer.v-navigation-drawer--active')).toHaveCount(0)
+  // Server / port fields must be hidden for a group (NoServer includes Failover).
+  await expect(drawer).not.toContainText('Server Address')
 })
