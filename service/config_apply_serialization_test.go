@@ -27,7 +27,7 @@ func startTestCore(t *testing.T) *core.Core {
 }
 
 // A post-save apply must wait for an in-flight core operation instead of being
-// silently skipped — otherwise the core keeps serving stale configuration.
+// silently skipped - otherwise the core keeps serving stale configuration.
 func TestConfigSaveApplyNotSkippedDuringConcurrentRestart(t *testing.T) {
 	initSettingTestDB(t)
 	coreInstance := startTestCore(t)
@@ -97,7 +97,7 @@ func TestConfigSaveApplyNotSkippedDuringConcurrentRestart(t *testing.T) {
 
 	select {
 	case <-saveDone:
-		t.Fatal("Save returned while a core operation was in flight — post-commit apply did not wait")
+		t.Fatal("Save returned while a core operation was in flight - post-commit apply did not wait")
 	case <-time.After(100 * time.Millisecond):
 	}
 

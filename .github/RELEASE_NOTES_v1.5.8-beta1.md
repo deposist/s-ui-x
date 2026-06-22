@@ -6,7 +6,7 @@ This beta extends no-restart apply from clients and TLS to **every object the
 panel manages**: saving inbounds, outbounds, endpoints, and services now
 hot-replaces the affected object inside the running sing-box core instead of
 restarting it. Active connections on unrelated objects survive every save. It
-is a backend-only release — no manual migration and no configuration changes.
+is a backend-only release - no manual migration and no configuration changes.
 
 One intentional behavior change: deleting or renaming an outbound, endpoint, or
 managed inbound that is still referenced elsewhere is now rejected with an
@@ -19,7 +19,7 @@ down.
 ### Hot reload for inbounds, outbounds, endpoints, and services
 
 - **Saving an inbound, outbound, endpoint, or service no longer restarts the
-  core.** The changed object is removed and re-added inside the running core —
+  core.** The changed object is removed and re-added inside the running core -
   the same mechanism client and TLS edits have used since v1.5.7. Renames
   remove the old tag first; deletes close the object's tracked connections.
   A failed hot apply still falls back to a full core restart, so the core
@@ -32,7 +32,7 @@ down.
   `dns`/`ntp` detours, a rule-set `download_detour`, or the Clash API UI
   download detour, the panel applies the change via a full restart instead.
   References from route rules and `route.final` are resolved per connection,
-  so those edits stay hot — including the common case of editing the proxy
+  so those edits stay hot - including the common case of editing the proxy
   outbound your routing points at.
 - **ssm-api cascade.** Editing a managed-shadowsocks inbound also recreates
   the `ssm-api` service bound to it, so the service keeps tracking the fresh
@@ -41,10 +41,10 @@ down.
 ### Referenced-tag delete and rename guard
 
 - Deleting or renaming an outbound, endpoint, or managed inbound whose tag is
-  still referenced anywhere — including lazily-resolved route rules and
-  `route.final` — is now blocked. The error enumerates every referencing site,
+  still referenced anywhere - including lazily-resolved route rules and
+  `route.final` - is now blocked. The error enumerates every referencing site,
   for example: `outbound "proxy-a" is still referenced by: route rule #3
-  (outbound), selector "auto" (outbounds list) — remove the reference or point
+  (outbound), selector "auto" (outbounds list) - remove the reference or point
   it to another outbound (e.g. direct) first`.
 
 ### Fixes and hardening
@@ -84,10 +84,10 @@ error toast, and hot saves return the same partial-reload payload as before.
 Дата релиза: 2026-06-11
 
 Эта бета расширяет применение без рестарта с клиентов и TLS на **все объекты,
-которыми управляет панель**: сохранение inbound'ов, outbound'ов, endpoint'ов и
+которыми управляет панель**: сохранение Inbounds, Outbounds, endpoint'ов и
 сервисов теперь горячо заменяет изменённый объект в работающем ядре sing-box
 вместо его перезапуска. Активные соединения через незатронутые объекты
-переживают каждое сохранение. Релиз затрагивает только backend — ручных
+переживают каждое сохранение. Релиз затрагивает только backend - ручных
 миграций и изменений конфигурации нет.
 
 Одно намеренное изменение поведения: удаление или переименование outbound'а,
@@ -97,24 +97,24 @@ endpoint'а или managed inbound'а, на который ещё есть сс�
 
 ## Что изменилось
 
-### Горячая перезагрузка inbound'ов, outbound'ов, endpoint'ов и сервисов
+### Горячая перезагрузка Inbounds, Outbounds, endpoint'ов и сервисов
 
 - **Сохранение inbound'а, outbound'а, endpoint'а или сервиса больше не
   перезапускает ядро.** Изменённый объект удаляется и добавляется заново в
-  работающем ядре — тем же механизмом, которым с v1.5.7 применяются правки
+  работающем ядре - тем же механизмом, которым с v1.5.7 применяются правки
   клиентов и TLS. При переименовании сначала удаляется старый тег; при
   удалении закрываются отслеживаемые соединения объекта. Неудачное горячее
-  применение по-прежнему откатывается на полный рестарт — ядро никогда не
+  применение по-прежнему откатывается на полный рестарт - ядро никогда не
   обслуживает устаревшую конфигурацию.
 - **Консервативная эскалация для захваченных ссылок.** Часть ссылок sing-box
   захватывает при создании адаптера; горячая замена цели такой ссылки оставила
   бы у зависимого объекта закрытый адаптер. Если на тег сохраняемого
   outbound'а/endpoint'а ссылаются `detour` другого outbound'а, список
   участников или `default` у `selector`/`urltest`, detour сервиса, detour в
-  `dns`/`ntp`, `download_detour` rule-set'а или detour загрузки Clash UI —
+  `dns`/`ntp`, `download_detour` rule-set'а или detour загрузки Clash UI -
   панель применяет изменение через полный рестарт. Ссылки из route-правил и
   `route.final` резолвятся на каждое соединение, поэтому такие правки остаются
-  горячими — включая типовой случай правки прокси-outbound'а, на который
+  горячими - включая типовой случай правки прокси-outbound'а, на который
   указывает маршрутизация.
 - **Каскад ssm-api.** Правка managed-shadowsocks inbound'а пересоздаёт и
   привязанный к нему сервис `ssm-api`, чтобы тот продолжал отслеживать свежий
@@ -123,10 +123,10 @@ endpoint'а или managed inbound'а, на который ещё есть сс�
 ### Защита от удаления и переименования тега со ссылками
 
 - Удаление или переименование outbound'а, endpoint'а или managed inbound'а,
-  на чей тег ещё есть ссылки — включая лениво резолвящиеся route-правила и
-  `route.final` — теперь блокируется. Ошибка перечисляет все ссылающиеся
+  на чей тег ещё есть ссылки - включая лениво резолвящиеся route-правила и
+  `route.final` - теперь блокируется. Ошибка перечисляет все ссылающиеся
   места, например: `outbound "proxy-a" is still referenced by: route rule #3
-  (outbound), selector "auto" (outbounds list) — remove the reference or point
+  (outbound), selector "auto" (outbounds list) - remove the reference or point
   it to another outbound (e.g. direct) first`.
 
 ### Исправления и усиление надёжности

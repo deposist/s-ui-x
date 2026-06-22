@@ -76,7 +76,7 @@ func (s *IpCertificateService) IssueNow(ctx context.Context, ip, email string, p
 
 // IssueForCLI obtains a certificate from a one-shot CLI process and points the
 // panel HTTPS cert settings at the new files. Unlike IssueNow it never restarts
-// the panel — a CLI invocation has no live runtime, and the management script
+// the panel - a CLI invocation has no live runtime, and the management script
 // (s-ui.sh) stops the panel before issuance and starts it afterwards, which is
 // what reloads the web certificate. The apply target is always the panel.
 func (s *IpCertificateService) IssueForCLI(ctx context.Context, ip, email string, port int) (IpCertStatus, error) {

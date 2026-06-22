@@ -3,8 +3,7 @@
 Prerelease for sing-box 1.13.12 settings coverage across Classic and Nexus UI
 in `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Extends the sing-box 1.13.12 settings UI across Classic and Nexus by sharing
   the same advanced editor surfaces for basics, rules, DNS, TLS, inbounds,
   outbounds, endpoints and services.

@@ -25,7 +25,7 @@ const cryptoBotPollGraceSeconds int64 = 24 * 60 * 60
 //
 // Ordering matters: the poll runs BEFORE any expiry pass so a payment confirmed
 // after the local order TTL is applied before it could be moved out of the
-// pending set — otherwise a late-but-valid payment would be silently lost
+// pending set - otherwise a late-but-valid payment would be silently lost
 // (money taken, no grant, no recovery).
 func PollOnce(ctx context.Context) {
 	setting := service.SettingService{}

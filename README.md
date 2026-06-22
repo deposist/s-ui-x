@@ -44,11 +44,11 @@ development, security hardening, testing, and release work.
 
 ## English
 
-Advanced Web panel built on `SagerNet/Sing-Box`.
+Web panel built on `SagerNet/Sing-Box`.
 
 **Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.8`).
 
-**This fork keeps the original project structure and updates the user-facing documentation and installation links for this repository. You can use the scripts from this repository directly, or fork and build the project yourself.**
+**This fork keeps the original project structure and maintains the documentation and install links for this repository. You can use these scripts directly, or fork the repository and build it yourself.**
 
 > **Disclaimer:** this project is intended only for personal learning and knowledge sharing. Do not use it for illegal purposes.
 
@@ -59,21 +59,21 @@ The full per-release notes live in the language-specific changelog files:
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Current release notes: [`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md)
+- Latest release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
 changelog in your preferred language.
 
-## Key differences vs `alireza0/s-ui`
+## How this differs from `alireza0/s-ui`
 
 <details>
   <summary>Show details</summary>
 
-This fork is binary-compatible with `alireza0/s-ui` — drop the new
-binary on top of an existing 1.x install, the panel migrates the DB
-automatically on first start. The intent is to harden security and
-reliability without changing the protocol surface.
+This fork is binary-compatible with `alireza0/s-ui`. Drop the new
+binary on top of an existing 1.x install; the panel migrates the DB
+on first start. The fork keeps protocol behavior stable while tightening
+security and reliability.
 
 - **Auth and session security.** bcrypt with lazy migration, randomly generated first-run password (logged once), login rate limiter, `HttpOnly` + `SameSite=Lax` + HTTPS-aware `Secure` cookies. Sensitive settings (Telegram bot token, proxy credentials, install salt) are encrypted at rest via secretbox; API tokens are stored as salted SHA-256 hashes. CSRF protection is enforced on browser `/api/*` mutating requests.
 - **API token scopes.** `admin`, `read`, `write`, and `observability` scopes are documented in [`docs/scope-matrix.md`](docs/scope-matrix.md), including audit, database, Telegram, subscription-secret rotation, observability, and realtime security-event behavior.
@@ -102,7 +102,7 @@ reliability without changing the protocol surface.
 | Multiple protocols | :heavy_check_mark: |
 | Multiple languages | :heavy_check_mark: |
 | Multiple clients/inbounds | :heavy_check_mark: |
-| Advanced traffic routing interface | :heavy_check_mark: |
+| Traffic routing interface | :heavy_check_mark: |
 | Client, traffic, and system status | :heavy_check_mark: |
 | Subscription links (link/json/clash + info) | :heavy_check_mark: |
 | Dark/light theme | :heavy_check_mark: |
@@ -163,8 +163,8 @@ sudo bash install.sh v1.5.8
 ## Install v1.5.7-hotfix1 (previous stable)
 
 Hotfix on top of the stable v1.5.7 (recommended over plain v1.5.7): deleting a
-client whose row was already gone no longer fails with "record not found" —
-client deletes are idempotent now. The `s-ui` menu gains a `SUI_COOKIE_KEY`
+client whose row was already gone no longer fails with "record not found".
+Client deletes are idempotent now. The `s-ui` menu gains a `SUI_COOKIE_KEY`
 generator (with no-logout rotation), and the installer creates the key
 automatically when absent. Everything else is the stable 1.5.7 line:
 the experimental Paid Subscriptions Telegram bot (off by default), the
@@ -189,8 +189,8 @@ sudo bash install.sh v1.5.7-hotfix1
 ## Install v1.5.6 Stable
 
 This stable release ships the 3x-ui (x-ui) → s-ui-x migration: import a 3x-ui
-SQLite database — inbounds, clients, outbounds, routing, DNS and inline TLS —
-into s-ui-x. It also corrects the import of `blackhole` and DNS-only configs and
+SQLite database into s-ui-x, including Inbounds, clients, Outbounds, routing,
+DNS and inline TLS. It also corrects imports of `blackhole` and DNS-only configs and
 keeps the panel-recovery terminal menu (clear domain/address, force-reissue SSL).
 See the release notes for details.
 
@@ -224,7 +224,7 @@ The installer is fully compatible with existing installations: settings,
 inbounds, outbounds, clients, TLS, services and tokens are kept; the DB
 schema is migrated automatically on first start; plaintext admin
 passwords are upgraded to bcrypt on the next successful login. Full
-upgrade procedure and rollback notes — in the per-language changelog
+upgrade procedure and rollback notes are in the per-language changelog
 ([EN](CHANGELOG-EN.md) · [RU](CHANGELOG-RU.md) · [中文](CHANGELOG-ZH.md)).
 
 ## Install an Older Version
@@ -396,8 +396,8 @@ Run the backend from the repository root:
   - V2Ray-based protocols: VLESS, VMess, Trojan, Shadowsocks
   - Other protocols: ShadowTLS, Hysteria, Hysteria2, Naive, TUIC
 - XTLS protocol support.
-- Advanced traffic routing interface with PROXY Protocol, External, transparent proxy, SSL certificates, and port configuration support.
-- Advanced inbound and outbound configuration interface.
+- Traffic routing interface with PROXY Protocol, External, transparent proxy, SSL certificates, and port configuration support.
+- Inbound and outbound configuration interface.
 - Client traffic limit and expiration support.
 - Online clients, inbound/outbound traffic statistics, and system status monitoring.
 - Subscription service supports external links and subscriptions.
@@ -452,11 +452,11 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 ## Русский
 
-Продвинутая Web-панель, построенная на базе `SagerNet/Sing-Box`.
+Web-панель на базе `SagerNet/Sing-Box`.
 
 **Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.8`).
 
-**Этот fork сохраняет структуру оригинального проекта и обновляет пользовательскую документацию и ссылки установки для этого репозитория. Вы можете напрямую использовать скрипты из этого репозитория или сделать fork и собрать проект самостоятельно.**
+**Этот fork сохраняет структуру оригинального проекта и поддерживает документацию и ссылки установки для этого репозитория. Можно использовать эти скрипты напрямую или сделать fork и собрать проект самостоятельно.**
 
 > **Отказ от ответственности:** этот проект предназначен только для личного обучения и обмена опытом. Не используйте его в незаконных целях.
 
@@ -467,39 +467,39 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Release notes текущей версии: [`docs/releases/v1.5.8.md`](docs/releases/v1.5.8.md)
+- Последние release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md)
 
 README оставляет только установку и общий обзор проекта. Полная история
 релизов, breaking-заметки, гайд по обновлению и инструкции по откату находятся
 в changelog на выбранном языке.
 
-## Ключевые отличия от `alireza0/s-ui`
+## Чем отличается от `alireza0/s-ui`
 
 <details>
   <summary>Показать подробности</summary>
 
-Этот форк бинарно совместим с `alireza0/s-ui` — новый бинарник можно
-ставить поверх работающей установки 1.x, схема БД автоматически
-обновится при первом старте. Цель форка — усилить безопасность и
-надёжность, не меняя протокол.
+Этот форк бинарно совместим с `alireza0/s-ui`. Новый бинарник можно
+ставить поверх работающей установки 1.x; схема БД обновится при первом
+старте. Форк сохраняет поведение протоколов и усиливает безопасность и
+надёжность.
 
-- **Авторизация и сессия.** bcrypt с ленивой миграцией, случайный пароль администратора при первой установке (выводится в журнал один раз), лимит на неуспешные логины, cookie сессии — `HttpOnly` + `SameSite=Lax` + `Secure` при HTTPS. Чувствительные настройки (Telegram bot token, креденшелы прокси, install salt) шифруются at-rest через secretbox; API-токены хранятся как salted SHA-256. CSRF-защита на browser `/api/*`-mutating-запросах.
+- **Авторизация и сессия.** bcrypt с ленивой миграцией, случайный пароль администратора при первой установке (выводится в журнал один раз), лимит на неуспешные логины, cookie сессии: `HttpOnly` + `SameSite=Lax` + `Secure` при HTTPS. Чувствительные настройки (Telegram bot token, креденшелы прокси, install salt) шифруются at-rest через secretbox; API-токены хранятся как salted SHA-256. CSRF-защита на browser `/api/*`-mutating-запросах.
 - **Scopes API-токенов.** `admin`, `read`, `write` и `observability` описаны в [`docs/scope-matrix.md`](docs/scope-matrix.md), включая audit, database, Telegram, rotation subscription-secret, observability и realtime security-event.
 - **`X-Forwarded-For`.** Заголовок игнорируется без `SUI_TRUSTED_PROXIES`; цепочка обходится справа налево, поддельный XFF не может обойти IP-логику.
-- **Загрузчик внешних подписок.** Allow-list URL, блок приватных/loopback по умолчанию (opt-in `SUI_ALLOW_PRIVATE_SUB_URLS=true`), лимит ответа 4 МиБ, защита от DNS rebinding на dial. `Authorization: Bearer <token>` — основной способ передачи API-токена в `/apiv2/*`; legacy `Token`-header работает с `Deprecation` и `Sunset` до `Sat, 15 Aug 2026 00:00:00 GMT`.
+- **Загрузчик внешних подписок.** Allow-list URL, блок приватных/loopback по умолчанию (opt-in `SUI_ALLOW_PRIVATE_SUB_URLS=true`), лимит ответа 4 МиБ, защита от DNS rebinding на dial. `Authorization: Bearer <token>` основной способ передачи API-токена в `/apiv2/*`; legacy `Token`-header работает с `Deprecation` и `Sunset` до `Sat, 15 Aug 2026 00:00:00 GMT`.
 - **Realtime WebSocket.** `/api/realtime/ws-token` + `/api/realtime/ws` с Origin allow-list, per-IP rate-limit handshake, одноразовыми токенами, ping/pong heartbeat, idle close и close-all при ротации сессии. На фронте есть polling-фолбэк для degraded-состояний.
 - **Per-client subscription secrets.** Поддерживаются `/sub/<secret>`, `/sub/json/<secret>`, `/sub/clash/<secret>`, `/json/<secret>`, `/clash/<secret>`; legacy `/sub/<name>` работает пока `subSecretRequired=false`. Subscription-эндпоинты санитизируют response-заголовки и применяют конфигурируемый per-IP rate-limit.
 - **Telegram-уведомления (off by default).** Асинхронная bounded-очередь с retry/backoff и audit-событиями overflow/failure. Egress может идти через валидированные HTTP/HTTPS/SOCKS5-прокси. Payload, audit-детали, changes и captions проходят redaction.
 - **Audit и observability.** Таблица `audit_events` с retention GC, scoped эндпоинт `GET /api/security/audit` с rate-limit и cursor pagination. Bounded observability buckets (`2s`, `30s`, `1m`, `5m`), сэмплятся cron'ом. Bounded logs API и fail-soft 1h-cached `GET /api/version`.
 - **IP monitor (monitor-only по умолчанию).** Соль+SHA-256 hashing, opt-in raw-display, retention GC, per-client `limitIp` и `ipLimitMode`. Enforce отбрасывает только новые сверхлимитные подключения и не разрывает активные.
-- **Безопасность SQL.** Параметризованные запросы в `service/config.go` и `service/inbounds.go`; в выборке пользователей по inbound — статический whitelist допустимых типов.
+- **Безопасность SQL.** Параметризованные запросы в `service/config.go` и `service/inbounds.go`; в выборке пользователей по Inbound используется статический whitelist допустимых типов.
 - **Импорт бэкапа / обновление.** `ImportDB` имеет cap 64 МиБ, проверку SQLite magic, временную staging-копию, read-only `PRAGMA integrity_check` и audit-события. WAL/SHM сайдкары очищаются, schema-миграции и `AdaptToCurrentVersion` запускаются автоматически (перешивка plaintext-паролей в bcrypt, обновление индексов, поднятие `settings.version`); при ошибке БД восстанавливается из staging.
 - **Листен-адрес, устойчивый к переезду.** Если в `webListen` / `subListen` сохранён IP, которого нет на текущем хосте, панель пишет warning и слушает на всех интерфейсах вместо краша `EADDRNOTAVAIL`.
 - **Race-free runtime.** core lifecycle, online-stats, last-update, v2 token store и realtime hub проходят `go test -race ./...` (требует CGO).
 - **HTTP server hardening.** Таймауты `Read/Write/Header/Idle` и `tls.MinVersion = 1.2` для панели и для эндпоинта подписки. Middleware security-headers (CSP, HSTS при TLS, no-store на subscription-ответах).
 - **WARP-регистрация.** Поддержка актуального API Cloudflare (`v0a4005`) с заголовками первого клиента, фоллбэк на `v0a2158`, ретраи переходящих TLS-ошибок.
 - **Чистота фронтенда.** `v-html` удалён из логов, ошибок импорта правил, IP-листов и gauge-плитки. Axios через экспортируемый instance, `AbortController` вместо устаревшего `CancelToken`, дедупликация только для идемпотентных запросов, code splitting Vite. Realtime WS-store с reconnect/degraded состояниями. Secret-aware-поля настроек с placeholder'ом `••• stored •••`. IP-history modal с маской raw-IP по умолчанию. Views Telegram-настроек и Audit.
-- **Локализация и значения по умолчанию.** Многоязычные `install.sh` и меню `s-ui` (английский / русский / китайский), язык переключается на лету. Часовой пояс по умолчанию — `Europe/Moscow`. Локаль фронтенда по умолчанию — английский (существующие браузеры сохраняют выбор из `localStorage`).
+- **Локализация и значения по умолчанию.** Многоязычные `install.sh` и меню `s-ui` (английский / русский / китайский), язык переключается на лету. Часовой пояс по умолчанию: `Europe/Moscow`. Локаль фронтенда по умолчанию: английский (существующие браузеры сохраняют выбор из `localStorage`).
 
 </details>
 
@@ -509,8 +509,8 @@ README оставляет только установку и общий обзо
 | -------------------------------------- | :----------------: |
 | Несколько протоколов | :heavy_check_mark: |
 | Несколько языков | :heavy_check_mark: |
-| Несколько клиентов/входящих подключений | :heavy_check_mark: |
-| Продвинутый интерфейс маршрутизации трафика | :heavy_check_mark: |
+| Несколько клиентов/Inbounds | :heavy_check_mark: |
+| Интерфейс маршрутизации трафика | :heavy_check_mark: |
 | Клиенты, трафик и состояние системы | :heavy_check_mark: |
 | Ссылки подписки (link/json/clash + info) | :heavy_check_mark: |
 | Темная/светлая тема | :heavy_check_mark: |
@@ -572,8 +572,8 @@ sudo bash install.sh v1.5.8
 ## Установка v1.5.7-hotfix1 (предыдущая стабильная версия)
 
 Хотфикс поверх стабильной v1.5.7 (рекомендуется вместо чистой v1.5.7): удаление
-клиента, строки которого уже нет, больше не падает с «record not found» —
-удаление клиентов теперь идемпотентно. В меню `s-ui` добавлен генератор
+клиента, строки которого уже нет, больше не падает с «record not found».
+Удаление клиентов теперь идемпотентно. В меню `s-ui` добавлен генератор
 `SUI_COOKIE_KEY` (с ротацией без разлогина), а установщик создаёт ключ
 автоматически при его отсутствии. Во всём остальном это стабильная линейка
 1.5.7: экспериментальный Telegram-бот «Платные подписки» (выключен по
@@ -598,11 +598,11 @@ sudo bash install.sh v1.5.7-hotfix1
 
 ## Установка стабильной версии v1.5.6
 
-Этот стабильный релиз приносит миграцию 3x-ui (x-ui) → s-ui-x: импорт базы 3x-ui
-(SQLite) — входящие, клиенты, outbound'ы, маршрутизацию, DNS и встроенный TLS — в
-s-ui-x. Также исправлен импорт `blackhole`- и DNS-only-конфигов и сохранено
+Этот стабильный релиз приносит миграцию 3x-ui (x-ui) → s-ui-x: импорт SQLite-базы
+3x-ui в s-ui-x, включая Inbounds, клиенты, Outbounds, маршрутизацию, DNS и встроенный
+TLS. Также исправлен импорт `blackhole`- и DNS-only-конфигов и сохранено
 терминальное меню восстановления панели (очистка домена/адреса, принудительный
-перевыпуск SSL). Подробности — в release notes.
+перевыпуск SSL). Подробности в release notes.
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.6
@@ -634,7 +634,7 @@ sudo bash install.sh v1.5.5
 inbounds, outbounds, клиенты, TLS, services и токены сохраняются; схема
 БД мигрируется автоматически при первом запуске; пароль администратора
 в открытом виде заменяется на bcrypt-хеш при следующем успешном входе.
-Полный гайд по обновлению и откату — в changelog'е на нужном языке
+Полный гайд по обновлению и откату находится в changelog'е на нужном языке
 ([EN](CHANGELOG-EN.md) · [RU](CHANGELOG-RU.md) · [中文](CHANGELOG-ZH.md)).
 
 ## Установка старой версии
@@ -806,10 +806,10 @@ go build -o sui main.go
   - Протоколы на базе V2Ray: VLESS, VMess, Trojan, Shadowsocks
   - Другие протоколы: ShadowTLS, Hysteria, Hysteria2, Naive, TUIC
 - Поддержка протокола XTLS.
-- Продвинутый интерфейс маршрутизации трафика с поддержкой PROXY Protocol, External, прозрачного прокси, SSL-сертификатов и настройки портов.
-- Продвинутый интерфейс настройки входящих и исходящих подключений.
+- Интерфейс маршрутизации трафика с поддержкой PROXY Protocol, External, прозрачного прокси, SSL-сертификатов и настройки портов.
+- Интерфейс настройки Inbounds и Outbounds.
 - Поддержка лимита трафика и срока действия для клиентов.
-- Отображение онлайн-клиентов, статистики трафика входящих и исходящих подключений, а также мониторинг состояния системы.
+- Отображение онлайн-клиентов, статистики трафика Inbounds/Outbounds и мониторинг состояния системы.
 - Служба подписок поддерживает добавление внешних ссылок и подписок.
 - Web-панель и служба подписок поддерживают безопасный доступ по HTTPS (необходимо самостоятельно предоставить домен и SSL-сертификат).
 - Темная/светлая тема.

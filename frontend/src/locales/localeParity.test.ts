@@ -6,7 +6,7 @@ import ru from './ru'
 // Project convention (see CLAUDE.md / redesign notes): en is the source of truth
 // and ru is the second fully-maintained locale; fa/vi/zhcn/zhtw intentionally fall
 // back to en for newer keys (fallbackLocale='en'). So we enforce en<->ru parity
-// only — this catches a translation added to one but forgotten in the other (which
+// only - this catches a translation added to one but forgotten in the other (which
 // would surface as an unexpected English string in RU).
 const flatten = (obj: Record<string, unknown>, prefix = ''): string[] => {
   const out: string[] = []

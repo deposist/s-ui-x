@@ -14,12 +14,12 @@ Small prerelease hotfix on top of the Nexus UI beta.
 
 ## Validation
 
-- `cd frontend && npm run test` — PASS
-- `cd frontend && npm run lint` — PASS
-- `cd frontend && npm run build` — PASS
-- External-origin primary gate over Nexus source — PASS, zero matches
-- Built `dist/index.html` inline-script/event-handler gate — PASS, zero matches
-- Supply-chain gate, `git diff -- package.json` dependency blocks — PASS
+- `cd frontend && npm run test` - PASS
+- `cd frontend && npm run lint` - PASS
+- `cd frontend && npm run build` - PASS
+- External-origin primary gate over Nexus source - PASS, zero matches
+- Built `dist/index.html` inline-script/event-handler gate - PASS, zero matches
+- Supply-chain gate, `git diff -- package.json` dependency blocks - PASS
 
 ## Install
 

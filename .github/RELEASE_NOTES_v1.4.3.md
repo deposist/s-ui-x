@@ -10,7 +10,7 @@
 This release updates the embedded sing-box runtime from `v1.13.4` to
 `v1.13.11`. The panel API, frontend forms, and SQLite schema are unchanged.
 
-### Highlights
+### Changes
 - **sing-box `v1.13.11`** with upstream fixes from the `1.13.x` line.
 - **NaiveProxy runtime refreshed** through the matching `cronet-go` dependency set.
 - **fake-ip DNS fix** from upstream `1.13.8`.

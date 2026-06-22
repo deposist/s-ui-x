@@ -1,40 +1,29 @@
-# Release v1.5.9‑beta2: What’s New
+# Release v1.5.9-beta2
 
-A small follow‑up to v1.5.9‑beta1. No manual changes to the database, API, or configuration are required.
+Small follow-up to v1.5.9-beta1. No database, API, or configuration changes are required.
 
-## 1. Frontend appearance fixes (CSS)
+## EN
 
-Two visual regressions from the v1.5.9‑beta1 settings‑UX update have been fixed so the interface renders as intended:
+### Frontend appearance fixes
 
-* **Readable hint tooltips.** The new (i) field‑hint tooltips were almost unreadable in the dark theme — the auto‑derived text colour was too faint, as reported on the Settings and Telegram hints. Tooltips now use a solid dark background with light text and read clearly in both the light and dark themes.
-* **Field labels no longer cut off.** With a persistent placeholder and the (i) info icon, some input labels were truncated to fragments like “Add…”, “P…”, “Do…”. Floating field labels are now shown in full.
+* **Readable field hints.** The new `(i)` hints were too faint in the dark theme, especially on Settings and Telegram pages. They now use a solid dark background with light text.
+* **Full field labels.** Persistent placeholders and `(i)` icons could cut labels down to fragments such as `Add...`, `P...`, or `Do...`. Floating labels now keep their full text.
 
-## 2. Faster, more reliable install and update
+### Install and update
 
-* **No more hangs on a stalled download mirror.** The install and self‑update scripts fetched their files without a timeout, so a single stuck mirror could block the whole install for up to ~15 minutes before failing. Downloads now use a 20‑second timeout with automatic retries, so a stuck mirror is abandoned quickly and the download is retried against a working node.
+* **Download timeout and retries.** `install.sh` and `s-ui.sh` fetched release files without a timeout, so a stuck mirror could block installation for about 15 minutes. Downloads now use a 20-second timeout with retries.
 
----
+## RU
 
-**Important:** no manual changes to the database, API, or configuration are required to use the new version.
+# Релиз v1.5.9-beta2
 
+Небольшое дополнение к v1.5.9-beta1. Изменения базы данных, API или конфигурации не требуются.
 
-**RU**
+### Исправления внешнего вида
 
-# Релиз v1.5.9‑beta2: что изменилось
+* **Читаемые подсказки к полям.** Новые `(i)`-подсказки были слишком бледными в тёмной теме, особенно на страницах «Настройки» и Telegram. Теперь у них плотный тёмный фон и светлый текст.
+* **Полные подписи полей.** Постоянные placeholder и `(i)`-иконки могли обрезать подписи до фрагментов вроде `Add...`, `P...` или `Do...`. Плавающие подписи теперь показываются полностью.
 
-Небольшое дополнение к v1.5.9‑beta1. Ручные изменения в базе данных, API или конфигурации не требуются.
+### Установка и обновление
 
-## 1. Исправления внешнего вида фронтенда (CSS)
-
-Исправлены две визуальные регрессии из обновления UX настроек в v1.5.9‑beta1, чтобы интерфейс отображался как задумано:
-
-* **Читаемые подсказки‑тултипы.** Новые (i)‑подсказки к полям были почти нечитаемы в тёмной теме — авто‑выведенный цвет текста был слишком блёклым (замечено на подсказках страниц «Настройки» и Telegram). Теперь тултипы используют плотный тёмный фон со светлым текстом и хорошо читаются и в светлой, и в тёмной теме.
-* **Подписи полей больше не обрезаются.** С постоянным placeholder и (i)‑иконкой некоторые подписи полей обрезались до фрагментов вроде «Add…», «P…», «Do…». Теперь плавающие подписи полей отображаются полностью.
-
-## 2. Быстрее и надёжнее установка и обновление
-
-* **Больше никаких зависаний на застрявшем зеркале загрузки.** Скрипты установки и самообновления качали файлы без таймаута, поэтому один застрявший узел зеркала мог блокировать всю установку до ~15 минут перед ошибкой. Теперь загрузки используют таймаут 20 секунд с автоматическими повторами, так что застрявшее зеркало быстро отбрасывается, а загрузка повторяется с рабочего узла.
-
----
-
-**Важно:** для использования новой версии не требуется вносить ручные изменения в базу данных, API или конфигурацию.
+* **Таймаут и повторы загрузки.** `install.sh` и `s-ui.sh` скачивали релизные файлы без таймаута, поэтому зависшее зеркало могло задержать установку примерно на 15 минут. Теперь загрузки используют таймаут 20 секунд и повторы.

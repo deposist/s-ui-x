@@ -2,8 +2,7 @@
 
 Stable release of the `1.5.4` line for `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Promotes `v1.5.4-beta1` through `v1.5.4-beta5` to stable `v1.5.4`.
 - Adds the opt-in Nexus UI mode while keeping Classic as the default UI.
 - Carries the beta hotfixes for canceled duplicate Nexus reads, denser Nexus

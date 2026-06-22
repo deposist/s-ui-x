@@ -2,9 +2,9 @@
 
 Release date: 2026-06-14
 
-This beta adds **TLS certificates for bare IP addresses** — issue a real Let's
+This beta adds **TLS certificates for bare IP addresses** - issue a real Let's
 Encrypt certificate for an IP with no domain name, and have the panel renew it
-automatically — mirroring 3x-ui's "Get SSL for IP Address (6-day cert,
+automatically - mirroring 3x-ui's "Get SSL for IP Address (6-day cert,
 auto-renews)", but done **entirely in-process** so it works the same on Linux,
 Windows and in Docker with no `acme.sh` to install. It also relocates **Config
 Doctor** into Settings → Maintenance and streamlines the Nexus Home overview. It
@@ -16,7 +16,7 @@ is additive: no database migration, no configuration changes.
 
 - A new **IP certificate** card in **Settings → Maintenance** issues a Let's
   Encrypt TLS certificate for a bare **IP address** (RFC 8738 / the `shortlived`
-  certificate profile) — no domain required. Like everything else in s-ui-x the
+  certificate profile) - no domain required. Like everything else in s-ui-x the
   ACME exchange runs **in-process** via `go-acme/lego` (the panel never shells
   out to `acme.sh`), so the feature behaves identically across Linux, Windows
   and Docker.
@@ -26,7 +26,7 @@ is additive: no database migration, no configuration changes.
   - the **panel's own HTTPS listener** (`webCertFile`/`webKeyFile`); the panel
     restarts to load it, or
   - an **inbound TLS profile**, applied through the hot-reload path so only the
-    affected inbounds reload — **no core restart** (recommended).
+    affected inbounds reload - **no core restart** (recommended).
 - **Auto-renew:** a background job checks every 12 hours and re-issues when
   fewer than 72 hours of validity remain (shortlived certs live ~160h ≈
   6.7 days, so a missed run still leaves margin). It also re-issues
@@ -43,8 +43,8 @@ is additive: no database migration, no configuration changes.
 
 - **Config Doctor** now lives in **Settings → Maintenance**, next to Backup and
   the new IP-certificate card, and is shared by both the Nexus and the classic
-  layout. It previously appeared in two separate places — the Nexus Home
-  overview and a separate inline copy on the classic Home page — which are both
+  layout. It previously appeared in two separate places - the Nexus Home
+  overview and a separate inline copy on the classic Home page - which are both
   removed in favour of this single location. Behaviour is unchanged: it is still
   a **read-only dry-check** that assembles the full sing-box config and
   constructs a sing-box instance without starting or restarting the running
@@ -87,7 +87,7 @@ No database migration. Applying a certificate to the panel restarts the panel;
 applying to an inbound TLS profile is hot and avoids the restart. Issuance uses
 Let's Encrypt production; the `SUI_ACME_DIR_URL` environment variable can point
 at staging/Pebble for testing. Binding the challenge port 80 needs privileges
-on Linux — use a custom port or a reverse proxy if the panel does not run as
+on Linux - use a custom port or a reverse proxy if the panel does not run as
 root.
 
 ---
@@ -96,9 +96,9 @@ root.
 
 Дата релиза: 2026-06-14
 
-Эта бета добавляет **TLS-сертификаты для голых IP-адресов** — выпуск настоящего
+Эта бета добавляет **TLS-сертификаты для голых IP-адресов** - выпуск настоящего
 сертификата Let's Encrypt для IP без доменного имени и его автоматический
-перевыпуск панелью — повторяя пункт 3x-ui «Get SSL for IP Address (6-day cert,
+перевыпуск панелью - повторяя пункт 3x-ui «Get SSL for IP Address (6-day cert,
 auto-renews)», но **полностью in-process**, поэтому это одинаково работает на
 Linux, Windows и в Docker без установки `acme.sh`. Также **Config Doctor**
 переезжает в Settings → Maintenance, а обзор главной Nexus становится чище.
@@ -110,16 +110,16 @@ Linux, Windows и в Docker без установки `acme.sh`. Также **Co
 
 - Новая карточка **IP certificate** в **Settings → Maintenance** выпускает
   TLS-сертификат Let's Encrypt для голого **IP-адреса** (RFC 8738 / профиль
-  сертификата `shortlived`) — домен не нужен. Как и всё остальное в s-ui-x,
+  сертификата `shortlived`) - домен не нужен. Как и всё остальное в s-ui-x,
   обмен ACME идёт **in-process** через `go-acme/lego` (панель никогда не шеллит
   `acme.sh`), поэтому фича ведёт себя одинаково на Linux, Windows и в Docker.
-- ACME-challenge — **HTTP-01 standalone** на настраиваемом порту (по
+- ACME-challenge - **HTTP-01 standalone** на настраиваемом порту (по
   умолчанию 80).
 - Выпущенный сертификат можно применить к одному из двух:
   - **HTTPS-листенеру самой панели** (`webCertFile`/`webKeyFile`); панель
     перезапускается, чтобы его загрузить, либо
-  - **inbound TLS-профилю** — через путь горячей перезагрузки, при котором
-    перезагружаются только затронутые inbound'ы, **без перезапуска ядра**
+  - **inbound TLS-профилю** - через путь горячей перезагрузки, при котором
+    перезагружаются только затронутые Inbounds, **без перезапуска ядра**
     (рекомендуется).
 - **Автоперевыпуск:** фоновая задача проверяет каждые 12 часов и перевыпускает,
   когда остаётся меньше 72 часов срока действия (shortlived-сертификаты живут
@@ -130,16 +130,16 @@ Linux, Windows и в Docker без установки `acme.sh`. Также **Co
   ACME-аккаунта **шифруется на диске** и никогда не возвращается API настроек и
   не показывается в UI.
 - **Безопасность:** целевой IP проверяется на private-, loopback-, link-local-,
-  CGNAT-, cloud-metadata- и зарезервированные диапазоны (без DNS-резолва) — и
-  при ручном выпуске, и при автоперевыпуске; выпуск — привилегированное действие
+  CGNAT-, cloud-metadata- и зарезервированные диапазоны (без DNS-резолва) - и
+  при ручном выпуске, и при автоперевыпуске; выпуск - привилегированное действие
   с аудитом.
 
 ### Config Doctor переезжает в Settings → Maintenance
 
 - **Config Doctor** теперь живёт в **Settings → Maintenance**, рядом с Backup и
   новой карточкой IP-сертификата, и общий для Nexus- и классической раскладки.
-  Раньше он был в двух разных местах — обзор главной Nexus и отдельная встроенная
-  копия на классической главной — оба убраны в пользу этого единого места.
+  Раньше он был в двух разных местах - обзор главной Nexus и отдельная встроенная
+  копия на классической главной - оба убраны в пользу этого единого места.
   Поведение прежнее: это по-прежнему **read-only dry-check**, который собирает
   полный конфиг sing-box и создаёт инстанс sing-box без запуска или перезапуска
   работающего ядра.
@@ -169,17 +169,17 @@ Linux, Windows и в Docker без установки `acme.sh`. Также **Co
 ## Проверка
 
 - Backend: `go build ./...`, `go vet ./service ./api ./cronjob` и
-  `go test ./service ./api ./cronjob` — всё зелёное. Новые unit-тесты покрывают
+  `go test ./service ./api ./cronjob` - всё зелёное. Новые unit-тесты покрывают
   решение о перевыпуске, валидацию IP/email/port, оркестрацию ACME (выпуск /
   переиспользование ключа аккаунта / перевыпуск / issued-but-apply-failed),
   хранилище сертификатов и парсинг PEM (включая не-leaf и multi-block bundle),
   round-trip настроек и патч server-блока TLS.
 - Frontend: `vue-tsc --noEmit`, `eslint` и `vitest` (25 файлов / 129 тестов,
-  включая locale parity и скан карты иконок Lucide) — всё зелёное.
+  включая locale parity и скан карты иконок Lucide) - всё зелёное.
 
 Миграций базы нет. Применение сертификата к панели перезапускает панель;
-применение к inbound TLS-профилю — горячее и перезапуска избегает. Выпуск
+применение к inbound TLS-профилю - горячее и перезапуска избегает. Выпуск
 использует Let's Encrypt production; переменная окружения `SUI_ACME_DIR_URL`
 может указывать на staging/Pebble для тестов. Бинд порта 80 для challenge на
-Linux требует привилегий — используйте свой порт или reverse-proxy, если панель
+Linux требует привилегий - используйте свой порт или reverse-proxy, если панель
 работает не от root.

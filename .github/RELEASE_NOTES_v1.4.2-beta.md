@@ -1,4 +1,4 @@
-# S-UI v1.4.2-beta — security and reliability hardening
+# S-UI v1.4.2-beta - security and reliability hardening
 
 > Pre-release. Binary artifacts to follow.
 > Supersedes [`v1.4.1`](https://github.com/deposist/s-ui-rus-inst/releases/tag/v1.4.1).
@@ -16,9 +16,9 @@ You can drop the new binary on top of an existing 1.x install or restore
 an older `.db` backup from the panel: schema migrations and the new
 post-migration adapter run automatically. **No data loss, no manual steps.**
 
-### Highlights
+### Changes
 - **bcrypt passwords** with lazy plaintext-to-bcrypt migration on the next successful login.
-- **No more `admin/admin`** default — first-run admin password is randomly generated and printed once to the application log.
+- **No more `admin/admin`** default - first-run admin password is randomly generated and printed once to the application log.
 - **Login rate limiter**: 5 failures / 15 minutes / 15 minutes block per source IP, with bounded memory.
 - **Hardened cookies**: `HttpOnly` + `SameSite=Lax` + HTTPS-aware `Secure`.
 - **`X-Forwarded-For`** is ignored unless `SUI_TRUSTED_PROXIES` is set, and the chain is now walked right-to-left so the leftmost (spoofable) value cannot bypass IP-based logic.
@@ -48,7 +48,7 @@ sudo bash install.sh v1.4.2-beta
 ```
 
 After the upgrade:
-- Behind a reverse proxy? Set `SUI_TRUSTED_PROXIES=…CIDRs…` so the panel sees real client IPs in audit logs.
+- Behind a reverse proxy? Set `SUI_TRUSTED_PROXIES=...CIDRs...` so the panel sees real client IPs in audit logs.
 - Pulling subscriptions from `http://127.0.0.1`? Set `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
 
 ### Breaking / behaviour changes
@@ -60,14 +60,14 @@ After the upgrade:
 ### Verification
 | Command | Result |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go test -count=1 ./...` | ✅ |
-| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | ✅ |
-| `go test -race -count=1 ./...` | ✅ (CGO + C compiler required) |
-| `npm ci` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `npm audit --audit-level=high` | ✅ (0 vulnerabilities) |
+| `go vet ./...` | OK |
+| `go test -count=1 ./...` | OK |
+| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | OK |
+| `go test -race -count=1 ./...` | OK (CGO + C compiler required) |
+| `npm ci` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `npm audit --audit-level=high` | OK (0 vulnerabilities) |
 
 ### Rollback
 1. `systemctl stop s-ui`
@@ -91,12 +91,12 @@ After the upgrade:
 
 ### Главное
 - **bcrypt-пароли** с автоматической миграцией plaintext → bcrypt при первом успешном входе.
-- **Никаких `admin/admin`** по умолчанию — пароль администратора при первой установке генерируется случайно и однократно выводится в журнал.
+- **Никаких `admin/admin`** по умолчанию - пароль администратора при первой установке генерируется случайно и однократно выводится в журнал.
 - **Лимит входа**: 5 неуспешных попыток с одного IP за 15 минут блокируют IP на 15 минут, с ограниченным потреблением памяти.
 - **Защищённые cookie сессии**: `HttpOnly` + `SameSite=Lax` + `Secure` для HTTPS.
-- **`X-Forwarded-For`** игнорируется без переменной `SUI_TRUSTED_PROXIES`, и теперь цепочка обходится справа налево — крайнее левое (подделываемое) значение нельзя использовать для обхода IP-логики.
+- **`X-Forwarded-For`** игнорируется без переменной `SUI_TRUSTED_PROXIES`, и теперь цепочка обходится справа налево - крайнее левое (подделываемое) значение нельзя использовать для обхода IP-логики.
 - **Параметризованный SQL** во всех путях; запрос пользователей по inbound теперь использует жёсткий список разрешённых типов.
-- **Загрузчик подписок** отклоняет `localhost`/частные/link-local/multicast адреса, ограничивает размер ответа 4 МиБ и заново проверяет IP перед dial-ом — защита от DNS rebinding. Для своих локальных адресов используйте `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
+- **Загрузчик подписок** отклоняет `localhost`/частные/link-local/multicast адреса, ограничивает размер ответа 4 МиБ и заново проверяет IP перед dial-ом - защита от DNS rebinding. Для своих локальных адресов используйте `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
 - **Race-free** жизненный цикл core, online-статистика и last-update, хранилище токенов v2; `go test -race` зелёный.
 - **Надёжные сохранения**: изменения core применяются только после успешного коммита БД; пользовательские рестарты обходят cooldown крона и реальный статус старта возвращается в API.
 - **Бэкап** теперь включает таблицы `services` и `tokens`.
@@ -104,7 +104,7 @@ After the upgrade:
 - **HTTP-серверы** панели и подписки получили таймауты `Read/Write/Header/Idle` и `tls.MinVersion = 1.2`.
 
 ### Автоадаптация старых бэкапов
-- `cmd/migration.MigrateDb` возвращает ошибку вместо `log.Fatal` — несовместимый импорт больше не убивает процесс панели.
+- `cmd/migration.MigrateDb` возвращает ошибку вместо `log.Fatal` - несовместимый импорт больше не убивает процесс панели.
 - `ImportDB` откатывает БД к предыдущей при ошибке миграции.
 - Новый `database.AdaptToCurrentVersion` запускается после каждого `InitDB` и импорта: перешивает plaintext-пароли в bcrypt, обновляет индексы, поднимает строку `settings.version`.
 - `app.Init` запускает миграции **до** открытия БД, поэтому новый бинарник поверх существующей базы 1.x обновляет её автоматически при первом старте.
@@ -121,26 +121,26 @@ sudo bash install.sh v1.4.2-beta
 ```
 
 После обновления:
-- Если панель за reverse-proxy и важно видеть реальный IP клиента в журналах входа, выставьте `SUI_TRUSTED_PROXIES=…CIDR…`.
+- Если панель за reverse-proxy и важно видеть реальный IP клиента в журналах входа, выставьте `SUI_TRUSTED_PROXIES=...CIDR...`.
 - Если внешние подписки забираются с `http://127.0.0.1`, выставьте `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
 
 ### Что меняет поведение
 - Go-модуль переименован: `github.com/alireza0/s-ui` → `github.com/deposist/s-ui-rus-inst`. Это касается только тех, кто собирает из исходников; готовые бинарники и docker-образ работают без изменений.
-- Загрузка подписки с самоподписанным TLS больше не проходит без доверенного CA — неявный `InsecureSkipVerify` удалён.
+- Загрузка подписки с самоподписанным TLS больше не проходит без доверенного CA - неявный `InsecureSkipVerify` удалён.
 - Крайнее левое значение `X-Forwarded-For` больше не используется как identity клиента; настройте `SUI_TRUSTED_PROXIES`.
 - 5 неуспешных входов с одного IP за 15 минут блокируют IP на 15 минут.
 
 ### Верификация
 | Команда | Результат |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go test -count=1 ./...` | ✅ |
-| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | ✅ |
-| `go test -race -count=1 ./...` | ✅ (нужны CGO и C-компилятор) |
-| `npm ci` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `npm audit --audit-level=high` | ✅ (0 уязвимостей) |
+| `go vet ./...` | OK |
+| `go test -count=1 ./...` | OK |
+| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | OK |
+| `go test -race -count=1 ./...` | OK (нужны CGO и C-компилятор) |
+| `npm ci` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `npm audit --audit-level=high` | OK (0 уязвимостей) |
 
 ### Откат
 1. `systemctl stop s-ui`

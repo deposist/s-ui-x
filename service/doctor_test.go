@@ -83,7 +83,7 @@ func TestDiagnoseClientTrafficBoundary(t *testing.T) {
 	inbounds, _ := json.Marshal([]uint{})
 
 	// used == Volume must count as over-limit (error), and the enabled/non-expired
-	// branches must report OK — pinning the OK direction the earlier test never asserts.
+	// branches must report OK - pinning the OK direction the earlier test never asserts.
 	atLimit := model.Client{Enable: true, Name: "atlimit", Inbounds: inbounds, Volume: 10, Up: 6, Down: 4}
 	if err := database.GetDB().Create(&atLimit).Error; err != nil {
 		t.Fatalf("create atlimit client: %v", err)

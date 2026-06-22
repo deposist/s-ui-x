@@ -150,7 +150,7 @@ func TestConfigSaveOutboundsEditSelectorMemberRestartsCore(t *testing.T) {
 	}
 }
 
-// A dns server detour builds its dialer at construction — eager, restart.
+// A dns server detour builds its dialer at construction - eager, restart.
 func TestConfigSaveOutboundsEditDnsDetourReferenceRestartsCore(t *testing.T) {
 	initSettingTestDB(t)
 	coreInstance := startTestCore(t)

@@ -14,7 +14,7 @@ import (
 
 // httpDoer is the minimal HTTP surface used by the version checker, so tests can
 // inject a transport. The real client (defaultVersionCheckClient) keeps Go's
-// default TLS verification — it MUST NOT be disabled (SR-003).
+// default TLS verification - it MUST NOT be disabled (SR-003).
 type httpDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -46,7 +46,7 @@ type ghRelease struct {
 
 // fetchChannelRelease queries GitHub for the channel's target release. main uses
 // /releases/latest (GitHub excludes pre-releases); beta lists releases and picks
-// the highest semver (so a freshly-published stable supersedes a beta — the
+// the highest semver (so a freshly-published stable supersedes a beta - the
 // "graduation" case). Returns (release, etag, notModified, err).
 func fetchChannelRelease(client httpDoer, base string, channel string, etag string) (*resolvedRelease, string, bool, error) {
 	url := base + "/releases/latest"

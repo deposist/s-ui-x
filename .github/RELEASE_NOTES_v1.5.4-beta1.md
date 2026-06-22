@@ -2,8 +2,7 @@
 
 Opt-in beta for the new Nexus UI mode in `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Adds `nexus` as an opt-in UI mode next to the existing `classic`
   interface. Classic remains the default.
 - Adds the UI mode contract, localStorage persistence, `VITE_ENABLE_NEXUS`
@@ -15,13 +14,13 @@ Opt-in beta for the new Nexus UI mode in `deposist/s-ui-x`.
 
 ## Validation
 
-- `cd frontend && npm run test` — PASS
-- `cd frontend && npm run lint` — PASS
-- `cd frontend && npm run build` — PASS
-- External-origin primary gate over Nexus source — PASS, zero matches
-- Built `dist/index.html` inline-script/event-handler gate — PASS, zero matches
-- Supply-chain gate, `git diff -- package.json` dependency blocks — PASS
-- Nexus viewport verification — PASS for LTR `en` and RTL `fa` at
+- `cd frontend && npm run test` - PASS
+- `cd frontend && npm run lint` - PASS
+- `cd frontend && npm run build` - PASS
+- External-origin primary gate over Nexus source - PASS, zero matches
+- Built `dist/index.html` inline-script/event-handler gate - PASS, zero matches
+- Supply-chain gate, `git diff -- package.json` dependency blocks - PASS
+- Nexus viewport verification - PASS for LTR `en` and RTL `fa` at
   `1440x900`, `1180x800`, `834x1112` and `390x844`
 - No backend/API/CSRF/CSP drift detected
 

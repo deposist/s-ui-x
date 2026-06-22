@@ -7,60 +7,58 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 ## [1.5.9-beta6] - 2026-06-18 - WireGuard endpoint editor opens reliably
 
-A small follow-up to v1.5.9-beta5. No database, API, or configuration changes
+Small follow-up to v1.5.9-beta5. No database, API, or configuration changes
 are required.
 
-- **Fix (UI): the WireGuard endpoint editor could open empty.** Adding a WireGuard
-  endpoint sometimes showed only the type and tag, with none of the key, address,
-  port, or peer fields, because the editor rendered before its key data was ready.
-  The editor now has that data from the start and loads all of its fields
-  reliably every time.
+- **Fix (UI): the WireGuard endpoint editor could open empty.** When adding a
+  WireGuard endpoint, the editor sometimes showed only the type and tag because
+  it rendered before its key data was ready. Key, address, port, and peer fields
+  now load on the first open.
 
 Full release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md).
 
 ## [1.5.9-beta5] - 2026-06-17 - cleaner forms in the default interface
 
-A small follow-up to v1.5.9-beta4. No database, API, or configuration changes
+Small follow-up to v1.5.9-beta4. No database, API, or configuration changes
 are required.
 
 - **Fix (UI): cramped, overlapping fields in the default interface.** The add and
   edit forms were packed too tightly, so a field's label could touch or overlap
-  the field, heading, or tab above it — most noticeable when adding a client or a
-  failover group. Every form now has proper spacing and reads cleanly throughout.
+  the field, heading, or tab above it, especially when adding a client or a
+  failover group. The forms now have enough vertical spacing.
 
 Full release notes: [`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md).
 
 ## [1.5.9-beta4] - 2026-06-17 - failover group editor fix in the Nexus UI
 
-A small follow-up to v1.5.9-beta3. No database, API, or configuration changes
-are required; the affected frontend builds and the full frontend test suite are
-green (incl. a Playwright check of the Nexus editor).
+Small follow-up to v1.5.9-beta3. No database, API, or configuration changes
+are required. The affected frontend build, frontend tests, and Nexus editor
+Playwright check pass.
 
 - **Fix (UI): the Failover group editor was missing in the Nexus (default) UI.**
   The `failover` outbound type added in v1.5.9-beta3 was wired into the classic
   outbound modal but not into the Nexus drawer (`OutboundDrawer.vue`), so
   selecting *Failover* in the default UI opened an empty editor and still rendered
   the server/port fields. The Nexus drawer now mounts the Failover editor and
-  hides server/port for the group — verified live with a Playwright e2e against
-  the Nexus UI.
+  hides server/port for the group. A Playwright e2e covers the Nexus UI path.
 
 Full release notes: [`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md).
 
 ## [1.5.9-beta3] - 2026-06-17 - in-panel web update + automatic outbound failover
 
 Two new capabilities since v1.5.9-beta2. No manual database, API, or
-configuration changes are required; the affected Go packages and the full
-frontend test suite are green.
+configuration changes are required. The affected Go packages and the frontend
+test suite pass.
 
-- **Feat (maintenance): update the panel from the web UI.** **Settings →
-  Maintenance** gains a *Panel updates* card — pick a channel (*Main* tracks
-  stable, *Beta* tracks the newest including pre-releases), check for updates, and
-  update in one click. The panel downloads the selected version, verifies it
+- **Feat (maintenance): update the panel from the web UI.** **Settings ->
+  Maintenance** now has a *Panel updates* card. Pick a channel (*Main* tracks
+  stable releases, *Beta* tracks the newest release including pre-releases), check
+  for updates, and update in one click. The panel downloads the selected version, verifies it
   against the release's published SHA-256 over verified HTTPS, replaces itself,
   and restarts on the new version, with the previous binary backed up and an
   automatic rollback if a freshly-installed version repeatedly fails to start.
-  Admin-only with password re-entry; every check and update attempt — including
-  rejected ones — is audited, and the password is never logged. Only newer
+  Only admins can run it, and the action requires password re-entry. Every check
+  and update attempt, including rejected ones, is audited. The password is never logged. Only newer
   versions are offered (no downgrades).
 - **Feat (routing): automatic strict-priority outbound failover.** A new
   `failover` outbound type holds an ordered member list (the first is the
@@ -69,8 +67,8 @@ frontend test suite are green.
   the active member via the sing-box selector: immediate failover when the active
   member stops responding, hysteresis-gated failback to the highest-priority
   member once it recovers, and a direct/hold-senior fallback when every member is
-  down. Use the group as **Routing → Default Outbound** or in any rule — it
-  behaves like any outbound — and the Outbounds list shows the currently-active
+  down. Use the group as **Routing -> Default Outbound** or in any rule. It
+  behaves like any outbound, and the Outbounds list shows the currently-active
   member. No schema migration (the group assembles to a sing-box selector; a
   non-authoritative `failover_state` observability table is created idempotently
   at startup).
@@ -88,7 +86,7 @@ frontend suite is green.
   solid dark-background/light-text scheme that reads well in both themes.
 - **Fix (UI): truncated floating field labels.** `persistent-placeholder` plus an
   append-inner (i) icon constrained the floating label, clipping short labels to
-  "Add…", "P…", "Do…". Floating labels now size to their content.
+  "Add...", "P...", "Do...". Floating labels now size to their content.
 - **Fix (install): installer/self-update could hang on a stalled mirror.**
   `install.sh` (the tarball and its `.sha256`) and the `s-ui.sh` self-update ran
   `wget` with no timeout, so one stuck `release-assets.githubusercontent.com` node
@@ -114,8 +112,8 @@ startup; no manual database migration and no configuration changes are required.
   assertion); `Save` recovers any panic into a transaction rollback. Regression
   tests cover all panic vectors.
 - **Fix (security): root RCE via TLS-disabled installer downloads.** `install.sh`
-  and the `s-ui.sh` self-update fetched their artifacts — and, for install.sh,
-  the `.sha256` validating the tarball — with `wget --no-check-certificate`, so
+  and the `s-ui.sh` self-update fetched their artifacts - and, for install.sh,
+  the `.sha256` validating the tarball - with `wget --no-check-certificate`, so
   an active man-in-the-middle could swap both the artifact and its checksum and
   the verification would still pass. Certificate validation is restored on every
   download; the self-update writes to a temp file and swaps it in atomically.
@@ -143,7 +141,7 @@ startup; no manual database migration and no configuration changes are required.
   the central validator, closing the CGNAT and other reserved ranges it
   previously let through.
 - **Concurrency & lifecycle.** A deplete-cron hot reload could race a full core
-  restart and panic inside sing-box — manager mutations now hold the core read
+  restart and panic inside sing-box - manager mutations now hold the core read
   lock for their duration. An IP-certificate auto-renewal could report success
   while silently skipping the panel restart that loads the new certificate; it
   now uses a non-droppable restart.
@@ -157,8 +155,8 @@ startup; no manual database migration and no configuration changes are required.
   field. Strictly-enumerated fields became pickers: the timezone is an
   autocomplete over the full IANA list, the Clash API default mode is a
   dropdown, and payment currencies are a combobox. The misleading routing label
-  "Invalid IP Ranges" / "Invalid Source IPs" — which match private IP ranges,
-  not invalid ones — was corrected in every locale; the login form shows an
+  "Invalid IP Ranges" / "Invalid Source IPs" - which match private IP ranges,
+  not invalid ones - was corrected in every locale; the login form shows an
   inline error instead of only a toast; and several hard-coded English strings
   (Telegram transport labels, routing action cards) and KPI captions were moved
   into i18n. Frontend-only; no API/database/configuration change.
@@ -229,7 +227,7 @@ certificate issuance. Moves the issuance workflow out of the web UI and into
 the terminal management menu. The in-panel auto-renewal cron is preserved; with
 the CSR fix it now works correctly. No database migration.
 
-- **Embedded sing-box updated to v1.13.13** (from v1.13.12) — upstream bug
+- **Embedded sing-box updated to v1.13.13** (from v1.13.12) - upstream bug
   fixes (TUN loopback in the direct outbound, ping-timeout fix, build fixes).
   Upstream moved the `v1.13.13` tag after publishing, so `go.mod` keeps
   `require v1.13.13` but `replace`s it with the fixed release commit; the
@@ -241,7 +239,7 @@ the CSR fix it now works correctly. No database migration.
   builds a CSR with `certcrypto.CreateCSR{Domain:"", SAN:[ip]}` and issues
   via `ObtainForCSR`, producing the correct `Type:"ip"` ACME identifier.
 - **Terminal issuance.** The Settings → Maintenance "IP certificate" card is
-  removed. New: s-ui.sh item 20 → option 5 — stops the panel (freeing port 80
+  removed. New: s-ui.sh item 20 → option 5 - stops the panel (freeing port 80
   and exclusive DB access), runs `sui ip-cert issue`, restarts the panel.
   Sources `/etc/s-ui/secretbox.env` so the CLI shares `SUI_SECRETBOX_KEY`
   with the running panel.
@@ -262,7 +260,7 @@ the CSR fix it now works correctly. No database migration.
   dominating `/load` CPU under load (profiled at ~85% of the endpoint). It now
   skips seeding once all default keys exist; the returned map is byte-identical
   and concurrent first-init stays exactly-once (issue #19). `BenchmarkAPI_Load`:
-  ~4.86 ms → ~1.30 ms/op, allocations −37%.
+  ~4.86 ms → ~1.30 ms/op, allocations -37%.
 - **Internal cleanup.** Removed proven-dead code (10 unreachable functions plus
   an orphaned variable) flagged by `deadcode`/`staticcheck`. The three
   security helpers that looked dead (`config.GetSecret`, `ValidateIssuableIP`,
@@ -277,12 +275,12 @@ Full release notes: [`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4
 ## [1.5.8-beta3] - 2026-06-14 - IP-address TLS certificates (issue + auto-renew); Config Doctor moves to Settings
 
 Beta: issue and auto-renew a Let's Encrypt TLS certificate for a bare IP address
-(no domain needed), done entirely in-process. Additive — no database migration,
+(no domain needed), done entirely in-process. Additive - no database migration,
 no configuration changes.
 
 - IP-address TLS certificates: a new "IP certificate" card in Settings →
   Maintenance issues a Let's Encrypt cert for a bare IP (RFC 8738 `shortlived`
-  profile) in-process via `go-acme/lego` — no `acme.sh`, identical on Linux,
+  profile) in-process via `go-acme/lego` - no `acme.sh`, identical on Linux,
   Windows and Docker. HTTP-01 standalone on a configurable port (default 80).
   Apply it to the panel HTTPS listener (panel restarts to load it) or to an
   inbound TLS profile (hot-reload, no core restart). A 12-hourly job re-issues
@@ -307,7 +305,7 @@ Full release notes: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3
 ## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack: Config Doctor, RU/ZH routing/DNS presets, subscription delivery UX, client diagnosis
 
 Beta: an operations and diagnostics layer for RU/ZH single-panel admins.
-Additive — new read-only diagnostic endpoints and frontend surfaces, no database
+Additive - new read-only diagnostic endpoints and frontend surfaces, no database
 migration and no configuration changes.
 
 - Config Doctor on the Home page (Nexus and classic layouts): one click
@@ -320,7 +318,7 @@ migration and no configuration changes.
 - Client "why doesn't it work" diagnosis from each client row: enabled / expired
   / traffic-limit, inbound membership, delivery links, subscription secret and
   formats, core state, online signal, and outbound reachability.
-- RU/ZH routing & DNS preset gallery on the Rules and DNS pages: curated `.srs`
+- RU/ZH routing & DNS preset gallery on the Rules and DNS pages: named `.srs`
   sources (SagerNet sing-geosite/sing-geoip, runetfreedom russia-blocked-geoip),
   preview diff, applied only to the local unsaved config; you choose your own
   proxy/direct outbound tags.
@@ -349,16 +347,16 @@ error instead of breaking the next core start.
   same mechanism clients and TLS edits already use). Existing connections on
   unrelated objects survive every save. A failed hot apply still falls back to
   a full core restart, so the core never serves a stale configuration.
-  - An outbound or endpoint whose tag is captured at adapter construction —
+  - An outbound or endpoint whose tag is captured at adapter construction -
     another outbound's `detour`, a `selector`/`urltest` member list or
     `default`, a service dial detour, `dns`/`ntp` detours, a rule-set
-    `download_detour`, or the Clash API UI download detour — is conservatively
+    `download_detour`, or the Clash API UI download detour - is conservatively
     applied via a full restart. References from route rules and `route.final`
     are resolved per connection, so those edits stay hot.
   - Editing a managed-shadowsocks inbound also recreates the `ssm-api` service
     bound to it, so the service keeps tracking the fresh inbound.
 - Deleting (or renaming) an outbound, endpoint, or managed inbound that is
-  still referenced anywhere — including route rules and `route.final` — is now
+  still referenced anywhere - including route rules and `route.final` - is now
   blocked with an error that lists every referencing site. Previously the save
   went through and the next core start failed on the dangling reference,
   taking the whole proxy down.
@@ -382,7 +380,7 @@ the installer. No breaking, manual-migration, or configuration changes.
 - Deleting a client whose database row was already gone (a stale list row, a
   concurrent delete from another session or tab, a resubmitted request) no
   longer fails with "record not found": client delete and bulk delete are now
-  idempotent — deleting an absent client is a no-op success, and a bulk delete
+  idempotent - deleting an absent client is a no-op success, and a bulk delete
   skips already-gone ids while deleting the rest. The delete paths of inbounds,
   outbounds, endpoints, services, and TLS were verified already idempotent and
   are now covered by regression tests.
@@ -393,7 +391,7 @@ the installer. No breaking, manual-migration, or configuration changes.
   into `/etc/s-ui/secretbox.env`; an existing key is detected and offered a
   rotation with rollover (previous keys stay accepted, so nobody is signed
   out).
-- The installer generates `SUI_COOKIE_KEY` automatically when absent — it
+- The installer generates `SUI_COOKIE_KEY` automatically when absent - it
   never overwrites an existing key and never prompts. On the first upgrade
   that introduces the key, sessions signed with the previous fallback key are
   signed out once.
@@ -402,7 +400,7 @@ Full release notes: [`docs/releases/v1.5.7-hotfix1.md`](docs/releases/v1.5.7-hot
 
 ## [1.5.7] - 2026-06-11 - first stable 1.5.7: Paid Subscriptions, Nexus redesign, hardening, no-restart apply
 
-First stable release of the 1.5.7 line, consolidating 1.5.7-beta1..beta10 — the
+First stable release of the 1.5.7 line, consolidating 1.5.7-beta1..beta10 - the
 experimental **Paid Subscriptions** Telegram bot (six payment providers, trials,
 refunds, broadcasts), the refreshed dark "technical" Nexus interface, and three
 rounds of independent security hardening. The entries below are new since
@@ -566,35 +564,33 @@ changes, breaking changes, manual migrations, or configuration changes.
 
 Full release notes: [`docs/releases/v1.5.7-beta8.md`](docs/releases/v1.5.7-beta8.md).
 
-## What's New in v1.5.7 (Beta) — customer-friendly summary
+## v1.5.7 Beta Summary
 
-A reader-friendly roundup of everything added since the last stable release,
-**v1.5.6**. Full per-release notes:
+Summary of changes added since stable **v1.5.6**. Full per-release notes:
 [`docs/releases/whats-new-1.5.7.md`](docs/releases/whats-new-1.5.7.md).
 
-The headline of the 1.5.7 line is a brand-new **Paid Subscriptions** module:
-a self-service Telegram bot that lets your end users get their subscription,
-check usage, and pay or renew on their own. It's **experimental and off by
-default** — existing setups are completely unaffected until you switch it on.
+The 1.5.7 line adds **Paid Subscriptions**, an experimental self-service
+Telegram bot. It is disabled by default. Existing setups are unchanged until an
+administrator enables it.
 
-**✨ New**
+**Main changes**
 - **Paid Subscriptions client bot:** subscription & per-protocol share links,
   **QR codes**, and live usage (used vs. limit, days left, online status, traffic).
 - **Self-service sign-up** with a configurable free trial (capped + rate-limited).
-- **Built-in payments across 6 providers** — Telegram Stars, YooKassa, Stripe,
-  CryptoBot, PayMaster, and external links — with safe, no-double-charge renewals.
+- **Built-in payments across 6 providers** - Telegram Stars, YooKassa, Stripe,
+  CryptoBot, PayMaster, and external links - with safe, no-double-charge renewals.
 - **In-bot Payment menu** (*Buy / Renew*, *My purchases*, *Request a refund*) with
   automatic Telegram Stars refunds; other providers route a request to the admin.
 - **Admin refund tool** with an optional per-refund claw-back of granted days/traffic.
 - **Broadcasts** to every bound client, plus an **editable /start greeting**.
-- **Flexible Telegram routing** — proxy (HTTP/HTTPS/SOCKS5) or a sing-box outbound,
+- **Flexible Telegram routing:** proxy (HTTP/HTTPS/SOCKS5) or a sing-box Outbound,
   set independently for the client bot and admin notifications.
 
-**🐛 Fixes (affects everyone)**
+**Fixes**
 - **No more accidental duplicates:** the Save button locks while saving and the
-  server rejects duplicate submissions — one action always creates one record.
+  server rejects duplicate submissions. One action creates one record.
 
-**🔒 Security**
+**Security**
 - Bot & payment tokens are **encrypted at rest** and masked in the UI; set
   `SUI_SECRETBOX_KEY` in production. Sensitive payment identifiers never reach the
   browser or logs.
@@ -619,7 +615,7 @@ at-rest encryption of saved sync profiles.
 - **Scheduled sync is gone.** The "3x-ui Sync" schedule page, sync profiles, and
   the background cron job no longer exist; any previously configured schedule
   stops running after upgrade. The `xui_sync_profiles` and `xui_known_hosts`
-  tables are dropped automatically on first start — no manual step.
+  tables are dropped automatically on first start - no manual step.
 - **Remote import is gone.** The `POST /api/import-xui/remote/*` and
   `/api/import-xui/sync/*` endpoints are removed. Import is now upload-only:
   `POST /api/import-xui[/plan|/apply|/rollback]` and `GET /api/import-xui/reports`.
@@ -630,76 +626,76 @@ at-rest encryption of saved sync profiles.
 
 ### Security & privacy (review fixes)
 
-- **Login no longer reveals whether a username exists** — the not-found path performs
+- **Login no longer reveals whether a username exists** - the not-found path performs
   the same bcrypt work as a wrong-password attempt, closing a timing oracle that
   enabled admin-username enumeration.
-- **URL credentials are masked in logs** — a `user:pass@host` in any logged URL is
-  redacted in free text, not only when the value sits under a secret-named setting key.
+- **URL credentials are masked in logs** - a `user:pass@host` in any logged URL is
+  redacted in free text and under secret-named setting keys.
 - **Session cookies are Secure by default** in the session store (production login/CSRF
   flows already set this explicitly).
-- **Refunds reject corrupted orders** — a paid order with a non-positive amount is never
+- **Refunds reject corrupted orders** - a paid order with a non-positive amount is never
   processed (defense in depth).
-- **IP-limit failures are observable** — a database error during the per-client IP-limit
+- **IP-limit failures are observable** - a database error during the per-client IP-limit
   check still fails open but now logs the event (throttled) instead of silently
   disabling enforcement.
 
 ### Reliability & fixes (review fixes)
 
-- **Correct traffic chart** — the per-client statistics graph summed each time bucket
+- **Correct traffic chart** - the per-client statistics graph summed each time bucket
   with a no-op reducer and displayed only the first sample instead of the total; it now
   sums correctly.
-- **Safer 1.3 migration** — the anytls / domain-strategy migration runs inside a
+- **Safer 1.3 migration** - the anytls / domain-strategy migration runs inside a
   transaction and checks every write (it previously ignored save errors and carried a
   dead filter clause that loaded every row).
-- **IDN panel domains work** — a Unicode panel domain (e.g. `панель.рф`) now matches the
+- **IDN panel domains work** - a Unicode panel domain (e.g. `панель.рф`) now matches the
   punycode `Host` header browsers send instead of being rejected with `403`.
-- **Bounded public-IP probe** — the `s-ui uri` public-IP lookup caps the response body
+- **Bounded public-IP probe** - the `s-ui uri` public-IP lookup caps the response body
   (1 MiB), matching every other outbound reader.
-- **No drawer thrash** — the default layout's `isMobile` is a pure computed again; the
+- **No drawer thrash** - the default layout's `isMobile` is a pure computed again; the
   drawer's default open state follows the breakpoint through a watcher.
-- **Clearer core-start log** — a sing-box core that fails to start is logged explicitly;
+- **Clearer core-start log** - a sing-box core that fails to start is logged explicitly;
   the panel intentionally stays up so the config can be fixed from the UI.
 
 ### Performance & cleanup (review fixes)
 
-- **Indexed order history** — `payment_orders.telegram_user_id` is now indexed, so a
+- **Indexed order history** - `payment_orders.telegram_user_id` is now indexed, so a
   user's order / refund history no longer scans the whole table.
-- **Lighter frontend install** — removed three unused dependencies (`core-js`,
+- **Lighter frontend install** - removed three unused dependencies (`core-js`,
   `roboto-fontface`, `material-design-icons-iconfont`).
 
 **Kept**
-- One-shot local **`.db` upload** import — the UI wizard, the API, and
-  `import-xui --src` — including dry-run, conflict strategy, plan/apply, and rollback.
+- One-shot local **`.db` upload** import - the UI wizard, the API, and
+  `import-xui --src` - including dry-run, conflict strategy, plan/apply, and rollback.
 
 No manual migration is required; the deprecated 3x-ui tables are dropped on startup.
 
 ## [1.5.7-beta6-hotfix1] - 2026-06-05 - Fix beta6 panel black screen (frontend build)
 
-Emergency **build** hotfix for v1.5.7-beta6. No code, config, or data changes —
+Emergency **build** hotfix for v1.5.7-beta6. No code, config, or data changes -
 it only fixes the broken frontend build that shipped in the beta6 artifacts.
 
-**🐛 Fixed**
-- **Web panel failed to load on v1.5.7-beta6** — black screen with a `404` for a
+**Fixed**
+- **Web panel failed to load on v1.5.7-beta6** - black screen with a `404` for a
   JS chunk (e.g. `assets/_WJiVkoC.js`). `frontend/package-lock.json` had drifted
   out of sync with `package.json` (icons moved from `@mdi/font` to `@mdi/js`
   without regenerating the lock); the release built the frontend with the lenient
   `npm install` and embedded an inconsistent, unvalidated bundle. The lockfile is
-  regenerated in sync and the build is verified consistent — no dangling chunk.
+  regenerated in sync and the build is verified consistent - no dangling chunk.
 
-**🔒 Release-pipeline hardening**
-- The release workflow now builds the frontend fail-closed — `npm ci` plus the
-  same lint and unit-test gates CI runs — so a desynced lockfile or any
+**Release-pipeline hardening**
+- The release workflow now builds the frontend fail-closed - `npm ci` plus the
+  same lint and unit-test gates CI runs - so a desynced lockfile or any
   CI-rejected frontend can no longer ship.
 
 ## [1.5.7-beta6] - 2026-06-05 - Security & reliability hardening, performance, and accessibility
 
 A hardening release driven by a full code-quality, optimization, and security
-audit of the panel. No new features and **no manual migration** — it closes
+audit of the panel. No new features and **no manual migration** - it closes
 several security gaps, removes silent-failure and panic risks, trims the frontend
 bundle by ~60%, and fixes a few data-integrity bugs. Two items change existing
-behavior — see **Breaking changes**.
+behavior - see **Breaking changes**.
 
-### 🔒 Security
+### Security
 
 - **Updated to Go 1.26.4**, closing two reachable Go standard-library
   vulnerabilities (`GO-2026-5037` in `crypto/x509`, `GO-2026-5039` in
@@ -732,7 +728,7 @@ behavior — see **Breaking changes**.
 - **Telegram payments** verify the payer's Telegram id; proxy URLs carrying
   embedded credentials are masked in logs.
 
-### 🐛 Reliability & fixes
+### Reliability and fixes
 
 - **No more false "running" core.** If the generated sing-box config fails to
   parse, the core now surfaces the error instead of silently starting an empty
@@ -741,7 +737,7 @@ behavior — see **Breaking changes**.
   skip-if-still-running; the WAL-checkpoint job is guarded against a startup
   nil-dereference.
 - **Sturdier subscription generation.** Malformed inbound/client configuration no
-  longer panics the link, Clash, or JSON subscription builders — they skip the bad
+  longer panics the link, Clash, or JSON subscription builders - they skip the bad
   field gracefully.
 - **Change feed stays available.** A client name containing a quote or other JSON
   metacharacter no longer corrupts the stored change log, which previously made the
@@ -752,26 +748,26 @@ behavior — see **Breaking changes**.
 - **Consistent API errors** with a documented success envelope and internal
   details redacted.
 
-### ⚡ Performance
+### Performance
 
 - **Backend.** The IP monitor writes pending records in a single batched upsert
   (instead of one statement per IP); the subscription hot path caches its display
   settings (~8 fewer queries per request) and `settings` reads now use an index.
-- **Frontend bundle 6.2 MB → 2.5 MB (−60%).** `moment` and the date-picker load
+- **Frontend bundle 6.2 MB → 2.5 MB (-60%).** `moment` and the date-picker load
   lazily with the pages that use them, and icons moved from the full Material
   Design webfont (~2.9 MB) to inline SVG paths.
 
-### ♿ Accessibility
+### Accessibility
 
 - The icon-only admin action buttons (edit / changes / delete) now have accessible
   names for screen readers.
 
-### ⚠️ Breaking changes
+### Breaking changes
 
 - **Scoped API tokens lose access they should not have had.** An integration using
   a `read`, `observability`, `telegram`, or `database` token to write config,
   restart the panel, or read settings (which only worked because of the enforcement
-  gap above) is now rejected — use an `admin` or appropriately scoped `write` token.
+  gap above) is now rejected - use an `admin` or appropriately scoped `write` token.
 - **`file`/`ssh` x-ui sync profiles must be admin-saved.** After upgrading, a
   scheduled sync profile whose source is a local `file` or `ssh` target will not run
   until an **admin re-saves it** (the panel can no longer prove a pre-upgrade
@@ -806,7 +802,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 - **Paid Subscriptions bot: new "Payment" section.** The flat "Buy / Renew"
   button is replaced by a **Payment** menu that opens a submenu: **Buy / Renew**,
   **My purchases**, **Request a refund**. The **Stats** button is renamed to
-  **My subscription** (icon 👤); the view itself is unchanged.
+  **My subscription** (person icon); the view itself is unchanged.
 - **My purchases:** a read-only list of the client's own orders (tariff, amount,
   status, date), scoped strictly to the requesting Telegram user.
 - **Refunds.** Telegram Stars are refunded automatically via the Bot API
@@ -817,17 +813,17 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 - **Refund rollback policy** `paidSubRefundRevoke` (default on) governs the bot's
   user-initiated Stars refund: a successful refund also rolls back the days and
   traffic that order granted (anti-abuse), idempotently and without disabling the
-  client. The user never chooses this — the admin does (globally, plus per-refund
+  client. The user never chooses this - the admin does (globally, plus per-refund
   in the panel).
 - **Hardening:** the admin Orders API no longer exposes the Telegram charge id or
   the invoice idempotency key; a concurrent bot/panel refund that returns "already
   refunded" is treated as success (Stars refunds are charge-idempotent).
 - **Fix: duplicate creation from double-submitted saves.** Saving an entity
-  (client/inbound/outbound/…) synchronously restarts the sing-box core before
+  (client/inbound/outbound/...) synchronously restarts the sing-box core before
   responding, so a second submission during that slow window created a duplicate
   row. The Save button is now disabled while a save is in flight (all create/edit
   modals), and the server skips an identical create that arrives while the first
-  is still in flight or within a short window after it — so one action creates one
+  is still in flight or within a short window after it - so one action creates one
   row even under a slow core restart.
 - Release notes: [`docs/releases/v1.5.7-beta4.md`](docs/releases/v1.5.7-beta4.md).
 
@@ -894,7 +890,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 
 ## [1.5.6] - 2026-06-04 - first stable 1.5.6: 3x-ui import-correctness fixes
 
-- First stable release of the 1.5.6 line, consolidating 1.5.6-beta1..beta9 — the
+- First stable release of the 1.5.6 line, consolidating 1.5.6-beta1..beta9 - the
   3x-ui → s-ui-x migration and the panel-recovery terminal menu. The entries below
   are the import-correctness fixes added since beta9.
 - An Xray `blackhole` outbound now migrates to a `reject` rule action instead of a
@@ -903,7 +899,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   found: block"; this supersedes the `blackhole`→`block` mapping shipped in
   1.5.6-beta7/beta8.
 - A DNS-only source config (no routing rules, no proxy outbounds, no endpoints) is
-  no longer skipped during import — its DNS was being dropped silently.
+  no longer skipped during import - its DNS was being dropped silently.
 - A built-in `direct` outbound is ensured whenever migrated routing routes to it
   (a rule, or a remote rule-set download detour), and the check now consults the
   database so the InitDB-seeded `direct` outbound is not re-reported as a skipped
@@ -958,7 +954,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   the active sing-box `config` setting (route rules/rule sets, DNS servers/rules),
   preserving existing rules and de-duplicating rule sets/servers by tag.
   Previously the import wrote them to a separate setting the panel never loaded,
-  so imported routing had no effect — it does now.
+  so imported routing had no effect - it does now.
 - Routing rules cover many more matchers instead of "manual review": `port`/
   `sourcePort` (including ranges), `network`, `protocol`, `source`, `inboundTag`
   (→`inbound`), `user` (→`auth_user`), and non-`geosite` domains
@@ -983,7 +979,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   wire-compatible with Xray mux and enabling it would break the outbound.
 - Web admin keeps unsaved edits during the background refresh: the Basics, DNS
   and Routing pages bound their forms to the live store config, so the 10-second
-  config poll (and WS reload events) silently reverted in-progress edits — they
+  config poll (and WS reload events) silently reverted in-progress edits - they
   now edit a local copy that persists until you save.
 - Routing import no longer produces a config sing-box rejects: an Xray external
   geoip reference (`ext:<file>:<code>`, e.g. `ext:geoip_RU.dat:ru`) and bare IPs
@@ -995,13 +991,13 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   a domain (`https://dns.google/...`, `tls://...`) was emitted without a
   `domain_resolver`, which sing-box 1.13 rejects (`missing domain resolver for
   domain server address`). Each domain-addressed server now gets a
-  `domain_resolver` — an IP-addressed server from the migration, or an appended
-  local bootstrap — the same way s-ui's own DNS editor sets it; TLS/HTTP servers
+  `domain_resolver` - an IP-addressed server from the migration, or an appended
+  local bootstrap - the same way s-ui's own DNS editor sets it; TLS/HTTP servers
   also get the `tls`/`headers` blocks so a migrated server matches a
   natively-created one.
 - A Trojan inbound no longer crashes the core: the inbound editor wrote a
   top-level `password`, which sing-box's Trojan inbound rejects (`unknown field
-  "password"` — it authenticates per user via `users`). The password field is now
+  "password"` - it authenticates per user via `users`). The password field is now
   outbound-only, and any leftover top-level password is dropped when the config
   is built (so existing inbounds recover without an edit).
 - Full release notes: [`docs/releases/v1.5.6-beta8.md`](docs/releases/v1.5.6-beta8.md).
@@ -1029,8 +1025,8 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 - Import no longer fails with "Network Error": a large import could run past the
   web server's 30s write timeout and sever the HTTP response mid-import even
   though it completed server-side. The deadline is now lifted on the raw
-  connection — the gzip middleware wraps the response writer so
-  `http.NewResponseController` could not reach it — only after the request is
+  connection - the gzip middleware wraps the response writer so
+  `http.NewResponseController` could not reach it - only after the request is
   authenticated, scope-checked and rate-limited, and the work stays bounded by
   the request context.
 - Full release notes: [`docs/releases/v1.5.6-beta7.md`](docs/releases/v1.5.6-beta7.md).
@@ -1039,7 +1035,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 
 - Fixes a runaway re-import loop: importing a large 3x-ui database takes longer
   than the web server's 30s write timeout, so the response was severed mid-import
-  — the client never saw success and resubmitted, and each retry ran a full
+  - the client never saw success and resubmitted, and each retry ran a full
   import and wrote another pre-import backup. The import endpoints now lift that
   deadline (only after authentication; the work stays bounded by the request
   context), so the client receives the result and stops resubmitting.
@@ -1066,7 +1062,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   (deduplicated), routing and history migrate.
 - Fixes setting migration that wrote 3x-ui keys s-ui ignores (`webBasePath`,
   `tgBotEnable`, `tgBotToken`, `tgBotChatId`, `tgRunTime`, `subEnable`). Keys now
-  map to their canonical s-ui names (`webPath`, `telegram*`, …) and the mapping
+  map to their canonical s-ui names (`webPath`, `telegram*`, ...) and the mapping
   is expanded from 9 to 34 settings (web/sub endpoints, display toggles, and the
   Telegram bot incl. CPU threshold, backup and proxy). Source settings with no
   s-ui equivalent are surfaced as visible, skipped plan items instead of being
@@ -1640,10 +1636,10 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
 
 ### Changed
 
-- `database/model/model.go` — removed the legacy
+- `database/model/model.go` - removed the legacy
   `idx_client_ips_client_ip,unique` tag from `ClientIP.ClientName` and
   `ClientIP.IP`.
-- `cmd/migration/1_5.go` — the `1.5` schema migration drops the legacy
+- `cmd/migration/1_5.go` - the `1.5` schema migration drops the legacy
   `idx_client_ips_client_ip` and creates a partial non-unique
   `idx_client_ips_client_legacy_ip ON client_ips(client_name, ip)
   WHERE ip IS NOT NULL AND ip != ''` for fast legacy lookups. The
@@ -1651,7 +1647,7 @@ tokens or `file`/`ssh` scheduled sync. Release notes:
   `CREATE INDEX IF NOT EXISTS`), so installs already on
   `1.5.2-beta` re-run it cleanly when the runner re-enters the `1.5`
   branch on the next start.
-- `database/db.go: ensureIndexes` — drops the obsolete unique index at
+- `database/db.go: ensureIndexes` - drops the obsolete unique index at
   every `InitDB`. This is a runtime safety net for installs that
   bypass `MigrateDb` (for example, restoring an older backup outside
   the panel) and ensures the temporary backup DB built by `GetDb("")`
@@ -1950,7 +1946,7 @@ schema unchanged.
 - `go test ./...`
 - `go test -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,with_tailscale" ./...`
 
-## [1.4.2-beta] — 2026-05-14 — security and reliability hardening
+## [1.4.2-beta] - 2026-05-14 - security and reliability hardening
 
 This release rewrites large parts of the auth, transaction, and runtime
 control flow, hardens the external-subscription fetcher against SSRF,
@@ -1961,8 +1957,7 @@ The full backend test suite (`go test`, `go test -race`,
 and the full frontend pipeline (`npm ci`, `npm run build`, `npm run lint`,
 `npm audit --audit-level=high`) pass clean.
 
-### Highlights
-
+### Changes
 - Plaintext passwords replaced with bcrypt; existing accounts migrate
   transparently on first successful login.
 - First-run admin password is randomly generated and printed once to the
@@ -2035,7 +2030,7 @@ and the full frontend pipeline (`npm ci`, `npm run build`, `npm run lint`,
 ### Reliability / data integrity
 
 - Backup export now includes the `services` and API `tokens` tables (`database/backup.go`).
-- Backup import (UI: **Backup → Restore**) now also runs the schema migrations and the post-migration adapter (`database.AdaptToCurrentVersion`) automatically. Old backups (S-UI 1.0/1.1/1.2/1.3 layouts, plaintext passwords, missing `services`/`tokens` tables, missing `version` row) are upgraded to the current shape on the fly. If migration fails, the previous live database is restored and an error is returned to the panel — no half-migrated state on disk.
+- Backup import (UI: **Backup → Restore**) now also runs the schema migrations and the post-migration adapter (`database.AdaptToCurrentVersion`) automatically. Old backups (S-UI 1.0/1.1/1.2/1.3 layouts, plaintext passwords, missing `services`/`tokens` tables, missing `version` row) are upgraded to the current shape on the fly. If migration fails, the previous live database is restored and an error is returned to the panel - no half-migrated state on disk.
 - Schema migrations (`cmd/migration`) now return errors instead of calling `log.Fatal`, so a bad import no longer kills the panel process; the version pin is upserted instead of expecting an existing row.
 - The same migration + adaptation pipeline runs at panel start (`app.Init`), so a fresh binary on top of an existing 1.x database upgrades automatically.
 - Added `database.AdaptToCurrentVersion`, an idempotent post-migration step that:
@@ -2051,7 +2046,7 @@ and the full frontend pipeline (`npm ci`, `npm run build`, `npm run lint`,
 - Inbound restart and `GetSingboxInfo` are now nil-safe against a concurrent core stop/start (previously could panic with `nil pointer dereference` on `corePtr.GetInstance().ConnTracker()`).
 - Race-detector-clean synchronization around:
   - API tokens (`api/apiV2Handler.go`, now a `map[string]TokenInMemory` with O(1) lookup).
-  - Online stats (`service/stats.go.onlineResources`) — readers receive a deep copy under `RWMutex`.
+  - Online stats (`service/stats.go.onlineResources`) - readers receive a deep copy under `RWMutex`.
   - Core running state and instance pointer (`core/main.go.Core`).
   - Last-update bookkeeping (`service/config.go.LastUpdate`).
 - HTTP server now sets `ReadHeaderTimeout`, `ReadTimeout`, `WriteTimeout`, `IdleTimeout`, and `tls.Config.MinVersion = tls.VersionTLS12` for both the panel and the subscription server.
@@ -2092,28 +2087,28 @@ and the full frontend pipeline (`npm ci`, `npm run build`, `npm run lint`,
 
 New regression tests:
 
-- `util/common/password_test.go` — hashing, plaintext detection, migration flag.
-- `util/subToJson_test.go` — URL validation rejects `file://`, `localhost`, RFC1918, IPv6 loopback; opt-in restores private targets.
-- `util/subToJson_dial_test.go` — dialer hook rejects loopback addresses post-validation; opt-in allows them.
-- `service/setting_test.go` — default port omission for `subURI`.
-- `database/backup_test.go` — backup includes `services` and `tokens`.
-- `database/adapt_test.go` — legacy plaintext password rehashing during import is correct, idempotent, and bumps `settings.version`.
-- `api/rateLimit_test.go` — block on max failures, reset clears state, concurrent access.
-- `api/utils_test.go` — XFF parsing matrix (untrusted client, rightmost untrusted hop, all-trusted fallback, spoofed XFF from untrusted client).
+- `util/common/password_test.go` - hashing, plaintext detection, migration flag.
+- `util/subToJson_test.go` - URL validation rejects `file://`, `localhost`, RFC1918, IPv6 loopback; opt-in restores private targets.
+- `util/subToJson_dial_test.go` - dialer hook rejects loopback addresses post-validation; opt-in allows them.
+- `service/setting_test.go` - default port omission for `subURI`.
+- `database/backup_test.go` - backup includes `services` and `tokens`.
+- `database/adapt_test.go` - legacy plaintext password rehashing during import is correct, idempotent, and bumps `settings.version`.
+- `api/rateLimit_test.go` - block on max failures, reset clears state, concurrent access.
+- `api/utils_test.go` - XFF parsing matrix (untrusted client, rightmost untrusted hop, all-trusted fallback, spoofed XFF from untrusted client).
 
 ### Verification
 
 | Command | Result |
 | --- | --- |
-| `go build ./...` | ✅ |
-| `go vet ./...` | ✅ |
-| `go test -count=1 ./...` | ✅ |
-| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | ✅ |
-| `go test -race -count=1 ./...` | ✅ (requires CGO and a C compiler, e.g. `C:\msys64\ucrt64\bin\gcc.exe`) |
-| `npm ci` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `npm audit --audit-level=high` | ✅ (0 vulnerabilities) |
+| `go build ./...` | OK |
+| `go vet ./...` | OK |
+| `go test -count=1 ./...` | OK |
+| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | OK |
+| `go test -race -count=1 ./...` | OK (requires CGO and a C compiler, e.g. `C:\msys64\ucrt64\bin\gcc.exe`) |
+| `npm ci` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `npm audit --audit-level=high` | OK (0 vulnerabilities) |
 
 ## Upgrade guide (English, TL;DR)
 
@@ -2141,11 +2136,11 @@ What you should review after the upgrade:
 
 - If the panel sits behind a reverse proxy and you relied on
   `X-Forwarded-For` (e.g. for IP audit logs), set
-  `SUI_TRUSTED_PROXIES=10.0.0.0/8,192.168.0.0/16,…` to the CIDRs your
+  `SUI_TRUSTED_PROXIES=10.0.0.0/8,192.168.0.0/16,...` to the CIDRs your
   proxy lives in. Without this variable, XFF is ignored and audit logs
   show the proxy IP instead of the real client.
 - If you fetch external subscriptions from a private endpoint
-  (`http://127.0.0.1:…/sub` etc.), set `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
+  (`http://127.0.0.1:.../sub` etc.), set `SUI_ALLOW_PRIVATE_SUB_URLS=true`.
 - If you used the old install / update script (`deposist/s-ui`), grab
   the new one once: `wget -O /usr/bin/s-ui https://raw.githubusercontent.com/deposist/s-ui-x/main/s-ui.sh && chmod +x /usr/bin/s-ui`.
 

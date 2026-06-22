@@ -194,7 +194,7 @@ func TestIssueNowReturnsApplyFailedButPersists(t *testing.T) {
 	svc := newIpCertTestService(t, issuer, now)
 
 	// Apply to a non-existent inbound TLS profile: issuance succeeds and is
-	// persisted, but the apply step fails — IssueNow must surface the apply
+	// persisted, but the apply step fails - IssueNow must surface the apply
 	// error while keeping the stored state so a later retry can re-apply.
 	status, err := svc.IssueNow(context.Background(), "93.184.216.34", "a@b.com", 80, "inbound:999999", "")
 	if err == nil {

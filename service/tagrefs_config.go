@@ -73,7 +73,7 @@ func scanConfigBlobForOutboundTag(blob []byte, tag string) ([]TagReference, erro
 
 // appendRouteRuleRefs records the rule's outbound action when it points at the
 // tag, recursing into logical rules' nested rule lists. Rule outbounds are
-// looked up by tag on every match, so they never force a restart on edit —
+// looked up by tag on every match, so they never force a restart on edit -
 // but a deleted tag would still fail the next core start, hence they count for
 // the delete guard.
 func appendRouteRuleRefs(refs []TagReference, rule map[string]any, index int, tag string) []TagReference {

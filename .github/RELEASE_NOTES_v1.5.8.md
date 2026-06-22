@@ -5,8 +5,7 @@ Release date: 2026-06-15
 Stable v1.5.8 consolidates v1.5.8-beta1..beta4 plus the final Nexus polish.
 No manual database migration is required.
 
-## Highlights
-
+## Changes
 - **No-restart apply for all managed sing-box objects.** Inbounds, outbounds,
   endpoints, and services hot-replace in the running core. Captured adapter
   references still use a full restart; route-rule and `route.final` edits stay
@@ -63,7 +62,7 @@ Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and
 ## Главное
 
 - **Применение без рестарта для всех управляемых объектов sing-box.** Inbound'ы,
-  outbound'ы, endpoint'ы и сервисы горячо заменяются в работающем ядре.
+  Outbounds, endpoint'ы и сервисы горячо заменяются в работающем ядре.
   Захваченные adapter-ссылки всё ещё применяются через полный рестарт;
   route-правила и `route.final` остаются горячими. Неизменённые настройки
   sing-box больше не рестартят ядро, пути apply/restart сериализованы.

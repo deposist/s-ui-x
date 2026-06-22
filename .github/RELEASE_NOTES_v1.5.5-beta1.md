@@ -25,18 +25,18 @@ Prerelease addressing two upstream subscription bugs reported on
 ## Added
 
 - Regression tests:
-  - `service/inbounds_vless_flow_test.go` — vless+TCP keeps flow,
+  - `service/inbounds_vless_flow_test.go` - vless+TCP keeps flow,
     vless+grpc/ws/no-tls strips, vmess unaffected.
-  - `util/genLink_vless_flow_test.go` — `vless://` links emit `flow`
+  - `util/genLink_vless_flow_test.go` - `vless://` links emit `flow`
     only when transport is TCP.
-  - `sub/clashService_ws_host_test.go` — explicit Host header survives
+  - `sub/clashService_ws_host_test.go` - explicit Host header survives
     YAML round-trip; SNI fallback populates `ws-opts.headers.Host`.
 
 ## Validation
 
-- `go test ./...` — all 26 packages PASS.
-- `cd frontend && npm run build` — PASS.
-- `git diff --check` — PASS.
+- `go test ./...` - all 26 packages PASS.
+- `cd frontend && npm run build` - PASS.
+- `git diff --check` - PASS.
 
 ## Install
 

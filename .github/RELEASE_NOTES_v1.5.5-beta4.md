@@ -32,7 +32,7 @@ area and describe both the user-visible issue and the effect of the fix.
     backup payloads and passphrases are wiped after use, and generated admin
     passwords stay hidden until explicit reveal and are cleared automatically.
 * **Audit quality and prioritization**
-  * **Problem:** important warning/security events could be pushed out of a
+  * **Problem:** warning/security events could be pushed out of a
     full audit queue by ordinary `info` events, successful legacy decrypt
     fallback created noise, stats commit failures lacked a complete audit trail,
     and optional URL settings accepted unsafe control characters.
@@ -287,12 +287,12 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 
 ## Validation
 
-* `go build ./...` — PASS
-* `go vet ./...` — PASS
-* `go test ./...` — PASS
-* `go test -race ./... -timeout 900s` — PASS
-* `govulncheck ./...` — PASS, no vulnerabilities found
-* `gosec ./...` — known classified baseline, 55 issues
+* `go build ./...` - PASS
+* `go vet ./...` - PASS
+* `go test ./...` - PASS
+* `go test -race ./... -timeout 900s` - PASS
+* `govulncheck ./...` - PASS, no vulnerabilities found
+* `gosec ./...` - known classified baseline, 55 issues
 
 ## Install
 

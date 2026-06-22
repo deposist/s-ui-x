@@ -200,7 +200,7 @@ func buildIpCSR(ip string) (crypto.PrivateKey, *x509.CertificateRequest, error) 
 		return nil, nil, err
 	}
 	csrDER, err := certcrypto.CreateCSR(leafKey, certcrypto.CSROptions{
-		Domain: "", // empty Common Name — IP must not be the CN
+		Domain: "", // empty Common Name - IP must not be the CN
 		SAN:    []string{strings.TrimSpace(ip)},
 	})
 	if err != nil {

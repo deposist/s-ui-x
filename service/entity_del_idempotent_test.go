@@ -6,7 +6,7 @@ import (
 )
 
 // Deleting an entity that is already gone must be an idempotent success for
-// every entity type the panel manages — a stale UI row, a concurrent delete
+// every entity type the panel manages - a stale UI row, a concurrent delete
 // from another session, or a resubmitted request must not surface
 // "record not found" (or any other error) to the operator.
 func TestConfigSaveDelOfMissingEntityIsIdempotent(t *testing.T) {

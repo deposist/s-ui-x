@@ -17,8 +17,7 @@ Do not publish database backups, subscription URLs, private keys,
 certificates, admin credentials, or API tokens in pull requests, issues, CI
 logs, or support chats.
 
-## Highlights
-
+## Changes
 - Admins can invalidate all active web sessions from the Admins panel. This
   rotates the web session generation and clears the initiator cookie. API
   tokens are not revoked by this action.
@@ -84,5 +83,5 @@ logs, or support chats.
 
 The current database schema remains compatible with the previous `v1.4.3`
 binary. If rollback is required, deploy the full previous archive or image,
-not only the executable, so runtime sidecar libraries such as `libcronet`
+including runtime sidecar libraries such as `libcronet`, so they
 remain in sync with the binary.

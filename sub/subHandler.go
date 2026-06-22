@@ -51,7 +51,7 @@ func noteSubNotFound(ip string) {
 		st.alertedAt = now
 	}
 	// Crude bound on map growth (a flood of distinct spoofed IPs): reset wholesale
-	// rather than track LRU — the counter is best-effort detection, not security.
+	// rather than track LRU - the counter is best-effort detection, not security.
 	if len(subEnumByIP) > subEnumMaxKeys {
 		subEnumByIP = map[string]subEnumState{}
 	}

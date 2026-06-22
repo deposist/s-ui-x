@@ -72,7 +72,7 @@ func (j *SubService) getClientBySubId(subId string) (*model.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Warning("sub: served config via legacy name lookup (subSecretRequired is OFF) — enable required sub-secrets to prevent name-based enumeration")
+	logger.Warning("sub: served config via legacy name lookup (subSecretRequired is OFF). Enable required sub-secrets to prevent name-based enumeration")
 	return client, j.ensureClientSubSecret(db, client)
 }
 
@@ -90,15 +90,20 @@ func (s *SubService) getClientInfo(c *model.Client) string {
 
 	var result []string
 	if vol := c.Volume - (c.Up + c.Down); vol > 0 {
-		result = append(result, fmt.Sprintf("%s%s", s.formatTraffic(vol), "📊"))
+		result = append(result, fmt.Sprintf("%s left", s.formatTraffic(vol)))
 	}
 	if c.Expiry > 0 {
-		result = append(result, fmt.Sprintf("%d%s⏳", (c.Expiry-now)/86400, "Days"))
+		days := (c.Expiry - now) / 86400
+		label := "days"
+		if days == 1 {
+			label = "day"
+		}
+		result = append(result, fmt.Sprintf("%d %s left", days, label))
 	}
 	if len(result) > 0 {
-		return " " + strings.Join(result, " ")
+		return " (" + strings.Join(result, ", ") + ")"
 	} else {
-		return " ♾"
+		return " (unlimited)"
 	}
 }
 

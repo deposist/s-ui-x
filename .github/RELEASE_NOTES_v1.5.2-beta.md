@@ -1,4 +1,4 @@
-# S-UI v1.5.2-beta — 3x-ui migration suite
+# S-UI v1.5.2-beta - 3x-ui migration suite
 
 > Pre-release. Adds a complete 3x-ui → s-ui migration suite (CLI, HTTP API,
 > wizard UI, scheduled remote sync) on top of `v1.5.1-beta`.
@@ -22,8 +22,7 @@ You can drop the new binary on top of an existing 1.x install. Schema
 migrations and the post-migration adapter run automatically. **No data
 loss, no manual steps.**
 
-### Highlights
-
+### Changes
 - **Local import.** `s-ui import-xui --src x-ui.db` and a new section in
   the Backup & Restore modal. One transaction, auto-backup before write,
   `merge`/`replace`/`skip` strategies, dry-run mode, and `xui_import` audit
@@ -98,13 +97,13 @@ CI logs or support chats.
 
 | Command | Result |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./...` | ✅ (importxui tests skip when `test-db/` fixtures are absent) |
-| `npm run test:unit` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `go test -race ./...` | ⚠ requires CGO and a C compiler |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./...` | OK (importxui tests skip when `test-db/` fixtures are absent) |
+| `npm run test:unit` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `go test -race ./...` | requires CGO and a C compiler |
 
 `test-db/` is intentionally excluded from the repository (see `.gitignore`).
 The importxui, ssh, xuihttp and CLI/API import tests skip gracefully when
@@ -210,13 +209,13 @@ sudo bash install.sh v1.5.2-beta
 
 | Команда | Результат |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./...` | ✅ (тесты importxui скипаются, если `test-db/` нет) |
-| `npm run test:unit` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `go test -race ./...` | ⚠ требуется CGO и C-компилятор |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./...` | OK (тесты importxui скипаются, если `test-db/` нет) |
+| `npm run test:unit` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `go test -race ./...` | требуется CGO и C-компилятор |
 
 `test-db/` намеренно исключён из репозитория (см. `.gitignore`). Тесты
 importxui, ssh, xuihttp и CLI/API-импорта аккуратно скипаются, если этих

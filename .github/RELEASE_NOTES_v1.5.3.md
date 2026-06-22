@@ -2,8 +2,7 @@
 
 Stable release of the `1.5.3` line for `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Promotes `1.5.3-beta` to stable `1.5.3`.
 - Keeps runtime compatibility with existing `s-ui` installs: binary name,
   service name, data paths, and database layout remain unchanged.
@@ -17,10 +16,10 @@ Stable release of the `1.5.3` line for `deposist/s-ui-x`.
 
 ## Validation
 
-- `cd frontend && npm run test` — PASS
-- `cd frontend && npm run lint` — PASS
-- `cd frontend && npm run build` — PASS
-- `go test ./service ./cronjob` — PASS
+- `cd frontend && npm run test` - PASS
+- `cd frontend && npm run lint` - PASS
+- `cd frontend && npm run build` - PASS
+- `go test ./service ./cronjob` - PASS
 
 ## Install
 

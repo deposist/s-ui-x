@@ -2,8 +2,7 @@
 
 Beta for sing-box 1.13 UI parity in `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Adds first-class UI controls for sing-box 1.13 TLS advanced fields, including
   curve preferences, client authentication/certificates, certificate public key
   pins and outbound kTLS.

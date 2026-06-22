@@ -112,7 +112,7 @@ func containsTag(members []any, tag string) bool {
 }
 
 // scanEndpointRowsForTag finds endpoints (e.g. wireguard) dialing through the
-// tag via detour — captured eagerly at endpoint construction.
+// tag via detour - captured eagerly at endpoint construction.
 func scanEndpointRowsForTag(rows []model.Endpoint, tag string, excludeId uint) []TagReference {
 	var refs []TagReference
 	for _, row := range rows {
@@ -131,7 +131,7 @@ func scanEndpointRowsForTag(rows []model.Endpoint, tag string, excludeId uint) [
 }
 
 // scanServiceRowsForOutboundDetour finds services (e.g. ccm/ocm) dialing
-// through the tag via detour — their dialer is built at service construction.
+// through the tag via detour - their dialer is built at service construction.
 func scanServiceRowsForOutboundDetour(rows []model.Service, tag string) []TagReference {
 	var refs []TagReference
 	for _, row := range rows {

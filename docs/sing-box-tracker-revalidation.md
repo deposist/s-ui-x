@@ -37,7 +37,7 @@ Validation gate for a sing-box bump:
 Revalidation log:
 
 - 2026-06-14, v1.13.12 -> v1.13.13: revalidated against the fixed release
-  commit (`78b2e12`). `adapter.ConnectionTracker` is unchanged —
+  commit (`78b2e12`). `adapter.ConnectionTracker` is unchanged -
   `RoutedConnection(ctx, net.Conn, InboundContext, Rule, Outbound) net.Conn` and
   `RoutedPacketConnection(ctx, N.PacketConn, InboundContext, Rule, Outbound) N.PacketConn`
   still match `ConnTracker`/`StatsTracker` (proven by `core` compiling the

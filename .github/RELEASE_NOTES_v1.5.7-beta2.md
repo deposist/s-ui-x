@@ -11,12 +11,12 @@ the core. No core schema migration.
 
 ## What changed
 
-- **Telegram transport selector — per module.** Both the Paid Subscriptions bot
+- **Telegram transport selector - per module.** Both the Paid Subscriptions bot
   and the admin Telegram module (notifications/backups) can now egress either
   through a **proxy** (http/https/socks5, with its own credentials) or through a
   configured **sing-box outbound** (routes Telegram traffic via a VPN/proxy
   outbound; requires the core to be running). The two modules are configured
-  **independently** — e.g. the client bot via one outbound and admin alerts via
+  **independently** - e.g. the client bot via one outbound and admin alerts via
   a different outbound or proxy.
 - **Broadcast to all clients.** A new *Messages* tab on the Paid Subscriptions
   page sends a one-off announcement to every bound Telegram user (throttled,
@@ -40,7 +40,7 @@ the core. No core schema migration.
 
 No manual migration; existing data is preserved and the feature stays **disabled
 by default**. If you use outbound transport, ensure the core is running and the
-selected outbound tag exists. This is a beta — test on a non-critical instance.
+selected outbound tag exists. This is a beta - test on a non-critical instance.
 
 ---
 
@@ -50,34 +50,34 @@ selected outbound tag exists. This is a beta — test on a non-critical instance
 
 Вторая бета линейки 1.5.7. Развивает экспериментальный модуль **«Платные
 подписки»** из beta1: добавлен **выбор транспорта** Telegram (прокси или
-sing-box-аутбаунд) независимо для каждого модуля, **рассылка** всем клиентам,
-**редактируемое приветствие** `/start`, и исправлен админ-UI выбора инбаундов и
+sing-box Outbound) независимо для каждого модуля, **рассылка** всем клиентам,
+**редактируемое приветствие** `/start`, и исправлен админ-UI выбора Inbounds и
 привязок. Функция по-прежнему **выключена по умолчанию** и изолирована от ядра.
 Миграции схемы ядра нет.
 
 ## Что изменилось
 
-- **Выбор транспорта Telegram — для каждого модуля.** И бот «Платных подписок»,
+- **Выбор транспорта Telegram - для каждого модуля.** И бот «Платных подписок»,
   и админский модуль Telegram (уведомления/бэкапы) теперь могут выходить в сеть
   либо через **прокси** (http/https/socks5, со своими реквизитами), либо через
-  настроенный **sing-box-аутбаунд** (трафик Telegram идёт через VPN/прокси-аутбаунд;
-  требуется запущенное ядро). Модули настраиваются **независимо** — например, бот
-  через один аутбаунд, а админ-уведомления через другой аутбаунд или прокси.
+  настроенный **sing-box Outbound** (трафик Telegram идёт через VPN/proxy Outbound;
+  требуется запущенное ядро). Модули настраиваются **независимо** - например, бот
+  через один Outbound, а админ-уведомления через другой Outbound или прокси.
 - **Рассылка всем клиентам.** Новая вкладка *Messages* на странице «Платные
   подписки» отправляет разовое объявление всем привязанным Telegram-пользователям
   (с троттлингом, отчётом sent/failed и подтверждением).
 - **Редактируемое приветствие.** Сообщение, показываемое привязанному клиенту по
-  `/start`, теперь редактируется на вкладке *Messages*; пусто — используется
+  `/start`, теперь редактируется на вкладке *Messages*; пусто - используется
   встроенное приветствие.
 - **Исправления (UI beta1):** выпадающий список *Auto-registration → Inbounds for
-  new clients* теперь показывает инбаунды (раньше неверно читался ответ API), а на
+  new clients* теперь показывает Inbounds (раньше неверно читался ответ API), а на
   вкладке *Bindings* появилась явная кнопка **Add binding** (выбор клиента +
   Telegram ID) и понятное пустое состояние.
 
 ## Безопасность
 
 - У модуля «Платные подписки» свои зашифрованные реквизиты прокси, отдельные от
-  админского Telegram-модуля. Outbound-транспорт дозванивается через аутбаунд
+  админского Telegram-модуля. Outbound-транспорт дозванивается через Outbound
   запущенного ядра по тегу; токены провайдеров/прокси хранятся в зашифрованном
   виде и не пишутся в логи. Эндпоинты рассылки и привязок доступны только
   админу (session + CSRF) и аудируются.
@@ -85,6 +85,6 @@ sing-box-аутбаунд) независимо для каждого модул
 ## Обновление
 
 Ручная миграция не нужна, данные сохраняются, функция **выключена по умолчанию**.
-Если используете outbound-транспорт — убедитесь, что ядро запущено и выбранный
-тег аутбаунда существует. Это бета — сначала протестируйте на некритичном
+Если используете Outbound transport - убедитесь, что ядро запущено и выбранный
+тег Outbound существует. Это бета - сначала протестируйте на некритичном
 экземпляре.

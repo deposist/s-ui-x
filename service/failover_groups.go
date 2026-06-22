@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Failover group shared constants — the single source of truth referenced by
+// Failover group shared constants - the single source of truth referenced by
 // the assembler, validation, the failover manager and the frontend contract.
 const (
 	// FailoverType is the panel/DB outbound type for an auto-failover group. It
@@ -188,7 +188,7 @@ func LoadFailoverGroups(db *gorm.DB) ([]FailoverGroupConfig, error) {
 }
 
 // validateFailoverGroup enforces the save-time rules for a Type:"failover" row:
-// non-empty members, every member exists and is a plain outbound (not a group —
+// non-empty members, every member exists and is a plain outbound (not a group -
 // which also rules out cycles), no self-reference, no duplicates, and a valid
 // probe target / interval / hysteresis.
 func validateFailoverGroup(tx *gorm.DB, o model.Outbound) error {
@@ -247,8 +247,8 @@ func validateFailoverGroup(tx *gorm.DB, o model.Outbound) error {
 
 // validateProbeTarget accepts an absolute http(s) URL whose host may be a
 // domain or IP. Unlike the panel's own outbound-check guard it does NOT reject
-// private IPs — the probe is dialed THROUGH the member outbound, so a private
-// target reachable via the tunnel is legitimate — but it still blocks
+// private IPs - the probe is dialed THROUGH the member outbound, so a private
+// target reachable via the tunnel is legitimate - but it still blocks
 // infrastructure/cloud-metadata addresses (e.g. 169.254.169.254).
 func validateProbeTarget(rawURL string) error {
 	parsed, err := url.Parse(rawURL)

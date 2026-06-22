@@ -3,22 +3,22 @@
 Release date: 2026-06-11
 
 First stable release of the 1.5.7 line. It consolidates the
-1.5.7-beta1..beta10 series — whose headline is the experimental **Paid
-Subscriptions** Telegram bot — together with the refreshed Nexus interface and
-two rounds of independent security hardening, and adds the **no-restart
-client/TLS apply** below as new in this stable release. One additive database
-column is created automatically on first start; no manual migration.
+1.5.7-beta1..beta10 series: the experimental **Paid Subscriptions** Telegram
+bot, the refreshed Nexus interface, and two rounds of independent security
+hardening. This stable release also adds **no-restart client/TLS apply**. One
+additive database column is created automatically on first start; no manual
+migration is needed.
 
 ## What changed
 
-- **Paid Subscriptions (the 1.5.7 headline; experimental, off by default).**
+- **Paid Subscriptions (experimental, off by default).**
   A client-facing Telegram bot on its own encrypted token: a bound client gets
   their subscription link, per-protocol share links and QR codes, and sees live
   usage (used vs. limit, days left, online status, total traffic). Unknown
   users can self-register with a configurable free trial (global cap +
   per-user rate limit). Admins define tariffs (price, +days, +traffic) and
-  clients pay or renew right in the bot across six providers — **Telegram
-  Stars, YooKassa, Stripe, CryptoBot, PayMaster, and external links** — with
+  clients pay or renew right in the bot across six providers - **Telegram
+  Stars, YooKassa, Stripe, CryptoBot, PayMaster, and external links** - with
   idempotent, server-verified renewals (no double-charging on retries). The
   bot's Payment menu covers *Buy / Renew*, *My purchases*, and *Request a
   refund* (Stars refund automatically; other providers route the request to
@@ -31,7 +31,7 @@ column is created automatically on first start; no manual migration.
 
 - **New in this stable release: client and TLS edits apply without restarting
   the core.** Adding, editing, enabling/disabling, or deleting a client no
-  longer restarts sing-box — only the affected inbounds are hot-reloaded in
+  longer restarts sing-box - only the affected inbounds are hot-reloaded in
   the running core. Connections on those inbounds are closed, so revoked or
   disabled credentials stop working immediately, while connections on
   unrelated inbounds survive the change. IP-limit changes (`limitIp`, mode)
@@ -76,7 +76,7 @@ column is created automatically on first start; no manual migration.
   instead of silently reporting a healthy empty core. Subscription builders
   skip malformed fields instead of panicking.
 
-- **Performance.** Frontend bundle cut from 6.2 MB to 2.5 MB (−60%; lazy
+- **Performance.** Frontend bundle cut from 6.2 MB to 2.5 MB (-60%; lazy
   `moment`/date-picker, SVG icons). The IP monitor writes pending records in a
   single batched upsert; the subscription hot path caches display settings
   (~8 fewer queries per request); order history is indexed.
@@ -95,7 +95,7 @@ full per-step history.
 
 - **Scoped API tokens lose access they should never have had.** An integration
   using a `read`/`observability`/`telegram`/`database` token to write config,
-  restart the panel, or read settings is now rejected — use an `admin` or
+  restart the panel, or read settings is now rejected - use an `admin` or
   appropriately scoped `write` token.
 - **3x-ui scheduled sync and remote import are removed.** Import is now the
   one-shot local `.db` upload only (UI wizard, `POST /api/import-xui[/plan|
@@ -113,7 +113,7 @@ No manual migration. One additive database column and a `settings` unique
 index are created automatically on first start; with `SUI_SECRETBOX_KEY` set,
 the one-time secret re-seal runs at startup. Review the breaking changes above
 if you use scoped API tokens or relied on 3x-ui scheduled sync / remote
-import. Paid Subscriptions stays off until you enable it — try it on a
+import. Paid Subscriptions stays off until you enable it - try it on a
 non-critical instance first.
 
 ---
@@ -123,8 +123,8 @@ non-critical instance first.
 Дата релиза: 2026-06-11
 
 Первый стабильный релиз линейки 1.5.7. Он объединяет серию
-1.5.7-beta1..beta10 — главная тема которой экспериментальный Telegram-бот
-**«Платные подписки»** — вместе с обновлённым интерфейсом Nexus и двумя
+1.5.7-beta1..beta10 - главная тема которой экспериментальный Telegram-бот
+**«Платные подписки»** - вместе с обновлённым интерфейсом Nexus и двумя
 раундами независимого аудита безопасности, и добавляет **применение изменений
 клиентов/TLS без перезапуска ядра** (новое в этом стабильном релизе). Одна
 добавочная колонка БД создаётся автоматически при первом старте; ручная
@@ -139,8 +139,8 @@ non-critical instance first.
   трафик). Незнакомый пользователь может зарегистрироваться сам с настраиваемым
   пробным периодом (глобальный лимит + ограничение частоты). Админ задаёт
   тарифы (цена, +дни, +трафик), клиенты платят и продлевают прямо в боте через
-  шесть провайдеров — **Telegram Stars, YooKassa, Stripe, CryptoBot, PayMaster
-  и внешние ссылки** — с идемпотентными, проверяемыми на сервере продлениями
+  шесть провайдеров - **Telegram Stars, YooKassa, Stripe, CryptoBot, PayMaster
+  и внешние ссылки** - с идемпотентными, проверяемыми на сервере продлениями
   (без двойных списаний при повторах). Меню «Оплата» в боте: *Купить /
   Продлить*, *Мои покупки*, *Оформить возврат* (Stars возвращаются
   автоматически; по остальным провайдерам заявка уходит админу); вкладка
@@ -153,13 +153,13 @@ non-critical instance first.
 
 - **Новое в этом стабильном релизе: изменения клиентов и TLS применяются без
   перезапуска ядра.** Добавление, редактирование, включение/выключение и
-  удаление клиента больше не перезапускают sing-box — в работающем ядре горячо
-  перезагружаются только затронутые inbound-ы. Соединения на них закрываются,
+  удаление клиента больше не перезапускают sing-box - в работающем ядре горячо
+  перезагружаются только затронутые Inbounds. Соединения на них закрываются,
   поэтому отозванные или отключённые учётные данные перестают работать сразу,
-  а соединения на остальных inbound-ах переживают изменение. Изменения
+  а соединения на остальных Inbounds переживают изменение. Изменения
   IP-лимита (`limitIp`, режим) применяются немедленно, а не после 30-секундного
   TTL кэша. Редактирование TLS-сертификата горячо перезагружает только
-  ссылающиеся на него inbound-ы и сервисы — после фиксации транзакции БД;
+  ссылающиеся на него Inbounds и сервисы - после фиксации транзакции БД;
   создание и удаление TLS-записи ядро вообще не трогают. Если горячая
   перезагрузка не удалась, панель откатывается к полному перезапуску ядра,
   чтобы оно не работало на устаревшей конфигурации. Также исправлено:
@@ -191,16 +191,16 @@ non-critical instance first.
   реальном времени на блокировку аккаунта и экспорт базы.
 
 - **Исправления для всех.** Двойная отправка сохранения больше не создаёт
-  дубликаты клиентов/инбаундов/аутбаундов (кнопка блокируется, сервер
+  дубликаты клиентов/Inbounds/Outbounds (кнопка блокируется, сервер
   отклоняет повтор). График трафика клиента суммирует корректно, а не
   показывает первую выборку. Имя клиента с кавычкой больше не ломает ленту
-  изменений. Массовая правка клиентов с разными наборами inbound-ов
-  регенерирует ссылки каждого клиента из его собственных inbound-ов. Работают
+  изменений. Массовая правка клиентов с разными наборами Inbounds
+  регенерирует ссылки каждого клиента из его собственных Inbounds. Работают
   Unicode-домены панели (IDN). Ошибка разбора конфига sing-box показывается
   явно, вместо тихо «здорового» пустого ядра. Генераторы подписок пропускают
   битые поля вместо паники.
 
-- **Производительность.** Фронтенд-бандл уменьшен с 6,2 МБ до 2,5 МБ (−60%;
+- **Производительность.** Фронтенд-бандл уменьшен с 6,2 МБ до 2,5 МБ (-60%;
   ленивые `moment`/date-picker, SVG-иконки). IP-монитор пишет накопленные
   записи одним батч-upsert'ом; горячий путь подписок кэширует настройки
   отображения (~8 запросов меньше на запрос); история заказов
@@ -221,15 +221,15 @@ non-critical instance first.
 - **Скоупированные API-токены теряют доступ, которого не должны были иметь.**
   Интеграция, использующая токен `read`/`observability`/`telegram`/`database`
   для записи конфига, перезапуска панели или чтения настроек, теперь
-  отклоняется — используйте `admin` или подходящий `write`-токен.
-- **Удалены плановая синхронизация и удалённый импорт 3x-ui.** Импорт — только
+  отклоняется - используйте `admin` или подходящий `write`-токен.
+- **Удалены плановая синхронизация и удалённый импорт 3x-ui.** Импорт - только
   разовая загрузка локального `.db` (мастер в UI, `POST /api/import-xui[/plan|
   /apply|/rollback]`, `s-ui import-xui --src`). Команда `s-ui sync-xui`, флаги
   `--remote`/`--schedule`, remote/sync API-маршруты и скоуп токена `xui_remote`
   удалены; таблицы `xui_sync_profiles` и `xui_known_hosts` удаляются
   автоматически при первом старте.
 - **Изменения поведения:** смена пароля администратора завершает все остальные
-  сессии; блокировка логина по имени пользователя — это задержка (tarpit), а
+  сессии; блокировка логина по имени пользователя - это задержка (tarpit), а
   не жёсткий блок.
 
 ## Обновление
@@ -239,5 +239,5 @@ non-critical instance first.
 однократное перешифрование секретов выполняется на старте. Просмотрите
 ломающие изменения выше, если используете скоупированные API-токены или
 полагались на плановую синхронизацию / удалённый импорт 3x-ui. «Платные
-подписки» выключены, пока вы их не включите — сначала попробуйте на
+подписки» выключены, пока вы их не включите - сначала попробуйте на
 некритичном экземпляре.

@@ -1,4 +1,4 @@
-# S-UI v1.5.2-beta-hotfix — backup chunking and SPA upgrade safety
+# S-UI v1.5.2-beta-hotfix - backup chunking and SPA upgrade safety
 
 > Hotfix on top of `v1.5.2-beta`. No schema changes, no behaviour changes
 > in the embedded `sing-box` runtime. Drop the new binary on top of an
@@ -33,32 +33,32 @@
 
 ### What changed
 
-- `database/bulk.go` — new `SafeSQLiteBatchSize`, `CreateInBatchesSafe`
+- `database/bulk.go` - new `SafeSQLiteBatchSize`, `CreateInBatchesSafe`
   and `SaveInBatchesSafe` helpers. They parse the GORM model schema to
   count columns and pick a batch size that keeps each generated INSERT
   under the SQLite variable budget (800 placeholders, conservative against
   the 999 hard limit).
-- `database/backup.go: copyBackupTable` — now reads the source in pages
+- `database/backup.go: copyBackupTable` - now reads the source in pages
   via `FindInBatches` and writes into the backup database with chunked
   `CreateInBatches`, all inside a single transaction. Memory stays bounded
   for arbitrarily large `stats` / `client_ips` tables.
-- `database/importxui/history_routing.go` — historical traffic import
+- `database/importxui/history_routing.go` - historical traffic import
   uses the chunked helper too, since `client_traffics`/`outbound_traffics`
   often produce tens of thousands of `stats` rows on production installs.
-- `service/client.go` — `addbulk`, `editbulk`, `ResetClients`,
+- `service/client.go` - `addbulk`, `editbulk`, `ResetClients`,
   `DepleteClients` now chunk their bulk `Save`/`Create` calls. Reset and
   deplete jobs no longer fail on installs with thousands of clients.
-- `web/web.go` + `web/assets.go` — `/<base>/assets/*` is served by a
+- `web/web.go` + `web/assets.go` - `/<base>/assets/*` is served by a
   custom handler that returns a real 404 for missing files instead of
   falling through to the SPA fallback. Hashed assets keep
   `Cache-Control: public, max-age=31536000, immutable`. `index.html` is
   served with `Cache-Control: no-cache, no-store, must-revalidate` so an
   upgrade is picked up on the next document load.
-- `frontend/src/router/index.ts` — listens for `vite:preloadError` and
+- `frontend/src/router/index.ts` - listens for `vite:preloadError` and
   `router.onError`. When a dynamic import fails because of a stale chunk
   hash, the router triggers a single guarded `window.location.reload()`
   (a `sessionStorage` flag prevents reload loops).
-- `database/backup_test.go` — regression test creates ~43k `stats` rows
+- `database/backup_test.go` - regression test creates ~43k `stats` rows
   plus 5k `client_ips` and verifies `GetDb("")` succeeds and round-trips
   the row count.
 
@@ -105,11 +105,11 @@ CI logs or support chats.
 
 | Command | Result |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./...` | ✅ |
-| `go test -race ./...` | ✅ (CGO + C compiler required) |
-| `npm run build` | ✅ |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./...` | OK |
+| `go test -race ./...` | OK (CGO + C compiler required) |
+| `npm run build` | OK |
 
 ### Rollback
 
@@ -140,42 +140,42 @@ stable across upgrade and rollback.
   Вкладки браузера, в которых остался старый `index.html`, запрашивали
   старые хэшированные чанки вида `assets/_5nyNEw12.js`. Static-хэндлер
   Gin для отсутствующих файлов отдавал SPA-fallback (`index.html`), и
-  браузер получал `text/html` на запрос JS-модуля — отсюда
+  браузер получал `text/html` на запрос JS-модуля - отсюда
   `Failed to load module script` / `Failed to fetch dynamically
-  imported module`. `Clients` — первая страница с динамическим импортом
+  imported module`. `Clients` - первая страница с динамическим импортом
   на пути большинства пользователей, поэтому она и ломалась видимым
   образом.
 
 ### Что изменилось
 
-- `database/bulk.go` — новые helper'ы `SafeSQLiteBatchSize`,
+- `database/bulk.go` - новые helper'ы `SafeSQLiteBatchSize`,
   `CreateInBatchesSafe`, `SaveInBatchesSafe`. Они разбирают схему
   GORM-модели, считают количество колонок и подбирают размер батча,
   при котором каждый INSERT укладывается в бюджет переменных SQLite
-  (800 плейсхолдеров — консервативный запас от лимита 999).
-- `database/backup.go: copyBackupTable` — теперь читает источник
+  (800 плейсхолдеров - консервативный запас от лимита 999).
+- `database/backup.go: copyBackupTable` - теперь читает источник
   страницами через `FindInBatches` и пишет в бэкап-БД чанками через
   `CreateInBatches`, всё внутри одной транзакции. Память не растёт
   на любых размерах `stats` / `client_ips`.
-- `database/importxui/history_routing.go` — импорт исторического
+- `database/importxui/history_routing.go` - импорт исторического
   трафика тоже использует чанковый helper: на проде
   `client_traffics`/`outbound_traffics` часто дают десятки тысяч строк
   `stats`.
-- `service/client.go` — `addbulk`, `editbulk`, `ResetClients`,
+- `service/client.go` - `addbulk`, `editbulk`, `ResetClients`,
   `DepleteClients` теперь нарезают bulk-`Save`/`Create` на чанки.
   Reset/deplete-задачи больше не падают на инсталлах с тысячами
   клиентов.
-- `web/web.go` + `web/assets.go` — `/<base>/assets/*` обслуживается
+- `web/web.go` + `web/assets.go` - `/<base>/assets/*` обслуживается
   кастомным хэндлером, который для отсутствующего файла возвращает
   честный 404, а не SPA-fallback. Хэшированные ассеты остаются с
   `Cache-Control: public, max-age=31536000, immutable`. `index.html`
   отдаётся с `Cache-Control: no-cache, no-store, must-revalidate`, и
   апгрейд подхватывается со следующим запросом документа.
-- `frontend/src/router/index.ts` — слушает `vite:preloadError` и
+- `frontend/src/router/index.ts` - слушает `vite:preloadError` и
   `router.onError`. Если динамический импорт упал из-за устаревшего
   хэша чанка, роутер делает один защищённый `window.location.reload()`
   (флаг в `sessionStorage` исключает петлю перезагрузок).
-- `database/backup_test.go` — регресс создаёт ~43k строк `stats` плюс
+- `database/backup_test.go` - регресс создаёт ~43k строк `stats` плюс
   5k `client_ips`, проверяет, что `GetDb("")` отрабатывает и количество
   строк сохраняется.
 
@@ -222,11 +222,11 @@ sudo bash install.sh v1.5.2-beta-hotfix
 
 | Команда | Результат |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./...` | ✅ |
-| `go test -race ./...` | ✅ (нужен CGO и C-компилятор) |
-| `npm run build` | ✅ |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./...` | OK |
+| `go test -race ./...` | OK (нужен CGO и C-компилятор) |
+| `npm run build` | OK |
 
 ### Откат
 

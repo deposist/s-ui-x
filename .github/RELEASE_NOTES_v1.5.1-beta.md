@@ -1,4 +1,4 @@
-# S-UI v1.5.1-beta — remediation hardening and UI completion
+# S-UI v1.5.1-beta - remediation hardening and UI completion
 
 > Pre-release. Closes the remaining security, privacy, realtime, Telegram,
 > observability, frontend and test gaps from the `1.5.0` remediation cycle.
@@ -21,8 +21,7 @@ You can drop the new binary on top of an existing 1.x install or restore an
 older `.db` backup from the panel: schema migrations and the post-migration
 adapter run automatically. **No data loss, no manual steps.**
 
-### Highlights
-
+### Changes
 - **Async Telegram pipeline.** Notifications go through a bounded queue with
   retry/backoff and audited overflow/failure events; login and other handlers
   never block on Telegram network failures.
@@ -44,7 +43,7 @@ adapter run automatically. **No data loss, no manual steps.**
   name URLs when `subSecretRequired=true`.
 - **Telegram proxy egress and reports.** Validated HTTP/HTTPS/SOCKS5 proxy,
   normalized error classes, CPU hysteresis alerts, scheduled reports and
-  encrypted DB backup export — all opt-in.
+  encrypted DB backup export - all opt-in.
 - **Bounded observability and logs.** Bounded buckets sampled by cron with
   validated API parameters; bounded `GET /api/logs` and fail-soft 1h-cached
   `GET /api/version`.
@@ -101,12 +100,12 @@ support chats.
 
 | Command | Result |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go test ./...` | ✅ |
-| `npm run test:unit` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `go test -race ./...` | ⚠ requires CGO and a C compiler |
+| `go vet ./...` | OK |
+| `go test ./...` | OK |
+| `npm run test:unit` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `go test -race ./...` | requires CGO and a C compiler |
 
 `go test -race ./...` could not run in this Windows workspace because the Go
 race detector requires CGO and no C compiler is available:
@@ -161,7 +160,7 @@ post-migration-адаптер выполнятся автоматически. *
   ограничены rate-limit, audit-список поддерживает cursor pagination и
   валидированные фильтры `event`/`severity`.
 - **Privacy-by-default для IP-истории.** Клиентские IP по умолчанию хранятся
-  как salt+SHA-256 хэш, показ raw-IP — opt-in, retention обслуживается
+  как salt+SHA-256 хэш, показ raw-IP - opt-in, retention обслуживается
   cron-GC, режим `enforce` отбрасывает только новые сверхлимитные
   подключения.
 - **Завершение подписок.** Per-client subscription-секреты, валидируемые
@@ -169,7 +168,7 @@ post-migration-адаптер выполнятся автоматически. *
   404 на legacy name-URL при `subSecretRequired=true`.
 - **Telegram-прокси и отчёты.** Валидируемые HTTP/HTTPS/SOCKS5-прокси,
   нормализованные классы ошибок, CPU-hysteresis алерты, scheduled отчёты и
-  зашифрованный экспорт БД-бэкапа в Telegram — всё opt-in.
+  зашифрованный экспорт БД-бэкапа в Telegram - всё opt-in.
 - **Bounded observability и логи.** Bounded buckets сэмплируются cron-job с
   валидируемыми API-параметрами; bounded `GET /api/logs` и fail-soft
   1h-cached `GET /api/version`.
@@ -228,12 +227,12 @@ sudo bash install.sh v1.5.1-beta
 
 | Команда | Результат |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go test ./...` | ✅ |
-| `npm run test:unit` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `go test -race ./...` | ⚠ требуется CGO и C-компилятор |
+| `go vet ./...` | OK |
+| `go test ./...` | OK |
+| `npm run test:unit` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `go test -race ./...` | требуется CGO и C-компилятор |
 
 `go test -race ./...` не запускался в этом Windows-workspace: race-детектору
 Go нужен CGO, а C-компилятор отсутствует:

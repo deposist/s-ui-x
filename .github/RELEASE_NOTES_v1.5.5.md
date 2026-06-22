@@ -2,8 +2,7 @@
 
 Stable release of the `1.5.5` line for `deposist/s-ui-x`.
 
-## Highlights
-
+## Changes
 - Promotes `v1.5.5-beta1` through `v1.5.5-beta4-hotfix2` to stable `v1.5.5`.
 - Fixes subscription correctness for shared VLESS UUIDs and Clash WebSocket
   Host headers: `xtls-rprx-vision` is no longer exported for non-TCP

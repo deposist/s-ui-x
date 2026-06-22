@@ -60,7 +60,7 @@ func decodeClientLinks(clientID uint, raw json.RawMessage, operation string) ([]
 
 // buildLinksForInbounds generates the "local" link entries for the given
 // inbounds. The result is always a non-nil slice so an empty result marshals to
-// `[]`, never `null` (the NULL Links class of bug — see decodeClientLinks).
+// `[]`, never `null` (the NULL Links class of bug - see decodeClientLinks).
 func buildLinksForInbounds(config json.RawMessage, inbounds []model.Inbound, hostname string) []map[string]string {
 	links := []map[string]string{}
 	for i := range inbounds {
@@ -260,7 +260,7 @@ func (s *ClientService) Save(tx *gorm.DB, act string, data json.RawMessage, host
 		err = tx.Where("id = ?", id).First(&client).Error
 		// Deleting a client that is already gone (a stale UI row, a concurrent
 		// delete from another session, or a resubmitted request) is an
-		// idempotent no-op instead of a "record not found" failure — the
+		// idempotent no-op instead of a "record not found" failure - the
 		// intended end state (client absent) already holds.
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -300,7 +300,7 @@ func (s *ClientService) updateLinksWithFixedInbounds(tx *gorm.DB, clients []*mod
 	// Each client may carry a different inbound set (notably act="editbulk", where
 	// ClientEditBulk.vue preserves per-client inbounds), so the inbound list used
 	// to regenerate a client's local links must come from THAT client's own
-	// Inbounds — not from clients[0], which would corrupt subscriptions for every
+	// Inbounds - not from clients[0], which would corrupt subscriptions for every
 	// client whose inbound set differs from the first one. Preloaded inbound rows
 	// are memoised by the raw Inbounds JSON so the common case of one shared set
 	// (act="addbulk", act="new"/"edit") still issues a single query.

@@ -1,4 +1,4 @@
-# S-UI v1.5.3-beta — aggregated remediation + upstream parity (#1114)
+# S-UI v1.5.3-beta - aggregated remediation + upstream parity (#1114)
 
 > Aggregates the multi-chat code review remediation passes (P0/P1/P2/P3
 > + P4/P5 architecture and logging cleanup) on top of `v1.5.2-beta-hotfix2`
@@ -14,8 +14,7 @@
 
 ## English
 
-### Highlights
-
+### Changes
 - **Upstream parity (#1114).** TUIC subscription/share links and the
   Clash export now include `udp_relay_mode`. The generator reads it from
   the inbound's `out_json.udp_relay_mode`, falls back to the inbound's
@@ -48,9 +47,9 @@
 
 ### Validation
 
-- `go build ./...` — PASS
-- `go test ./...` — PASS
-- `go test -race ./util ./sub` — PASS (TUIC link generation, parser
+- `go build ./...` - PASS
+- `go test ./...` - PASS
+- `go test -race ./util ./sub` - PASS (TUIC link generation, parser
   round-trip, default-mode behavior, Clash conversion).
 - The full multi-chat phase validation evidence is in `plans/`:
   - `plans/fix-validation.txt` (P0)
@@ -115,23 +114,23 @@ invalidate active sessions after downgrade and rotate admin credentials.
 
 ### Что это значит для оператора
 
-- `config/version` поднят до `1.5.3-beta`, версия frontend-пакета —
+- `config/version` поднят до `1.5.3-beta`, версия frontend-пакета -
   следом. Default тег release workflow теперь `v1.5.3-beta`.
 - TUIC-клиенты, которым раньше приходилось вручную выставлять
   `udp_relay_mode` на стороне импорта, теперь получают его прямо из
   панели. Inbound'ы с явным значением продолжают использовать его;
-  inbound'ы без значения получают безопасный default `quic`.
+  Inbounds без значения получают безопасный default `quic`.
 - Внешние Go-интеграции, использовавшие `logger.InitLogger` или
   `logger.GetLogger`, должны перейти на `logger.Init(logger.Level*)`,
   `logger.Slog(source)` или `slog.Default()`.
 
 ### Валидация
 
-- `go build ./...` — PASS
-- `go test ./...` — PASS
-- `go test -race ./util ./sub` — PASS (генерация TUIC-ссылки, round-trip
+- `go build ./...` - PASS
+- `go test ./...` - PASS
+- `go test -race ./util ./sub` - PASS (генерация TUIC-ссылки, round-trip
   парсинга, дефолтное поведение, Clash conversion).
-- Доказательная база по фазам — в `plans/`:
+- Доказательная база по фазам - в `plans/`:
   - `plans/fix-validation.txt` (P0)
   - `plans/p1-validation.txt` (P1)
   - `plans/p2-validation.txt` (P2)

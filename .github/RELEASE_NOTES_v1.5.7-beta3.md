@@ -3,8 +3,8 @@
 Release date: 2026-06-04
 
 Bug-fix beta for the experimental **Paid Subscriptions** module. Most
-importantly it fixes the admin write path (bindings, tariffs and broadcast did
-not actually save in beta2), plus several robustness fixes. Feature remains
+it also fixes the admin write path (bindings, tariffs and broadcast did
+not actually save in beta2), plus several reliability fixes. Feature remains
 **off by default**; no core schema migration.
 
 ## What changed
@@ -13,7 +13,7 @@ not actually save in beta2), plus several robustness fixes. Feature remains
   made it non-functional before: (1) write requests (`/api/paidsub/*`: bindings,
   tariffs, broadcast) were sent as `x-www-form-urlencoded` while the backend
   parsed JSON, and (2) every paidsub response omitted empty `msg`/`obj` keys,
-  which the frontend rejected as "unknown data" — so even reads (bindings,
+  which the frontend rejected as "unknown data" - so even reads (bindings,
   tariffs, orders) came back empty. Requests now send JSON and responses always
   include the `success`/`msg`/`obj` envelope, so the page loads and saves
   correctly.
@@ -39,7 +39,7 @@ not actually save in beta2), plus several robustness fixes. Feature remains
 
 No manual migration; existing data is preserved and the feature stays **disabled
 by default**. If you were on v1.5.7-beta2, upgrade to use the Paid Subscriptions
-admin page (bindings/tariffs/broadcast) — those actions only work from beta3.
+admin page (bindings/tariffs/broadcast) - those actions only work from beta3.
 
 ---
 
@@ -47,7 +47,7 @@ admin page (bindings/tariffs/broadcast) — those actions only work from beta3.
 
 Дата релиза: 2026-06-04
 
-Багфикс-бета экспериментального модуля **«Платные подписки»**. Главное —
+Багфикс-бета экспериментального модуля **«Платные подписки»**. Главное -
 исправлен путь записи в админке (в beta2 привязки, тарифы и рассылка фактически
 не сохранялись), плюс несколько правок надёжности. Функция по-прежнему
 **выключена по умолчанию**; миграции схемы ядра нет.
@@ -58,17 +58,17 @@ admin page (bindings/tariffs/broadcast) — those actions only work from beta3.
   её ломали две причины: (1) запросы записи (`/api/paidsub/*`: привязки, тарифы,
   рассылка) слались как `x-www-form-urlencoded`, а бэкенд парсит JSON, и (2) все
   paidsub-ответы опускали пустые ключи `msg`/`obj`, которые фронтенд отбраковывал
-  как «unknown data» — поэтому даже чтение (привязки, тарифы, заказы) возвращалось
+  как «unknown data» - поэтому даже чтение (привязки, тарифы, заказы) возвращалось
   пустым. Теперь запросы шлются как JSON, а ответы всегда содержат конверт
-  `success`/`msg`/`obj` — страница загружается и сохраняет корректно.
+  `success`/`msg`/`obj` - страница загружается и сохраняет корректно.
 - **Исправление: нет ложной авто-регистрации при транзиентной ошибке БД.**
   `/start` авто-регистрирует пробного клиента только при реальном «не найдено»;
   временная ошибка БД больше не приводит к созданию и перепривязке нового
   клиента поверх существующей подписки.
 - **Исправление: утечка соединений в цикле опроса бота.** Бот пересоздавал
-  HTTP-клиент каждый цикл; у выброшенных proxy/outbound-транспортов теперь
-  закрываются idle-соединения — нет медленной утечки сокетов при настроенном
-  прокси/аутбаунде.
+  HTTP-клиент каждый цикл; у выброшенных proxy/Outbound transports теперь
+  закрываются idle-соединения - нет медленной утечки сокетов при настроенном
+  прокси/Outbound.
 - **Усиление:** rate-лимитер команд бота отказывает новым ключам при
   переполнении (ограниченная память при всплеске); `invoice_ids` CryptoBot
   экранируются в URL; длинные списки ссылок жёстко режутся под лимит сообщения
@@ -82,5 +82,5 @@ admin page (bindings/tariffs/broadcast) — those actions only work from beta3.
 ## Обновление
 
 Ручная миграция не нужна, данные сохраняются, функция **выключена по умолчанию**.
-Если вы были на v1.5.7-beta2 — обновитесь, чтобы пользоваться страницей «Платные
+Если вы были на v1.5.7-beta2 - обновитесь, чтобы пользоваться страницей «Платные
 подписки» (привязки/тарифы/рассылка): эти действия работают только с beta3.

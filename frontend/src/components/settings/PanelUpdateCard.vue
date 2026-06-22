@@ -35,11 +35,11 @@
     </div>
 
     <div class="panel-update__versions">
-      <span>{{ $t('update.current') }}: <strong>{{ status?.current || '—' }}</strong></span>
+      <span>{{ $t('update.current') }}: <strong>{{ status?.current || 'N/A' }}</strong></span>
       <v-icon icon="mdi-arrow-right" size="small" />
       <span>
         {{ $t('update.available') }}:
-        <strong>{{ status?.latest || '—' }}</strong>
+        <strong>{{ status?.latest || 'N/A' }}</strong>
       </span>
       <v-chip
         v-if="status?.latest"
@@ -91,7 +91,7 @@
       type="error"
       variant="tonal"
     >
-      {{ $t('update.failed') }}<span v-if="status?.job?.error"> — {{ status.job.error }}</span>
+      {{ $t('update.failed') }}<span v-if="status?.job?.error">: {{ status.job.error }}</span>
     </v-alert>
 
     <div class="panel-update__actions">
@@ -187,8 +187,8 @@ const applyStatus = (obj: unknown) => {
   const incoming = status.value?.channel
   // Only arm the watch-suppression when the incoming channel actually differs
   // from the current selection. Arming it on an identical value (e.g. the common
-  // 'main' === 'main' case) leaves the flag stuck — Vue does not fire the watch
-  // for a no-op assignment — which would silently swallow the user's first real
+  // 'main' === 'main' case) leaves the flag stuck. Vue does not fire the watch
+  // for a no-op assignment, which would silently swallow the user's first real
   // channel toggle (no auto-check, channel not persisted).
   if ((incoming === 'main' || incoming === 'beta') && incoming !== channel.value) {
     suppressChannelCheck = true
@@ -238,7 +238,7 @@ const runUpdate = async () => {
 const startPolling = () => {
   stopPolling()
   pollTimer = setInterval(async () => {
-    // While the panel restarts into the new binary, requests fail — that is the
+    // While the panel restarts into the new binary, requests fail. That is the
     // expected end state; keep polling so the UI recovers once it returns.
     await loadStatus()
     if (!jobActive.value) stopPolling()

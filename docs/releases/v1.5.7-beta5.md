@@ -19,9 +19,9 @@ columns. Paid Subscriptions remains **off by default**; no schema migration.
   remaining-days chip (green = unlimited, red = expired), reusing the same
   formatter as the Clients page.
 - **Unbind confirmation.** Removing a client's Telegram binding now opens a
-  **confirmation dialog** ("Unbind Telegram from …?") instead of unbinding on the
+  **confirmation dialog** ("Unbind Telegram from ...?") instead of unbinding on the
   first click; the link is cleared only after you confirm. The client itself stays
-  in the panel — only the binding is removed.
+  in the panel - only the binding is removed.
 - **Orders columns.** The Orders table now shows **Client name** (replacing the
   bare numeric client id), **Telegram ID**, and **Description**. The name and
   description are joined server-side from the clients table with a LEFT JOIN (a
@@ -31,7 +31,7 @@ columns. Paid Subscriptions remains **off by default**; no schema migration.
 ## Upgrade
 
 No manual migration. The new columns are read from existing client fields via a
-read-only join — there is no schema change — and Paid Subscriptions stays
+read-only join - there is no schema change - and Paid Subscriptions stays
 **disabled by default**.
 
 ---
@@ -52,14 +52,14 @@ UI-бета поверх v1.5.7-beta4: шлифует админскую стр�
 
 - **Порядок вкладок + колонки Bindings.** Вкладки «Платных подписок»
   переупорядочены: **Bindings** теперь первая (и открывается по умолчанию), а
-  **Bot** — последняя (после *Orders*). В таблицу Bindings добавлены три колонки:
+  **Bot** - последняя (после *Orders*). В таблицу Bindings добавлены три колонки:
   **Client ID**, **Description** и **Expiry**. Expiry показывает дату/время плюс
   чип с остатком дней (зелёный = безлимит, красный = истёк), переиспользуя тот же
   форматтер, что и страница Clients.
 - **Подтверждение отвязки.** Снятие Telegram-привязки клиента теперь открывает
-  **диалог подтверждения** («Unbind Telegram from …?») вместо мгновенной отвязки
+  **диалог подтверждения** («Unbind Telegram from ...?») вместо мгновенной отвязки
   по первому клику; привязка снимается только после подтверждения. Сам клиент
-  остаётся в панели — удаляется только привязка.
+  остаётся в панели - удаляется только привязка.
 - **Колонки Orders.** В таблице Orders теперь показываются **имя клиента**
   (вместо голого числового id), **Telegram ID** и **описание**. Имя и описание
   подтягиваются на сервере из таблицы клиентов через LEFT JOIN (удалённый клиент
@@ -69,5 +69,5 @@ UI-бета поверх v1.5.7-beta4: шлифует админскую стр�
 ## Обновление
 
 Ручная миграция не нужна. Новые колонки читаются из существующих полей клиента
-через read-only join — изменения схемы нет, — а «Платные подписки» остаются
+через read-only join - изменения схемы нет, - а «Платные подписки» остаются
 **выключенными по умолчанию**.

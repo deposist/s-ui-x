@@ -1,6 +1,6 @@
 # 更新日志（简体中文）
 
-本文件记录了项目的所有重要变更。
+本文件记录项目变更。
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
@@ -9,8 +9,8 @@
 对 v1.5.9-beta5 的小幅跟进。无需变更数据库、API 或配置。
 
 - **修复（UI）：WireGuard 端点编辑器可能打开为空。** 添加 WireGuard 端点时，有时
-  只显示类型和标签，而没有密钥、地址、端口或对等端字段，因为编辑器在其密钥数据
-  准备好之前就已渲染。现在这些数据从一开始就存在，编辑器每次都能稳定加载全部字段。
+  只显示类型和标签，而没有密钥、地址、端口或对等端字段，因为编辑器在数据
+  准备好之前就已渲染。现在这些字段会在第一次打开时加载。
 
 完整发布说明：[`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md)。
 
@@ -19,31 +19,31 @@
 对 v1.5.9-beta4 的小幅跟进。无需变更数据库、API 或配置。
 
 - **修复（UI）：默认界面中表单字段拥挤、相互重叠。** 添加和编辑表单排得太紧，字段
-  标签可能贴住或压到上方的字段、标题或标签页——在添加客户端或故障转移组时最为明显。
-  现在所有表单都有合适的间距，显示清晰。
+  标签可能贴住或压到上方的字段、标题或标签页，添加客户端或故障转移组时最明显。
+  现在表单有足够的垂直间距。
 
 完整发布说明：[`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md)。
 
 ## [1.5.9-beta4] - 2026-06-17 - 修复 Nexus 界面中的故障转移组编辑器
 
-对 v1.5.9-beta3 的小幅跟进。无需变更数据库、API 或配置；受影响的前端可正常构建，
-全部前端测试套件通过（含针对 Nexus 编辑器的 Playwright 检查）。
+对 v1.5.9-beta3 的小幅跟进。无需变更数据库、API 或配置。受影响的前端可正常构建，
+前端测试通过，Nexus 编辑器路径已由 Playwright 覆盖。
 
 - **修复（UI）：Nexus（默认）界面中缺失故障转移组编辑器。** v1.5.9-beta3 新增的
   `failover` 出站类型此前只接入了经典出站弹窗，未接入 Nexus 抽屉
   （`OutboundDrawer.vue`），因此在默认界面选择 *Failover* 会打开空编辑器，并仍然
   渲染服务器地址/端口字段。现在 Nexus 抽屉会挂载 Failover 编辑器并为该组隐藏
-  服务器/端口字段——已通过针对 Nexus 界面的 Playwright e2e 实测验证。
+  服务器/端口字段。Nexus 路径已由 Playwright e2e 覆盖。
 
 完整发布说明：[`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md)。
 
 ## [1.5.9-beta3] - 2026-06-17 - 网页内面板更新 + 出站自动故障转移
 
 自 v1.5.9-beta2 起的两项新能力。无需手动变更数据库、API 或配置；受影响的 Go 包
-与全部前端测试套件均通过。
+与前端测试均通过。
 
-- **新增（维护）：从网页界面更新面板。** **设置 → 维护** 新增 *面板更新* 卡片
-  —— 选择通道（*Main* 跟踪稳定版，*Beta* 跟踪最新版含预发布）、检查更新并一键
+- **新增（维护）：从网页界面更新面板。** **设置 -> 维护** 新增 *面板更新* 卡片。
+  选择通道（*Main* 跟踪稳定版，*Beta* 跟踪最新版含预发布）、检查更新并一键
   更新。面板下载所选版本，通过受验证的 HTTPS 对照发布的 SHA-256 校验后替换自身
   并在新版本上重启；旧二进制会备份，若新装版本反复无法启动则自动回滚。仅管理员
   可用且需重新输入密码；每次检查与更新尝试（含被拒绝的）都会记入审计，且从不记录
@@ -52,8 +52,8 @@
   保存有序的成员列表（第一个为主，其余为备）。进程内管理器通过 HTTPS 探测每个
   成员（目标地址与间隔由运营者设置，默认 30 秒），并经由 sing-box selector 切换
   当前成员：活动成员失联时立即切换，主成员恢复后带迟滞地切回最高优先级成员，全部
-  不可用时回退到 direct 或保持最高优先级成员。可将该组用作 **路由 → 默认出站**
-  或任意规则——其行为与普通出站一致——出站列表会显示当前活动成员。无需架构迁移
+  不可用时回退到 direct 或保持最高优先级成员。可将该组用作 **路由 -> 默认出站**
+  或任意规则。其行为与普通出站一致，出站列表会显示当前活动成员。无需架构迁移
   （该组装配为 sing-box selector；非权威的 `failover_state` 可观测性表在启动时
   幂等创建）。
 
@@ -68,7 +68,7 @@
   但未设置 `on-surface-variant`）。现在所有气泡都采用实色深底/浅字方案，在浅色与
   深色主题下均清晰可读。
 - **修复（UI）：浮动字段标签被截断。** `persistent-placeholder` 加上 append-inner
-  的 (i) 图标会限制浮动标签宽度，将较短标签截断为 “Add…”“P…”“Do…”。现在浮动标签
+  的 (i) 图标会限制浮动标签宽度，将较短标签截断为 "Add...""P...""Do..."。现在浮动标签
   会根据内容自适应宽度。
 - **修复（安装）：安装/自更新可能在卡住的镜像上挂起。** `install.sh`（tarball 和
   `.sha256`）以及 `s-ui.sh` 自更新调用 `wget` 时没有超时，因此一个卡住的
@@ -79,7 +79,7 @@
 
 修复了一次全量代码库审计发现的问题：在 Go 后端、Vue 前端及构建/安装脚本中共
 28 项修复，确定性工具链（build、vet、staticcheck、gosec、govulncheck）干净，
-受影响的 Go 包与全部前端测试套件均通过。两项最严重的问题属于完整性类。新增的
+受影响的 Go 包和前端测试均通过。两项最严重的问题属于完整性类。新增的
 stats 索引在启动时自动创建；无需手动数据库迁移，也无需更改配置。
 
 - **修复（完整性）：保存时 panic 导致半提交事务。** 订阅/out-JSON 的 TLS 组装器
@@ -89,12 +89,12 @@ stats 索引在启动时自动创建；无需手动数据库迁移，也无需�
   现在 `addTls` 是完备的（nil 安全的客户端 map、每处断言均用 comma-ok）；`Save`
   将任何 panic 恢复为事务回滚。回归测试覆盖所有 panic 向量。
 - **修复（安全）：安装器禁用 TLS 的下载导致 root RCE。** `install.sh` 与
-  `s-ui.sh` 自更新使用 `wget --no-check-certificate` 拉取其制品——对 install.sh
-  还包括用于校验 tarball 的 `.sha256`——因此主动中间人可同时替换制品及其校验和，
+  `s-ui.sh` 自更新使用 `wget --no-check-certificate` 拉取其制品--对 install.sh
+  还包括用于校验 tarball 的 `.sha256`--因此主动中间人可同时替换制品及其校验和，
   而校验仍会通过。现已在每次下载时恢复证书校验；自更新先写入临时文件再原子换入。
 - **供应链。** 预构建的 `libcronet` 原生库（由 root 内核在进程内 `dlopen`）在
   Dockerfile 与 `windows.yml` 中被固定到不可变的 cronet-go 发布标签，并按架构以
-  SHA-256 校验——不再使用无校验和的可变 `releases/latest` URL。Docker 基础镜像按
+  SHA-256 校验--不再使用无校验和的可变 `releases/latest` URL。Docker 基础镜像按
   digest 固定；所有 workflow 中的每个 GitHub Actions 步骤均固定到完整 commit SHA。
   `s-ui.sh` 的 SSL 菜单加固了 acme.sh 安装（`curl -fsSL --proto '=https'`），
   并不再启用 `--auto-upgrade`。
@@ -109,7 +109,7 @@ stats 索引在启动时自动创建；无需手动数据库迁移，也无需�
   `resetDays=0` 的周期重置配置错误被钳制，避免每分钟清零计数；外部订阅的 SSRF
   过滤现复用中央校验器，封堵此前放行的 CGNAT 等保留网段。
 - **并发与生命周期。** deplete 定时任务的热重载可能与内核全量重启竞争并在 sing-box
-  内部 panic——管理器变更现在在其执行期间持有内核读锁。IP 证书自动续期可能在悄然
+  内部 panic--管理器变更现在在其执行期间持有内核读锁。IP 证书自动续期可能在悄然
   跳过加载新证书的面板重启的同时报告成功；现使用不可丢弃的重启。
 - **性能。** 新增与仪表盘查询匹配的复合索引 `stats(resource, tag, date_time)`；
   WebSocket 事件每次广播仅序列化一次，而非每个连接一次；订阅服务器现以 gzip
@@ -170,7 +170,7 @@ stats 索引在启动时自动创建；无需手动数据库迁移，也无需�
 IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面迁移至终端管理菜单。
 面板内的自动续期定时任务保持不变；修复 CSR 后现可正常运行。无需数据库迁移。
 
-- **内置 sing-box 更新至 v1.13.13**（自 v1.13.12）——上游错误修复
+- **内置 sing-box 更新至 v1.13.13**（自 v1.13.12）--上游错误修复
   （direct outbound 中的 TUN loopback 处理、ping 超时修复、构建修复）。
   上游在发布后移动了 `v1.13.13` 标签，因此 `go.mod` 保留 `require v1.13.13`
   但通过 `replace` 指向修复后的发布提交；代理缓存的原始提交在 Windows 上无法编译。
@@ -181,7 +181,7 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
   通过 `certcrypto.CreateCSR{Domain:"", SAN:[ip]}` 构建 CSR，并经由
   `ObtainForCSR` 签发，生成正确的 `Type:"ip"` ACME 标识符。
 - **终端签发。** 设置 → Maintenance 中的「IP certificate」卡片已移除。新增：
-  s-ui.sh 第 20 项 → 选项 5 — 停止面板（释放端口 80 及数据库独占访问），
+  s-ui.sh 第 20 项 → 选项 5 - 停止面板（释放端口 80 及数据库独占访问），
   执行 `sui ip-cert issue`，重启面板。source `/etc/s-ui/secretbox.env`，
   使 CLI 与运行中的面板共享 `SUI_SECRETBOX_KEY`。
 - **新 CLI 子命令：** `sui ip-cert <issue|renew|status|disable>`，
@@ -199,7 +199,7 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
   面板最繁忙的读取路径，并在负载下占据了 `/load` 的大部分 CPU（性能分析约占该端点
   的 85%）。现在当所有默认键已存在时即跳过播种；返回的 map 字节一致，并发首次初始化
   仍为 exactly-once（issue #19）。`BenchmarkAPI_Load`：~4.86 ms → ~1.30 ms/op，
-  分配 −37%。
+  分配 -37%。
 - **内部清理。** 删除了 `deadcode`/`staticcheck` 标记的确证死代码（10 个不可达函数
   及 1 个孤立变量）。三个看似死代码的安全辅助函数（`config.GetSecret`、
   `ValidateIssuableIP`、`ssrf.IsInfrastructureAddr`）予以保留，并以新的契约测试固定。
@@ -211,10 +211,10 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
 ## [1.5.8-beta3] - 2026-06-14 - IP 地址 TLS 证书（签发 + 自动续期）；Config Doctor 移至设置
 
 测试版：为无域名的裸 IP 地址签发并自动续期 Let's Encrypt TLS 证书，全程在进程内完成。
-增量更新——无需数据库迁移，无配置变更。
+增量更新--无需数据库迁移，无配置变更。
 
 - IP 地址 TLS 证书：设置 → Maintenance 中新增「IP certificate」卡片，通过 `go-acme/lego`
-  在进程内为裸 IP 签发 Let's Encrypt 证书（RFC 8738 `shortlived` 证书配置）——无需
+  在进程内为裸 IP 签发 Let's Encrypt 证书（RFC 8738 `shortlived` 证书配置）--无需
   `acme.sh`，在 Linux、Windows 与 Docker 上表现一致。HTTP-01 standalone，端口可配置
   （默认 80）。可应用于面板自身的 HTTPS 监听器（面板重启以加载）或某个入站 TLS 配置
   （热重载，不重启内核）。每 12 小时的任务会在剩余有效期不足 72 小时时（shortlived
@@ -234,7 +234,7 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
 
 ## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack：Config Doctor、RU/ZH 路由/DNS 预设、订阅交付 UX、客户端诊断
 
-测试版：面向 RU/ZH 单面板管理员的运维与诊断层。增量更新——新增只读诊断端点与前端界面，
+测试版：面向 RU/ZH 单面板管理员的运维与诊断层。增量更新--新增只读诊断端点与前端界面，
 无需数据库迁移，无配置变更。
 
 - 主页的 Config Doctor（Nexus 与经典布局）：一键从数据库组装完整的 sing-box 配置并进行
@@ -265,14 +265,14 @@ IP 地址证书签发的关键 CSR 构造错误。将签发流程从 Web 界面�
 - 保存入站、出站、端点和服务不再重启 sing-box 内核：被修改的对象会在运行中的内核里
   热替换（与客户端和 TLS 编辑已使用的机制相同）。未受影响对象上的现有连接在每次保存
   后都得以保留。热应用失败时仍会回退到完整重启，内核永远不会继续使用过期配置。
-  - 若出站/端点的标签在适配器构建时被捕获——其他出站的 `detour`、`selector`/`urltest`
+  - 若出站/端点的标签在适配器构建时被捕获--其他出站的 `detour`、`selector`/`urltest`
     的成员列表或 `default`、服务的拨号 detour、`dns`/`ntp` 的 detour、规则集的
-    `download_detour`、Clash API 界面下载 detour——则保守地通过完整重启应用。来自
+    `download_detour`、Clash API 界面下载 detour--则保守地通过完整重启应用。来自
     路由规则和 `route.final` 的引用按连接解析，这类编辑保持热更新。
   - 编辑受管 shadowsocks 入站时会同时重建绑定它的 `ssm-api` 服务，使其继续跟踪新的
     入站适配器。
-- 删除（或重命名）仍被任何位置引用的出站、端点或受管入站——包括路由规则和
-  `route.final`——现在会被阻止，并返回列出所有引用位置的错误。此前保存会成功，而下次
+- 删除（或重命名）仍被任何位置引用的出站、端点或受管入站--包括路由规则和
+  `route.final`--现在会被阻止，并返回列出所有引用位置的错误。此前保存会成功，而下次
   内核启动会因悬空引用而失败，导致整个代理瘫痪。
 - 在未做任何修改的情况下重新保存 sing-box 设置不再重启内核（也不再断开所有活动连接）。
 - 保存后的内核同步、用户发起的重启与定时内核启动现已串行化：保存不会再与重启交错，
@@ -290,7 +290,7 @@ v1.5.7 的热修复，并在 `s-ui` 菜单与安装器中加入会话 Cookie 密
 ### 修复
 
 - 删除数据库中已不存在的客户端（列表行过期、另一会话/标签页并发删除、请求重复提交）
-  不再报「record not found」错误：客户端的单个删除与批量删除现已幂等——删除不存在的
+  不再报「record not found」错误：客户端的单个删除与批量删除现已幂等--删除不存在的
   客户端是成功的空操作，批量删除会跳过已不存在的 id 并删除其余条目。入站、出站、
   端点、服务与 TLS 的删除路径经验证本已幂等，并新增了回归测试加以固化。
 
@@ -299,14 +299,14 @@ v1.5.7 的热修复，并在 `s-ui` 菜单与安装器中加入会话 Cookie 密
 - 新增 `s-ui` 菜单第 23 项：生成会话 Cookie 密钥（`SUI_COOKIE_KEY`），写入
   `/etc/s-ui/secretbox.env`；若密钥已存在会检测到并提供平滑轮换（旧密钥继续被接受，
   不会注销任何会话）。
-- 安装器在密钥缺失时自动生成 `SUI_COOKIE_KEY`——绝不覆盖已有密钥，也不会提问。首次
+- 安装器在密钥缺失时自动生成 `SUI_COOKIE_KEY`--绝不覆盖已有密钥，也不会提问。首次
   引入该密钥的升级会使旧后备密钥签发的会话注销一次。
 
 完整发行说明：[`docs/releases/v1.5.7-hotfix1.md`](docs/releases/v1.5.7-hotfix1.md)。
 
 ## [1.5.7] - 2026-06-11 - 首个稳定版 1.5.7：付费订阅、Nexus 重设计、安全加固、免重启生效
 
-1.5.7 线的首个稳定版本，整合了 1.5.7-beta1..beta10——实验性的**「付费订阅」** Telegram
+1.5.7 线的首个稳定版本，整合了 1.5.7-beta1..beta10--实验性的**「付费订阅」** Telegram
 机器人（六家支付渠道、试用、退款、群发）、焕新的深色「技术风」Nexus 界面，以及三轮独立
 安全加固。以下条目为 beta10 之后的新内容。
 
@@ -354,7 +354,7 @@ v1.5.7 的热修复，并在 `s-ui` 菜单与安装器中加入会话 Cookie 密
 ### 界面（Nexus）
 
 - 未保存更改的确认现在覆盖所有实体表单（抽屉与经典对话框），且在两种界面模式下均生效。
-- 客户端搜索不区分大小写；TLS 选项默认值不再在表单间“泄漏”；入站表单在配置有效前禁用“保存”；
+- 客户端搜索不区分大小写；TLS 选项默认值不再在表单间"泄漏"；入站表单在配置有效前禁用"保存"；
   逐行复选框具有正确的屏幕阅读器标签；移除了无用的 UI 代码。
 - 仪表盘状态轮询在浏览器标签页隐藏时暂停。
 
@@ -371,43 +371,43 @@ v1.5.7-beta9 的热修复。没有后端逻辑、破坏性变更、手动迁移�
 
 ### 修复
 
-- 修复了当构建生成以“_”开头的资源名时出现的空白面板（“Failed to fetch dynamically
-  imported module”，JS 分块 404）：Go 的 `//go:embed` 在不使用 `all:` 前缀时会丢弃此类
+- 修复了当构建生成以"_"开头的资源名时出现的空白面板（"Failed to fetch dynamically
+  imported module"，JS 分块 404）：Go 的 `//go:embed` 在不使用 `all:` 前缀时会丢弃此类
   文件。现在 embed 使用 `all:`，且前端为资源名添加前缀（`app-`/`chunk-`/`style-[hash]`），
-  使其永远不以“_”开头。
+  使其永远不以"_"开头。
 
 完整发布说明：[`docs/releases/v1.5.7-beta9-hotfix1.md`](docs/releases/v1.5.7-beta9-hotfix1.md)。
 
 ## [1.5.7-beta9] - 2026-06-10 - Nexus 界面对齐参考设计
 
-仅前端发布。默认的 Nexus 界面已对齐深色“技术”参考设计。没有后端、破坏性变更、
+仅前端发布。默认的 Nexus 界面已对齐深色"技术"参考设计。没有后端、破坏性变更、
 手动迁移或配置变更。
 
-### 全新外观
+### 外观调整
 
-- **焕新的 Nexus 界面。** 默认界面现已全面对齐深色“技术”参考设计：精确的配色
+- **Nexus 界面更新。** 默认界面已对齐深色"技术"参考设计：精确的配色
   （表面、`#2a2a2a` 边框、cyan 强调色、状态与文本颜色、cyan 主操作按钮）、统一的
   系统字体，以及等宽的 IP / 端口 / UUID 单元格。
 
 ### 改进
 
 - **状态一目了然。** Online / Offline / Disabled 以彩色状态徽章显示，TLS 以
-  On / Off 药丸显示；状态列标题为“Status”。
-- **页面标题移入顶栏。** 每个页面在顶栏显示其标题、计数摘要（例如“8 inbounds •
-  3 online”）和搜索框，全局控件位于右侧。
-- **紧凑侧边栏与焕新图标。** 更紧凑的扁平侧边栏，带 cyan “S” 标识，并在整个界面
-  焕新图标。第一个菜单项现为“Dashboard”。
+  On / Off 药丸显示；状态列标题为"Status"。
+- **页面标题移入顶栏。** 每个页面在顶栏显示其标题、计数摘要（例如"8 inbounds •
+  3 online"）和搜索框，全局控件位于右侧。
+- **紧凑侧边栏与焕新图标。** 更紧凑的扁平侧边栏，带 cyan "S" 标识，并在整个界面
+  焕新图标。第一个菜单项现为"Dashboard"。
 
 ### 修复
 
 - 修复批量**添加**与**编辑**客户端对话框中下拉菜单可能彼此叠加且无法关闭的问题；
   现在它们以正规抽屉形式打开。
-- 修复批量**编辑**客户端时，选择“所有客户端”后“保存”按钮仍处于禁用状态的问题。
-- 修复“付费订阅”页面上未翻译的“刷新”和“取消”按钮。
+- 修复批量**编辑**客户端时，选择"所有客户端"后"保存"按钮仍处于禁用状态的问题。
+- 修复"付费订阅"页面上未翻译的"刷新"和"取消"按钮。
 
 ### 本地化
 
-- 本地化“付费订阅”页面（英文与俄文；其余语言回退到英文），并以各语言自然的措辞
+- 本地化"付费订阅"页面（英文与俄文；其余语言回退到英文），并以各语言自然的措辞
   本地化页面副标题。
 
 仅前端发布；已通过 lint、128 个单元测试（含新增的 Lucide 图标集与英文/俄文语言键
@@ -437,33 +437,32 @@ v1.5.7-beta9 的热修复。没有后端逻辑、破坏性变更、手动迁移�
 
 完整发布说明：[`docs/releases/v1.5.7-beta8.md`](docs/releases/v1.5.7-beta8.md)。
 
-## v1.5.7（Beta）更新内容 — 面向用户的摘要
+## v1.5.7 Beta 摘要
 
-对上一个稳定版 **v1.5.6** 以来所有新增内容的易读汇总。完整的逐版本说明见
+稳定版 **v1.5.6** 之后的变更摘要。完整的逐版本说明见
 [`docs/releases/whats-new-1.5.7.md`](docs/releases/whats-new-1.5.7.md)。
 
-1.5.7 线的核心是全新的**「付费订阅」**模块：一个自助式 Telegram 机器人，让你的
-终端用户自行领取订阅、查看用量、自助购买或续费。该功能为**实验性且默认关闭**——
-在你启用之前，现有部署完全不受影响。
+1.5.7 线加入 **Paid Subscriptions**：实验性的 Telegram 自助机器人。该功能默认关闭。
+管理员启用前，现有部署不会改变。
 
-**✨ 新功能**
+**主要变化**
 - **「付费订阅」客户端机器人：** 订阅链接与各协议分享链接、**二维码**，以及实时用量
   （已用/上限、剩余天数、在线状态、流量）。
 - **自助注册**，带可配置的免费试用（有上限与频率限制）。
-- **内置 6 家支付渠道** —— Telegram Stars、YooKassa、Stripe、CryptoBot、PayMaster
-  和外部链接 —— 续费安全生效、不会重复扣费。
+- **内置 6 家支付渠道：** Telegram Stars、YooKassa、Stripe、CryptoBot、PayMaster
+  和外部链接；续费会幂等应用。
 - **机器人内「支付」菜单**（*购买 / 续费*、*我的购买*、*申请退款*），Telegram Stars
   自动退款；其他渠道则将退款申请转交管理员。
 - **管理员退款工具**，可选择逐笔撤销已发放的天数/流量。
 - **群发**给所有已绑定客户，以及**可编辑的 /start 问候语**。
-- **灵活的 Telegram 路由** —— 代理（HTTP/HTTPS/SOCKS5）或 sing-box 出站，客户端机器人
+- **灵活的 Telegram 路由：** 代理（HTTP/HTTPS/SOCKS5）或 sing-box Outbound，客户端机器人
   与管理员通知可分别独立配置。
 
-**🐛 修复（影响所有人）**
-- **不再意外重复创建：** 保存按钮在保存期间锁定，服务端也会拒绝重复提交——一次操作
-  始终只创建一条记录。
+**修复**
+- **不再意外重复创建：** 保存按钮在保存期间锁定，服务端也会拒绝重复提交。一次操作
+  只创建一条记录。
 
-**🔒 安全**
+**安全**
 - 机器人与支付令牌**加密存储**并在界面中脱敏；生产环境请设置 `SUI_SECRETBOX_KEY`。
   敏感的支付标识符绝不会到达浏览器或日志。
 
@@ -471,7 +470,7 @@ v1.5.7-beta9 的热修复。没有后端逻辑、破坏性变更、手动迁移�
 
 ## [1.5.7-beta7] - 2026-06-06 - 独立复审加固；移除 3x-ui 定时同步与远程导入
 
-本测试版包含**移除 3x-ui 定时同步 / 远程导入**，以及一轮来自全新独立代码质量、性能与
+本测试版包含**移除 3x-ui 定时同步 / 远程导入**，以及一轮独立代码质量、性能与
 安全复审的**低风险修复与加固**。无新功能，**无需手动迁移**。3x-ui 的移除会改变现有
 行为（见下方破坏性变更）；复审修复均不具破坏性。
 
@@ -483,7 +482,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 **破坏性变更**
 - **定时同步已移除。**「3x-ui Sync」计划页面、同步配置以及后台 cron 任务均不再存在；
   升级后任何此前配置的计划都将停止运行。`xui_sync_profiles` 与 `xui_known_hosts`
-  两张表会在首次启动时自动删除——无需手动操作。
+  两张表会在首次启动时自动删除--无需手动操作。
 - **远程导入已移除。** `POST /api/import-xui/remote/*` 与 `/api/import-xui/sync/*`
   端点已删除。导入现在仅支持文件上传：`POST /api/import-xui[/plan|/apply|/rollback]`
   与 `GET /api/import-xui/reports`。
@@ -494,64 +493,64 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 
 ### 安全与隐私（复审修复）
 
-- **登录不再泄露用户名是否存在** —— “未找到”路径现在执行与密码错误相同的 bcrypt 计算，
+- **登录不再泄露用户名是否存在** -- "未找到"路径现在执行与密码错误相同的 bcrypt 计算，
   关闭了可用于枚举管理员用户名的时序侧信道。
-- **日志中的 URL 凭据被脱敏** —— 任何被记录 URL 中的 `user:pass@host` 在自由文本中也会
+- **日志中的 URL 凭据被脱敏** -- 任何被记录 URL 中的 `user:pass@host` 在自由文本中也会
   被脱敏，而不仅是位于密钥命名设置项下时。
 - **会话 Cookie 默认 Secure**（生产登录/CSRF 流程已显式设置）。
-- **退款拒绝损坏的订单** —— 金额非正的已支付订单不会被处理（纵深防御）。
-- **IP 限制失败可观测** —— 每客户端 IP 限制检查遇到数据库错误时仍 fail-open，但现在会
+- **退款拒绝损坏的订单** -- 金额非正的已支付订单不会被处理（纵深防御）。
+- **IP 限制失败可观测** -- 每客户端 IP 限制检查遇到数据库错误时仍 fail-open，但现在会
   （限频）记录日志，而不是静默停用强制。
 
 ### 可靠性与修复（复审修复）
 
-- **正确的流量图表** —— 每客户端统计图表此前用空操作的 reducer 汇总每个时间桶，只显示第
+- **正确的流量图表** -- 每客户端统计图表此前用空操作的 reducer 汇总每个时间桶，只显示第
   一个样本；现已正确求和。
-- **更安全的 1.3 迁移** —— anytls / domain-strategy 迁移现在在事务中运行并检查每次写入
+- **更安全的 1.3 迁移** -- anytls / domain-strategy 迁移现在在事务中运行并检查每次写入
   （此前忽略保存错误并带有失效的过滤子句）。
-- **IDN 面板域名可用** —— Unicode 面板域名（如 `панель.рф`）现在与浏览器发送的 punycode
+- **IDN 面板域名可用** -- Unicode 面板域名（如 `панель.рф`）现在与浏览器发送的 punycode
   `Host` 匹配，不再返回 `403`。
-- **受限的公网 IP 探测** —— `s-ui uri` 的公网 IP 查询对响应体设置上限（1 MiB），与代码中
+- **受限的公网 IP 探测** -- `s-ui uri` 的公网 IP 查询对响应体设置上限（1 MiB），与代码中
   其他出站读取一致。
-- **抽屉不再抖动** —— 默认布局的 `isMobile` 重新成为纯 computed；抽屉默认展开状态通过
+- **抽屉不再抖动** -- 默认布局的 `isMobile` 重新成为纯 computed；抽屉默认展开状态通过
   watcher 跟随断点。
-- **更清晰的内核启动日志** —— sing-box 内核启动失败会显式记录（面板有意保持运行，以便从
+- **更清晰的内核启动日志** -- sing-box 内核启动失败会显式记录（面板有意保持运行，以便从
   UI 修复配置）。
 
 ### 性能与清理（复审修复）
 
-- **索引化订单历史** —— `payment_orders.telegram_user_id` 现已建立索引，用户的订单/退款
+- **索引化订单历史** -- `payment_orders.telegram_user_id` 现已建立索引，用户的订单/退款
   历史不再全表扫描。
-- **更轻的前端安装** —— 移除三个未使用的依赖（`core-js`、`roboto-fontface`、
+- **更轻的前端安装** -- 移除三个未使用的依赖（`core-js`、`roboto-fontface`、
   `material-design-icons-iconfont`）。
 
 **保留**
-- 一次性的本地 **`.db` 上传**导入——UI 向导、API 以及 `import-xui --src`——包括
+- 一次性的本地 **`.db` 上传**导入--UI 向导、API 以及 `import-xui --src`--包括
   dry-run、冲突策略、plan/apply 与回滚。
 
-无需手动迁移——已弃用的 3x-ui 表会在启动时删除。
+无需手动迁移--已弃用的 3x-ui 表会在启动时删除。
 
 ## [1.5.7-beta6-hotfix1] - 2026-06-05 - 修复 beta6 面板黑屏（前端构建）
 
-针对 v1.5.7-beta6 的紧急**构建**热修复。无代码、配置或数据变更——仅修复 beta6
+针对 v1.5.7-beta6 的紧急**构建**热修复。无代码、配置或数据变更--仅修复 beta6
 构建产物中损坏的前端构建。
 
-**🐛 修复**
-- **v1.5.7-beta6 上 Web 面板无法加载**——黑屏，控制台对某个 JS 分块报 `404`
+**修复**
+- **v1.5.7-beta6 上 Web 面板无法加载**--黑屏，控制台对某个 JS 分块报 `404`
   （例如 `assets/_WJiVkoC.js`）。`frontend/package-lock.json` 与 `package.json`
   失同步（图标从 `@mdi/font` 改为 `@mdi/js` 却未重新生成 lock）；发布流程用宽松的
   `npm install` 构建前端并嵌入了不一致、未经验证的产物。现已重新生成同步的 lock，
-  并验证构建一致——无悬空分块。
+  并验证构建一致--无悬空分块。
 
-**🔒 发布流水线加固**
-- 发布工作流现在以 fail-closed 方式构建前端——`npm ci` 加上与 CI 相同的 lint 与
-  单元测试门禁——因此失同步的 lock 或任何被 CI 拒绝的前端都无法再发布。
+**发布流水线加固**
+- 发布工作流现在以 fail-closed 方式构建前端--`npm ci` 加上与 CI 相同的 lint 与
+  单元测试门禁--因此失同步的 lock 或任何被 CI 拒绝的前端都无法再发布。
 
 ## [1.5.7-beta6] - 2026-06-05 - 安全与可靠性加固、性能与无障碍
 
-一次加固版本，源于对面板的一次完整代码质量、优化与安全审计。没有新功能，**也无需手动迁移**——它修补了多处安全缺口，消除了静默失败与 panic 风险，将前端打包体积削减约 60%，并修复了若干数据完整性缺陷。其中两项改变了现有行为，详见 **破坏性变更**。
+一次加固版本，源于对面板的一次完整代码质量、优化与安全审计。没有新功能，**也无需手动迁移**--它修补了多处安全缺口，消除了静默失败与 panic 风险，将前端打包体积削减约 60%，并修复了若干数据完整性缺陷。其中两项改变了现有行为，详见 **破坏性变更**。
 
-### 🔒 安全
+### 安全
 
 - **升级到 Go 1.26.4**，修补两个可达的 Go 标准库漏洞（`crypto/x509` 的
   `GO-2026-5037`、`net/textproto` 的 `GO-2026-5039`）。
@@ -564,7 +563,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   均被阻止。**`file` 与 `ssh` 导入源现仅限管理员**，计划同步也仅会从管理员保存的配置运行
   `file`/`ssh` 源。*(破坏性。)*
 - **静态密钥。** 设置 `SUI_SECRETBOX_KEY` 后，已存储的密钥现会在**启动时一次性以该数据库外密钥
-  重新封装**——在你启用该密钥之前写入的值，将无法仅凭数据库恢复。远程面板凭据加密的密钥改为从随机的
+  重新封装**--在你启用该密钥之前写入的值，将无法仅凭数据库恢复。远程面板凭据加密的密钥改为从随机的
   每安装实例密钥派生，而非可预测的默认值。
 - **登录暴破。** 在按 IP 限制之上新增**按用户名**的登录限流，使针对单个账户的分布式攻击也会被减速。
 - **会话固定（fixation）。** 会话 ID 现在**登录时轮换**，使被植入的预认证会话 Cookie 无法在认证后存活。
@@ -572,34 +571,34 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   `SameSite`；`s-ui admin -reset` 生成随机密码而非固定默认值。
 - **Telegram 支付**会校验付款方的 Telegram id；带有内嵌凭据的代理 URL 在日志中被掩码。
 
-### 🐛 可靠性与修复
+### 可靠性与修复
 
 - **不再误报「running」内核。** 若生成的 sing-box 配置解析失败，内核现会上报错误，而不是静默启动一个空实例、
   在无任何监听时仍报告健康。
 - **后台任务不会拖垮面板。** Cron 任务具备 panic 隔离与 skip-if-still-running；WAL-checkpoint
   任务对启动期的空指针解引用做了保护。
-- **更稳健的订阅生成。** 畸形的 inbound/客户端配置不再使 link、Clash 或 JSON 订阅生成器 panic——会优雅跳过坏字段。
-- **变更记录保持可用。** 含引号或其他 JSON 元字符的客户端名称不再破坏已存储的变更日志——此前这会让管理员
+- **更稳健的订阅生成。** 畸形的 inbound/客户端配置不再使 link、Clash 或 JSON 订阅生成器 panic--会优雅跳过坏字段。
+- **变更记录保持可用。** 含引号或其他 JSON 元字符的客户端名称不再破坏已存储的变更日志--此前这会让管理员
   **Changes** 页面对所有人返回空响应。
 - **批量编辑链接正确。** 编辑一组 inbound 集合*各不相同*的客户端时，现会按各自的 inbound 重新生成每个客户端的
   订阅链接，而不是复制第一个客户端的集合。
 - **一致的 API 错误**，带有文档化的 success 信封，并对内部细节做脱敏。
 
-### ⚡ 性能
+### 性能
 
 - **后端。** IP 监控以单次批量 upsert 写入待处理记录（而非每个 IP 一条语句）；订阅热路径缓存其显示设置
   （每次请求约少 8 次查询），`settings` 读取现走索引。
-- **前端打包 6.2 MB → 2.5 MB（−60%）。** `moment` 与日期选择器随其所属页面懒加载，图标从完整的
+- **前端打包 6.2 MB → 2.5 MB（-60%）。** `moment` 与日期选择器随其所属页面懒加载，图标从完整的
   Material Design 网页字体（约 2.9 MB）改为内联 SVG 路径。
 
-### ♿ 无障碍
+### 无障碍
 
 - 仅含图标的管理员动作按钮（编辑 / 变更 / 删除）现具有可供屏幕阅读器识别的可访问名称。
 
-### ⚠️ 破坏性变更
+### 破坏性变更
 
 - **scoped API 令牌将失去其本不应拥有的访问权。** 若某集成使用 `read`/`observability`/`telegram`/`database`
-  令牌写入配置、重启面板或读取设置（这仅因上述强制缺口才能工作），现将被拒绝——请改用 `admin` 或合适的
+  令牌写入配置、重启面板或读取设置（这仅因上述强制缺口才能工作），现将被拒绝--请改用 `admin` 或合适的
   `write` 令牌。
 - **`file`/`ssh` 的 x-ui 同步配置必须由管理员保存。** 升级后，源为本地 `file`/`ssh` 目标的计划同步配置在
   **管理员重新保存**之前不会运行（面板已无法证明升级前的配置由管理员创建）。从管理员会话重新保存即可恢复。
@@ -627,7 +626,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 
 - **「付费订阅」机器人：新增「支付」分区。** 原先扁平的「购买 / 续费」按钮被替换为
   **「支付」**菜单，点击后展开子菜单：**购买 / 续费**、**我的购买**、**申请退款**。
-  **「统计」**按钮更名为**「我的订阅」**（图标 👤）；视图本身不变。
+  **「统计」**按钮更名为**「我的订阅」**（个人图标）；视图本身不变。
 - **我的购买：** 只读列出*该用户本人*的订单（套餐、金额、状态、日期），严格限定为
   发起请求的 Telegram 用户。
 - **退款。** Telegram Stars 通过 Bot API（`refundStarPayment`）自动退款；其他支付方
@@ -636,22 +635,22 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   或将订单标记为 `refunded`，并带有逐笔的「撤销已发放的天数/流量」开关。
 - **退款回滚策略** `paidSubRefundRevoke`（默认开启）控制机器人中由用户发起的 Stars
   退款：退款成功时一并回滚该订单发放的天数与流量（防滥用），具备幂等性且不会停用客户。
-  用户无法选择此项——由管理员决定（全局，以及面板中的逐笔开关）。
+  用户无法选择此项--由管理员决定（全局，以及面板中的逐笔开关）。
 - **加固：** 后台 Orders API 不再暴露 Telegram charge id 与发票幂等键；机器人/面板的
-  并发退款若返回 “already refunded” 视为成功（Stars 退款在 charge 级别幂等）。
-- **修复：双重提交导致的重复创建。** 保存实体（客户端/入站/出站/…）会在响应前
-  同步重启 sing-box 内核，因此在该“缓慢”窗口内的第二次提交会创建重复行。现在保存
+  并发退款若返回 "already refunded" 视为成功（Stars 退款在 charge 级别幂等）。
+- **修复：双重提交导致的重复创建。** 保存实体（客户端/入站/出站/...）会在响应前
+  同步重启 sing-box 内核，因此在该"缓慢"窗口内的第二次提交会创建重复行。现在保存
   按钮在请求进行中被禁用（所有创建/编辑弹窗），服务端会跳过在首个请求仍在进行中或
-  其完成后短窗口内到达的相同创建——即使内核重启较慢，一次操作也只创建一行。
+  其完成后短窗口内到达的相同创建--即使内核重启较慢，一次操作也只创建一行。
 - 发布说明：[`docs/releases/v1.5.7-beta4.md`](docs/releases/v1.5.7-beta4.md)。
 
 ## [1.5.7-beta3] - 2026-06-04 - 修复「付费订阅」后台写入 + 加固
 
 - **修复：** 「付费订阅」后台页面现已完整可用。此前有两点问题：写操作
   （`/api/paidsub/*`：绑定、套餐、群发）以 form-urlencoded 发送，而后端按 JSON
-  解析；且所有 paidsub 响应都省略了空的 `msg`/`obj` 键（被前端判为 “unknown data”，
+  解析；且所有 paidsub 响应都省略了空的 `msg`/`obj` 键（被前端判为 "unknown data"，
   导致读取也为空）。现在请求以 JSON 发送，响应始终包含 `success`/`msg`/`obj` 信封。
-- **修复：** `/start` 仅在确实“未找到”时才自动注册；数据库瞬时错误不再可能在已有
+- **修复：** `/start` 仅在确实"未找到"时才自动注册；数据库瞬时错误不再可能在已有
   订阅之上创建并重新绑定新客户。
 - **修复：** 机器人轮询循环的连接泄漏（被丢弃的 proxy/outbound 传输的空闲连接现已
   关闭）。
@@ -660,7 +659,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 - **支付：新增 PayMaster 支付方**（Telegram 原生开票，使用 BotFather 的
   `provider_token`），与 YooKassa/Stripe/Stars/CryptoBot/外部链接并列。
 - **修复：** 订单表中 Telegram Stars (XTR) 金额按整数显示（此前 1 星订单显示为
-  “0.01 XTR”）。
+  "0.01 XTR"）。
 - 发布说明：[`docs/releases/v1.5.7-beta3.md`](docs/releases/v1.5.7-beta3.md)。
 
 ## [1.5.7-beta2] - 2026-06-04 - Telegram 传输选择、群发与问候语
@@ -696,13 +695,13 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 
 ## [1.5.6] - 2026-06-04 - 首个稳定版 1.5.6：3x-ui 导入正确性修复
 
-- 1.5.6 系列的首个稳定版，整合了 1.5.6-beta1..beta9——3x-ui → s-ui-x 迁移与面板恢复
+- 1.5.6 系列的首个稳定版，整合了 1.5.6-beta1..beta9--3x-ui → s-ui-x 迁移与面板恢复
   终端菜单。以下条目是 beta9 之后新增的导入正确性修复。
 - Xray 的 `blackhole` 出站现在迁移为 `reject` 规则动作，而非悬空的
   `outbound: "block"` 引用。sing-box 1.11+ 已无 `block` 出站，该引用会使导入的配置在
-  路由时以 “outbound not found: block” 失败；这取代了 1.5.6-beta7/beta8 中的
+  路由时以 "outbound not found: block" 失败；这取代了 1.5.6-beta7/beta8 中的
   `blackhole`→`block` 映射。
-- 仅含 DNS 的源配置（无路由规则、无代理出站、无 endpoint）在导入时不再被跳过——
+- 仅含 DNS 的源配置（无路由规则、无代理出站、无 endpoint）在导入时不再被跳过--
   此前其 DNS 会被静默丢弃。
 - 当迁移后的路由引用 `direct`（规则或远程 rule-set 的 download detour）时，会确保存在
   内置 `direct` 出站；检查现在会查询数据库，因此 InitDB 预置的 `direct` 出站不再被
@@ -720,7 +719,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   菜单项后，后续菜单项重新编号（原 `11..21` 变为 `12..22`），选择范围提示扩展为
   `0-22`。
 - `Get SSL` 菜单现在可以对 acme.sh 已持有的证书进行重签，而不再以
-  “Certificate already exists; cannot reissue” 终止：它会显示现有证书，提示
+  "Certificate already exists; cannot reissue" 终止：它会显示现有证书，提示
   Let's Encrypt 重复证书限额（每周 5 个），确认后执行 `acme.sh --issue --force`
   及 `--installcert`，因此 `/root/cert/<域名>/` 中的文件也会被重写。存在性检查不再
   仅检查 `acme.sh --list` 的最后一行，因此存在多个证书时也能匹配到正确的域名。
@@ -734,7 +733,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   这样的出站都会转换为一等的 sing-box 出站（服务器/端口、`uuid`/`password`/
   `method`/用户名密码、VLESS 的 `flow`、TLS/Reality 块以及
   `ws`/`grpc`/`http`/`httpupgrade` 传输），并注册为路由目标，因此引用它的规则会解析
-  到迁移后的出站，而不是被标记为“需要手动检查”。
+  到迁移后的出站，而不是被标记为"需要手动检查"。
 - 系统出站映射到其 sing-box 对应项：`freedom`→`direct`、`blackhole`→`block`，
   而 `dns` 出站变为 `hijack-dns` 路由动作（sing-box 没有 `dns` 出站）。`loopback`
   以及任何 Xray 不会产生的协议（例如 `hysteria`）会以警告形式提示手动重建，而不是
@@ -746,8 +745,8 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   导入报告新增 `outbounds`（已导入/已跳过）计数。
 - 迁移的路由与 DNS 现在会应用到实时配置：它们被合并进活动的 sing-box `config`
   设置（route 规则/规则集、DNS 服务器/规则），保留已有规则并按 tag 去重。此前导入
-  会写入面板从不加载的单独设置，因此导入的路由不生效——现在生效了。
-- 路由规则现在覆盖更多匹配器，而不再标记为“需要手动检查”：`port`/`sourcePort`
+  会写入面板从不加载的单独设置，因此导入的路由不生效--现在生效了。
+- 路由规则现在覆盖更多匹配器，而不再标记为"需要手动检查"：`port`/`sourcePort`
   （含范围）、`network`、`protocol`、`source`、`inboundTag`（→`inbound`）、`user`
   （→`auth_user`），以及非 `geosite` 域名（`domain:`/`full:`/`keyword:`/`regexp:`/
   裸域名 → `domain_suffix`/`domain`/`domain_keyword`/`domain_regex`）。`geosite:`/
@@ -768,7 +767,7 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
   多路复用与 Xray mux 在协议层不兼容，启用会破坏该出站。
 - 网页管理后台在后台刷新期间保留未保存的修改：Basics、DNS 和路由页面此前将表单绑定到
   store 中的实时配置，因此每 10 秒的配置轮询（以及 WS 重载事件）会静默还原正在进行的
-  编辑——现在它们改为编辑本地副本，直到你保存为止。
+  编辑--现在它们改为编辑本地副本，直到你保存为止。
 - 路由导入不再生成 sing-box 拒绝的配置：Xray 的外部 geoip 引用（`ext:<文件>:<代码>`，
   如 `ext:geoip_RU.dat:ru`）和裸 IP 之前被原样写入 `ip_cidr`，而 sing-box 无法解析
   （`ipcidr: parse: no '/'`）导致内核无法启动。现在 `ext:` 映射为 geoip 规则集，裸 IP
@@ -776,11 +775,11 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 - 迁移的 DNS 不再阻止内核启动：通过域名访问的 DNS 服务器（`https://dns.google/...`、
   `tls://...`）此前未带 `domain_resolver`，而 sing-box 1.13 会拒绝（`missing domain
   resolver for domain server address`）。现在每个域名地址的服务器都会获得
-  `domain_resolver`——来自迁移的 IP 服务器，或新增的 local 引导服务器——与 s-ui 自带
+  `domain_resolver`--来自迁移的 IP 服务器，或新增的 local 引导服务器--与 s-ui 自带
   DNS 编辑器的设置方式一致；TLS/HTTP 服务器还会补上 `tls`/`headers` 块，使迁移的服务器
   与手动创建的一致。
 - Trojan 入站不再使内核崩溃：入站编辑器会写入顶层 `password`，而 sing-box 的 Trojan
-  入站会拒绝（`unknown field "password"`——它通过 `users` 按用户认证）。密码字段现在
+  入站会拒绝（`unknown field "password"`--它通过 `users` 按用户认证）。密码字段现在
   仅用于出站，构建配置时会丢弃残留的顶层 `password`（因此已有入站无需编辑即可恢复）。
 - 完整发布说明：[`docs/releases/v1.5.6-beta8.md`](docs/releases/v1.5.6-beta8.md)。
 
@@ -795,28 +794,28 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 - Cloudflare WARP 作为 WireGuard endpoint 连同其路由规则一起迁移：3x-ui 把 WARP
   存为被规则引用的 WireGuard outbound，而 s-ui 把 WARP 建模为 endpoint 并通过
   Rules 路由。WARP outbound 现转换为 WARP endpoint（Cloudflare 对端、MTU、地址、
-  reserved），其规则改为指向该 endpoint，而不再标记“需人工审核”；源
+  reserved），其规则改为指向该 endpoint，而不再标记"需人工审核"；源
   blackhole/freedom outbound 按协议解析为 block/direct，因此 `blocked`/`direct`
   规则也会迁移。endpoint 仅在新建时创建（重复导入或计划同步不再覆盖已编辑的 WARP
   endpoint），且非恰好 3 字节的 `reserved` 会被丢弃并给出警告，使配置仍可加载。
-- 导入不再以“Network Error”失败：较大的导入可能超过 Web 服务器的 30 秒写超时并在
-  中途切断 HTTP 响应，尽管服务端已完成导入。现在在原始连接上解除截止时间——gzip
-  中间件包装了响应 writer，使 `http.NewResponseController` 无法触及它——且仅在请求
+- 导入不再以"Network Error"失败：较大的导入可能超过 Web 服务器的 30 秒写超时并在
+  中途切断 HTTP 响应，尽管服务端已完成导入。现在在原始连接上解除截止时间--gzip
+  中间件包装了响应 writer，使 `http.NewResponseController` 无法触及它--且仅在请求
   通过鉴权、scope 检查和限速之后，工作仍受请求上下文限制。
 - 完整发布说明：[`docs/releases/v1.5.6-beta7.md`](docs/releases/v1.5.6-beta7.md)。
 
 ## [1.5.6-beta6] - 2026-06-02 - 3x-ui 迁移加固
 
 - 修复重复导入循环：导入较大的 3x-ui 数据库耗时超过 Web 服务器的 30 秒写超时，
-  因此响应在导入中途被切断——客户端收不到成功结果而重新提交，每次重试都会执行一
+  因此响应在导入中途被切断--客户端收不到成功结果而重新提交，每次重试都会执行一
   次完整导入并再写一个 pre-import 备份。导入端点现在会解除该截止时间（仅在通过鉴
   权之后；实际工作仍受请求上下文限制），使客户端能收到结果，不再重复提交。
 - 限制 pre-import 备份数量：仅保留最新的 10 个 `s-ui-pre-xui-import-*.db` 文件，
   缓慢或被重试的导入不再会塞满数据库目录。
-- 恢复（Restore）现在会在前期就以明确提示拒绝 3x-ui / x-ui 数据库（“请使用
-  Migrate from 3x-ui”），而不是稍后以晦涩的 `no such table: changes` 失败；架构迁
+- 恢复（Restore）现在会在前期就以明确提示拒绝 3x-ui / x-ui 数据库（"请使用
+  Migrate from 3x-ui"），而不是稍后以晦涩的 `no such table: changes` 失败；架构迁
   移也能容忍缺失的 `changes` 表，使确实较旧的 s-ui 备份仍可恢复。
-- “备份与恢复”对话框：明确 Restore 仅用于 s-ui 备份，并区分 3x-ui 快速导入与完整
+- "备份与恢复"对话框：明确 Restore 仅用于 s-ui 备份，并区分 3x-ui 快速导入与完整
   的审阅向导。
 - 完整发布说明：[`docs/releases/v1.5.6-beta6.md`](docs/releases/v1.5.6-beta6.md)。
 
@@ -1336,17 +1335,17 @@ SSH/HTTP/file 导入源、带 SSRF 防护的远程客户端、SSH host-key（TOF
 
 ### 变更
 
-- `database/model/model.go` — 从 `ClientIP.ClientName` 与
+- `database/model/model.go` - 从 `ClientIP.ClientName` 与
   `ClientIP.IP` 上移除了
   `idx_client_ips_client_ip,unique` 标签。
-- `cmd/migration/1_5.go` — `1.5` 分支的 schema 迁移会删除过期的
+- `cmd/migration/1_5.go` - `1.5` 分支的 schema 迁移会删除过期的
   `idx_client_ips_client_ip`，并创建部分非唯一索引
   `idx_client_ips_client_legacy_ip ON client_ips(client_name, ip)
   WHERE ip IS NOT NULL AND ip != ''` 以便保持旧版查询性能。该迁移
   完全幂等（`DROP INDEX IF EXISTS` / `CREATE INDEX IF NOT EXISTS`）：
   已经升级到 `1.5.2-beta` 的部署在下次启动、迁移 runner 重新进入
   `1.5` 分支时会再次干净地运行它。
-- `database/db.go: ensureIndexes` — 在每次 `InitDB` 时也会删除该旧版
+- `database/db.go: ensureIndexes` - 在每次 `InitDB` 时也会删除该旧版
   唯一索引。这为绕过 `MigrateDb` 的场景（例如在面板外恢复旧版备份）
   提供运行时兜底，并确保 `GetDb("")` 构建的临时备份库不会再带上这
   个坏索引。
@@ -1622,7 +1621,7 @@ REST API、前端表单与数据库 schema 均保持不变。
 - `go test ./...`
 - `go test -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,with_tailscale" ./...`
 
-## [1.4.2-beta] — 2026-05-14 — 安全与可靠性加固
+## [1.4.2-beta] - 2026-05-14 - 安全与可靠性加固
 
 本次发布大幅重写了认证、事务与运行时控制流，将外部订阅 fetcher 加固
 为可抵御 SSRF，并将 Go 模块路径重命名为
@@ -1633,7 +1632,7 @@ REST API、前端表单与数据库 schema 均保持不变。
 以及完整的前端流水线 (`npm ci`、`npm run build`、`npm run lint`、
 `npm audit --audit-level=high`) 全部通过。
 
-### 亮点
+### 主要变更
 
 - 明文密码替换为 bcrypt；首次成功登录时已有账户会自动迁移。
 - 首次安装时随机生成管理员密码，并在应用日志中只输出一次（不再使用
@@ -1733,7 +1732,7 @@ REST API、前端表单与数据库 schema 均保持不变。
 - Race-detector clean 的同步：
   - API token (`api/apiV2Handler.go`，现在是 `map[string]TokenInMemory`，
     O(1) 查找)。
-  - 在线统计 (`service/stats.go.onlineResources`) — 读端在 `RWMutex`
+  - 在线统计 (`service/stats.go.onlineResources`) - 读端在 `RWMutex`
     保护下获得 deep copy。
   - core 运行状态与实例指针 (`core/main.go.Core`)。
   - last-update 记账 (`service/config.go.LastUpdate`)。
@@ -1780,33 +1779,33 @@ REST API、前端表单与数据库 schema 均保持不变。
 
 新增回归测试：
 
-- `util/common/password_test.go` — 哈希、明文检测、迁移标记。
-- `util/subToJson_test.go` — URL 校验拒绝 `file://`、`localhost`、
+- `util/common/password_test.go` - 哈希、明文检测、迁移标记。
+- `util/subToJson_test.go` - URL 校验拒绝 `file://`、`localhost`、
   RFC1918、IPv6 loopback；opt-in 恢复私有目标。
-- `util/subToJson_dial_test.go` — dialer hook 在校验后拒绝 loopback
+- `util/subToJson_dial_test.go` - dialer hook 在校验后拒绝 loopback
   地址；opt-in 允许它们。
-- `service/setting_test.go` — `subURI` 的默认端口省略。
-- `database/backup_test.go` — 备份包含 `services` 与 `tokens`。
-- `database/adapt_test.go` — 导入时旧的明文密码重新哈希正确、幂等并
+- `service/setting_test.go` - `subURI` 的默认端口省略。
+- `database/backup_test.go` - 备份包含 `services` 与 `tokens`。
+- `database/adapt_test.go` - 导入时旧的明文密码重新哈希正确、幂等并
   提升 `settings.version`。
-- `api/rateLimit_test.go` — 达到最大失败数即封锁、重置可清空状态、
+- `api/rateLimit_test.go` - 达到最大失败数即封锁、重置可清空状态、
   并发访问。
-- `api/utils_test.go` — XFF 解析矩阵 (不可信客户端、最右非可信 hop、
+- `api/utils_test.go` - XFF 解析矩阵 (不可信客户端、最右非可信 hop、
   全部可信回退、来自不可信客户端的伪造 XFF)。
 
 ### 验证
 
 | 命令 | 结果 |
 | --- | --- |
-| `go build ./...` | ✅ |
-| `go vet ./...` | ✅ |
-| `go test -count=1 ./...` | ✅ |
-| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | ✅ |
-| `go test -race -count=1 ./...` | ✅ (需要 CGO 与 C 编译器，例如 `C:\msys64\ucrt64\bin\gcc.exe`) |
-| `npm ci` | ✅ |
-| `npm run build` | ✅ |
-| `npm run lint` | ✅ |
-| `npm audit --audit-level=high` | ✅ (0 漏洞) |
+| `go build ./...` | OK |
+| `go vet ./...` | OK |
+| `go test -count=1 ./...` | OK |
+| `go test -count=1 -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_tailscale" ./...` | OK |
+| `go test -race -count=1 ./...` | OK (需要 CGO 与 C 编译器，例如 `C:\msys64\ucrt64\bin\gcc.exe`) |
+| `npm ci` | OK |
+| `npm run build` | OK |
+| `npm run lint` | OK |
+| `npm audit --audit-level=high` | OK (0 漏洞) |
 
 ## 升级指南 (TL;DR)
 
@@ -1832,10 +1831,10 @@ bcrypt。来自旧 S-UI 版本 (1.0/1.1/1.2/1.3) 的备份可以直接通过面�
 升级后建议确认：
 
 - 如果面板位于 reverse proxy 后面，并且你依赖 `X-Forwarded-For` (例如
-  IP 审计日志)，请将 `SUI_TRUSTED_PROXIES=10.0.0.0/8,192.168.0.0/16,…`
+  IP 审计日志)，请将 `SUI_TRUSTED_PROXIES=10.0.0.0/8,192.168.0.0/16,...`
   设置为代理所在的 CIDR。如果不设置，XFF 会被忽略，审计日志显示的将
   是代理 IP 而不是真实客户端。
-- 如果你从私有端点 (`http://127.0.0.1:…/sub` 等) 拉取外部订阅，请设置
+- 如果你从私有端点 (`http://127.0.0.1:.../sub` 等) 拉取外部订阅，请设置
   `SUI_ALLOW_PRIVATE_SUB_URLS=true`。
 - 如果你之前使用旧的安装/更新脚本 (`deposist/s-ui`)，请一次性获取新版：
   `wget -O /usr/bin/s-ui https://raw.githubusercontent.com/deposist/s-ui-x/main/s-ui.sh && chmod +x /usr/bin/s-ui`。

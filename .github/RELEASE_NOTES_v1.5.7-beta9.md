@@ -5,7 +5,7 @@ Release date: 2026-06-10
 This release brings the panel's default (Nexus) interface in line with the dark
 "technical" reference design: an exact colour palette, a single typography stack,
 clear status badges, a compact sidebar, and a topbar that carries each page's
-title, counts and search. It is a frontend-only release — there are no backend,
+title, counts and search. It is a frontend-only release - there are no backend,
 breaking, manual-migration, or configuration changes.
 
 ## What changed
@@ -14,7 +14,7 @@ breaking, manual-migration, or configuration changes.
 
 - **Exact dark "technical" palette.** Surfaces, borders (`#2a2a2a`), the cyan
   accent (`#00d4ff`), and the status and text colours now match the reference
-  design exactly — including Vuetify component borders and the primary button
+  design exactly - including Vuetify component borders and the primary button
   (cyan background with dark text).
 - **Unified typography.** The whole UI renders in one system font stack (Segoe UI
   on Windows). Table and menu body text is secondary grey with white emphasis,
@@ -75,7 +75,7 @@ unchanged from v1.5.7-beta8.
 Этот релиз приводит интерфейс панели по умолчанию (Nexus) к тёмному
 «техническому» эталонному дизайну: точная цветовая палитра, единый набор
 шрифтов, понятные бейджи статусов, компактный сайдбар и верхняя панель, в которой
-размещены заголовок раздела, счётчики и поиск. Релиз затрагивает только фронтенд —
+размещены заголовок раздела, счётчики и поиск. Релиз затрагивает только фронтенд -
 изменений в backend, ломающих изменений, ручных миграций и изменений конфигурации
 нет.
 
@@ -85,18 +85,18 @@ unchanged from v1.5.7-beta8.
 
 - **Точная тёмная «техническая» палитра.** Поверхности, границы (`#2a2a2a`),
   cyan-акцент (`#00d4ff`), а также цвета статусов и текста теперь точно
-  соответствуют эталону — включая границы компонентов Vuetify и основную кнопку
+  соответствуют эталону - включая границы компонентов Vuetify и основную кнопку
   (cyan-фон с тёмным текстом).
 - **Единая типографика.** Весь интерфейс использует один системный стек шрифтов
-  (Segoe UI в Windows). Основной текст таблиц и меню — вторичный серый с белыми
+  (Segoe UI в Windows). Основной текст таблиц и меню - вторичный серый с белыми
   акцентами; IP-адреса, порты и UUID выводятся моноширинным шрифтом.
 - **Заголовок раздела в верхней панели.** Каждая страница теперь показывает свой
-  заголовок, подзаголовок-статистику (например, «Входящие: 8 • Онлайн: 3») и поле
-  поиска в верхней панели; глобальные элементы управления — справа, а кнопка
+  заголовок, подзаголовок-статистику (например, «Inbounds: 8 • Онлайн: 3») и поле
+  поиска в верхней панели; глобальные элементы управления - справа, а кнопка
   «Добавить» и фильтры остаются в области контента. Заголовок управляется общим
   состоянием и поэтому стабилен при переходах между разделами.
 - **Ячейки статуса и TLS.** Online / Offline / Disabled показываются бейджами с
-  точкой; TLS — пилюлями On / Off. Заголовок колонки статуса теперь «Status».
+  точкой; TLS - пилюлями On / Off. Заголовок колонки статуса теперь «Status».
 - **Компактный сайдбар.** Плоская активная строка во всю ширину с 3px cyan-меткой,
   строки 40px, серые (tertiary) подписи групп и cyan-логотип «S».
 - **Иконки Lucide** для видимого интерфейса (сайдбар, верхняя панель, тулбары,

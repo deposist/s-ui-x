@@ -1,4 +1,4 @@
-# Dependabot keeps dependencies — and the SHA-pinned GitHub Actions — current by
+# Dependabot keeps dependencies and the SHA-pinned GitHub Actions current by
 # opening update PRs. Pinning actions to a commit SHA (supply-chain hardening,
 # MITRE T1195.001) is only safe to maintain with automated bump PRs; this file
 # is the backbone for that across every ecosystem the repo uses.

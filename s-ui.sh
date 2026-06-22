@@ -375,9 +375,9 @@ t() {
         en:cookie_key_keep)     echo "Keep this file private and preserve the same value across updates and restores.";;
         ru:cookie_key_keep)     echo "Держите этот файл в секрете и сохраняйте то же значение при обновлениях и восстановлении.";;
         en:cookie_key_restart_rollover) echo "The key takes effect after a service restart. The previous key is kept for rollover, so active sessions stay signed in.";;
-        ru:cookie_key_restart_rollover) echo "Ключ вступит в силу после перезапуска службы. Прежний ключ сохранен для плавной ротации — активные сессии останутся в силе.";;
+        ru:cookie_key_restart_rollover) echo "Ключ вступит в силу после перезапуска службы. Прежний ключ сохранен для плавной ротации. Активные сессии останутся в силе.";;
         en:cookie_key_restart_fresh) echo "The key takes effect after a service restart. Sessions signed with the previous fallback key will be signed out once; log in again afterwards.";;
-        ru:cookie_key_restart_fresh) echo "Ключ вступит в силу после перезапуска службы. Сессии, подписанные прежним fallback-ключом, будут разлогинены один раз — потребуется повторный вход.";;
+        ru:cookie_key_restart_fresh) echo "Ключ вступит в силу после перезапуска службы. Сессии, подписанные прежним fallback-ключом, будут разлогинены один раз. Потребуется повторный вход.";;
         en:enter_choice_range)  echo "Enter your choice [0-23]: ";;
         ru:enter_choice_range)  echo "Введите ваш выбор [0-23]: ";;
         en:enter_valid_number)  echo "Enter a valid number [0-23]";;
@@ -815,7 +815,7 @@ update_shell() {
     # Keep TLS validation ON (github.com presents a valid certificate, so the
     # transport is the integrity anchor) and download to a temp file first, then
     # swap it into the root-executed path atomically only after a fully successful
-    # fetch — a failed/partial transfer must never leave a broken root script in
+    # fetch. A failed/partial transfer must never leave a broken root script in
     # /usr/bin/s-ui.
     wget --timeout=20 --tries=5 --retry-connrefused -O "${tmp_script}" https://github.com/deposist/s-ui-x/raw/main/s-ui.sh
     if [[ $? != 0 || ! -s "${tmp_script}" ]]; then

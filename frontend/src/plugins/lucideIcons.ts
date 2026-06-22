@@ -187,7 +187,7 @@ const LucideNexusIcon = defineComponent({
 
       if (!Cmp) {
         if (import.meta.env.DEV) {
-          console.warn(`[lucideIcons] no icon "${name}" — add it to iconMap in plugins/lucideIcons.ts.`)
+          console.warn(`[lucideIcons] no icon "${name}": add it to iconMap in plugins/lucideIcons.ts.`)
         }
 
         return h(props.tag, mergeProps(attrs, {}))

@@ -10,7 +10,7 @@ export default {
   table: {
     search: "جستجو",
     rowsPerPage: "ردیف در هر صفحه",
-    showingRange: "{from}–{to} از {total}",
+    showingRange: "{from}-{to} از {total}",
     selectAll: "انتخاب همه",
     expandRow: "نمایش جزئیات ردیف",
     clearFilters: "پاک کردن فیلترها",
@@ -190,7 +190,7 @@ export default {
       sbConfig: "دریافت پیکربندی سینگ‌باکس",
       xui: {
         title: "مهاجرت از 3x-ui",
-        button: "انتخاب پایگاه داده 3x-ui…",
+        button: "انتخاب پایگاه داده 3x-ui...",
         dryRun: "اجرای آزمایشی (فقط پیش‌نمایش)",
         strategy: "راهبرد تعارض",
         merge: "ادغام",
@@ -765,8 +765,8 @@ export default {
       preview: "پیش‌نمایش",
       skipped: "از قبل وجود دارند، به‌صورت خاکستری نمایش داده شده‌اند",
       conflict: "تعارض شناسایی شد",
-      merge: "ادغام — افزودن قوانین واردشده (رد برچسب تکراری مجموعه‌ها)",
-      replace: "جایگزینی — حذف قوانین و مجموعه‌های موجود و ورود دوباره",
+      merge: "ادغام - افزودن قوانین واردشده (رد برچسب تکراری مجموعه‌ها)",
+      replace: "جایگزینی - حذف قوانین و مجموعه‌های موجود و ورود دوباره",
       pasteUrls: "چسباندن URL",
       uploadTxt: "بارگذاری .txt",
       uploadFile: "بارگذاری فایل",

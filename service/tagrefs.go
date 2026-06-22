@@ -21,7 +21,7 @@ type TagReference struct {
 }
 
 // eagerTagReferences filters references that pin the target adapter at
-// construction time — only those force a full core restart on hot replace.
+// construction time. Only those force a full core restart on hot replace.
 func eagerTagReferences(refs []TagReference) []TagReference {
 	var eager []TagReference
 	for _, ref := range refs {
@@ -52,7 +52,7 @@ func formatTagReferenceError(entityKind string, tag string, refs []TagReference)
 	if entityKind == "outbound" || entityKind == "endpoint" {
 		hint = "remove the reference or point it to another outbound (e.g. direct) first"
 	}
-	return common.NewErrorf("%s %q is still referenced by: %s — %s",
+	return common.NewErrorf("%s %q is still referenced by: %s. %s",
 		entityKind, tag, strings.Join(locators, ", "), hint)
 }
 

@@ -399,7 +399,7 @@ func (s *DoctorService) outboundChecksTarget(configService *ConfigService, targe
 			check := configService.CheckOutboundWithContext(ctx, outboundTag, target)
 			res := result{Tag: outboundTag, OK: check.OK, Error: check.Error, Delay: check.Delay}
 			// A probe cancelled by the doctor's own time budget is "not tested",
-			// not a genuine outbound failure — don't count it as failed.
+			// not a genuine outbound failure - don't count it as failed.
 			if !check.OK && ctx.Err() != nil {
 				res.Skipped = true
 			}

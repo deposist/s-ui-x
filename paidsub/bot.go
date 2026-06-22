@@ -83,8 +83,8 @@ func StopBot(ctx context.Context) error {
 	}
 }
 
-// newSenderBot builds a Bot ready to SEND (not poll) — used by the payment poll
-// job to notify users out-of-band. Returns an error if the bot token is unset.
+// newSenderBot builds a Bot ready to send without polling. The payment poll job
+// uses it to notify users out-of-band. Returns an error if the bot token is unset.
 func newSenderBot() (*Bot, error) {
 	b := newBot()
 	token, err := b.setting.GetPaidSubBotToken()
@@ -495,7 +495,7 @@ func (b *Bot) handleRefundRequest(ctx context.Context, chatID int64, tgID int64,
 	// path). This way a transient Telegram failure leaves the order paid and
 	// retryable, instead of revoking the grant + marking refunded while the money
 	// was never returned. An "already refunded" response means a concurrent
-	// refund (e.g. the admin panel) returned it first — treat as success.
+	// refund (e.g. the admin panel) returned it first. Treat as success.
 	if rerr := b.refundStarPayment(ctx, order.TelegramUserId, charge); rerr != nil && !isAlreadyRefunded(rerr) {
 		logger.Warning("paidsub: refundStarPayment failed; manual refund needed")
 		(&service.TelegramService{}).NotifyTelegramEvent("paidsub_refund_failed", map[string]string{
@@ -607,14 +607,14 @@ func (b *Bot) buildStatsText(client *model.Client, l lang) string {
 		}
 	}
 	if client.Enable {
-		sb.WriteString("✅ " + tr(l, "stats_enabled") + "\n")
+		sb.WriteString(tr(l, "stats_enabled") + "\n")
 	} else {
-		sb.WriteString("⛔ " + tr(l, "stats_disabled") + "\n")
+		sb.WriteString(tr(l, "stats_disabled") + "\n")
 	}
 	if b.isOnline(client.Name) {
-		sb.WriteString("🟢 " + tr(l, "stats_online") + "\n")
+		sb.WriteString(tr(l, "stats_online") + "\n")
 	} else {
-		sb.WriteString("⚪ " + tr(l, "stats_offline") + "\n")
+		sb.WriteString(tr(l, "stats_offline") + "\n")
 	}
 	return strings.TrimSpace(sb.String())
 }
@@ -655,7 +655,7 @@ func (b *Bot) buildOrdersText(orders []PaymentOrder, l lang) string {
 		if o.CreatedAt > 0 {
 			date = time.Unix(o.CreatedAt, 0).Format("2006-01-02")
 		}
-		sb.WriteString(fmt.Sprintf("\n• %s — %s\n  %s · %s",
+		sb.WriteString(fmt.Sprintf("\n• %s: %s\n  %s · %s",
 			orderTariffName(&o, names),
 			formatOrderAmount(o.Amount, o.Currency),
 			orderStatusLabel(o.Status, l),
@@ -673,7 +673,7 @@ func orderTariffName(o *PaymentOrder, names map[uint]string) string {
 }
 
 func refundOrderButtonLabel(o *PaymentOrder, names map[uint]string) string {
-	return fmt.Sprintf("%s — %s", orderTariffName(o, names), formatOrderAmount(o.Amount, o.Currency))
+	return fmt.Sprintf("%s: %s", orderTariffName(o, names), formatOrderAmount(o.Amount, o.Currency))
 }
 
 // orderStatusLabel localizes a status, falling back to the raw value.

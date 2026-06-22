@@ -10,7 +10,7 @@ export default {
   table: {
     search: "Tìm kiếm",
     rowsPerPage: "Số hàng mỗi trang",
-    showingRange: "{from}–{to} trên {total}",
+    showingRange: "{from}-{to} trên {total}",
     selectAll: "Chọn tất cả",
     expandRow: "Hiện chi tiết hàng",
     clearFilters: "Xóa bộ lọc",
@@ -190,7 +190,7 @@ export default {
       sbConfig: "Tải xuống cấu hình Sing-Box",
       xui: {
         title: "Di chuyển từ 3x-ui",
-        button: "Chọn cơ sở dữ liệu 3x-ui…",
+        button: "Chọn cơ sở dữ liệu 3x-ui...",
         dryRun: "Chạy thử (chỉ xem trước)",
         strategy: "Chiến lược xung đột",
         merge: "Gộp",
@@ -765,8 +765,8 @@ export default {
       preview: "Xem trước",
       skipped: "đã tồn tại, hiển thị màu xám",
       conflict: "Phát hiện xung đột",
-      merge: "Gộp — thêm quy tắc đã nhập (bỏ qua thẻ bộ trùng)",
-      replace: "Thay thế — xóa quy tắc và bộ hiện có, nhập lại",
+      merge: "Gộp - thêm quy tắc đã nhập (bỏ qua thẻ bộ trùng)",
+      replace: "Thay thế - xóa quy tắc và bộ hiện có, nhập lại",
       pasteUrls: "Dán URL",
       uploadTxt: "Tải lên .txt",
       uploadFile: "Tải lên tệp",

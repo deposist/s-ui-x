@@ -91,7 +91,7 @@ func (p *cryptoBotProvider) Poll(ctx context.Context, pending []PaymentOrder) ([
 		// Defense in depth: re-validate the paid amount/currency against the
 		// server-side order snapshot before granting (mirrors the Stars path).
 		// The invoice amount is server-fixed at creation, so a mismatch is
-		// anomalous — refuse and alert. Fail OPEN when the provider omits the
+		// anomalous - refuse and alert. Fail OPEN when the provider omits the
 		// amount field so a response-format change never blocks a real payment.
 		if it.Amount != "" {
 			want := fmt.Sprintf("%.2f", float64(order.Amount)/100.0)

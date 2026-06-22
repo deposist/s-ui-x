@@ -136,7 +136,7 @@ func TestConfigSaveClientsInvalidatesIPPolicyCacheWithoutInboundReload(t *testin
 
 // Unlike the stub-based regressions above, this test exercises the REAL
 // post-commit reload path end to end: a client edit must reach the running
-// core via RemoveInbound/AddInbound — without swapping the core instance and
+// core via RemoveInbound/AddInbound - without swapping the core instance and
 // without the full-restart fallback firing.
 func TestConfigSaveClientsEditAppliesToRunningCoreRealReload(t *testing.T) {
 	initSettingTestDB(t)

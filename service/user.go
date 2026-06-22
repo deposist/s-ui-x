@@ -106,7 +106,7 @@ func (s *UserService) Login(username string, password string, remoteIP string) (
 
 // CheckUser is a pure query (Command-Query Separation): it validates the
 // credentials and returns the user plus whether the stored hash needs
-// migration. It performs NO writes — recording the login is RecordLogin's job.
+// migration. It performs NO writes - recording the login is RecordLogin's job.
 func (s *UserService) CheckUser(username string, password string, remoteIP string) (*model.User, bool) {
 	db := database.GetDB()
 

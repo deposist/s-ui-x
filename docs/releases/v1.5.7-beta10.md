@@ -7,12 +7,12 @@ security, and supply-chain review. It fixes financial-correctness issues in the
 Paid Subscriptions module, hardens the external attack surface, adds new
 abuse-detection audit signals, fixes frontend correctness and safety issues, and
 hardens the CI supply chain. There is no manual migration (one additive database
-column is created automatically). Two changes alter behavior — see **Behavior
-changes** below. This is a beta — test first.
+column is created automatically). Two changes alter behavior - see **Behavior
+changes** below. This is a beta - test first.
 
 ## What changed
 
-### Paid Subscriptions (payments) — financial correctness
+### Paid Subscriptions (payments) - financial correctness
 
 - **A CryptoBot payment confirmed after the local order timeout is no longer
   lost.** The poll now confirms out-of-band payments before any expiry pass, and
@@ -26,8 +26,8 @@ changes** below. This is a beta — test first.
   not-returned, mirroring the admin refund path.
 - **CryptoBot polling re-validates the paid amount and currency** against the
   server-side order snapshot before granting (mirrors the Telegram-native path).
-- **Tariffs reject negative values** (price, stars, days, traffic, sort) on the
-  server, not only client-side.
+- **Tariffs reject negative values** (price, stars, days, traffic, sort) on both
+  the server and client side.
 
 ### Security
 
@@ -52,12 +52,12 @@ changes** below. This is a beta — test first.
   from one source), login from a new source IP, cross-user order access on the
   client bot, IP-limit enforcement, and an audit-pipeline drop marker.
 - **Real-time alerts** are now sent on account lockout and on full database
-  export — two of the highest-signal admin-compromise events.
+  export - two of the highest-signal admin-compromise events.
 
 ### Interface (Nexus)
 
-- **Unsaved-changes confirmation now covers every entity form** — all drawers and
-  the classic dialogs (clients, DNS, endpoints, rules, rule sets, bulk) — in both
+- **Unsaved-changes confirmation now covers every entity form** - all drawers and
+  the classic dialogs (clients, DNS, endpoints, rules, rule sets, bulk) - in both
   interface modes, so closing a form with edits asks before discarding.
 - **Assorted correctness and safety fixes:** the client list search is now
   case-insensitive (consistent with the other lists); TLS option defaults no
@@ -70,7 +70,7 @@ changes** below. This is a beta — test first.
 ### Supply chain (CI)
 
 - **Third-party and Docker GitHub Actions are pinned to commit SHAs**, and a new
-  Dependabot configuration keeps them — and the Go, npm, and Docker dependencies —
+  Dependabot configuration keeps them - and the Go, npm, and Docker dependencies -
   current.
 - **The Docker frontend build uses `npm ci`** so the image is built from the
   exact, audited lockfile.
@@ -112,12 +112,12 @@ changes** below. This is a beta — test first.
 добавляет новые сигналы аудита для детектирования злоупотреблений, исправляет
 корректность и безопасность фронтенда и усиливает цепочку поставок CI. Ручная
 миграция не нужна (одна добавочная колонка БД создаётся автоматически). Два
-изменения меняют поведение — см. **Изменения поведения** ниже. Это бета —
+изменения меняют поведение - см. **Изменения поведения** ниже. Это бета -
 сначала протестируйте.
 
 ## Что изменилось
 
-### Платные подписки (платежи) — финансовая корректность
+### Платные подписки (платежи) - финансовая корректность
 
 - **Платёж CryptoBot, подтверждённый после локального таймаута заказа, больше не
   теряется.** Опрос теперь подтверждает out-of-band платежи до прохода истечения,
@@ -129,7 +129,7 @@ changes** below. This is a beta — test first.
   восстанавливает, а не откатывает только объём.
 - **Возврат Stars сначала возвращает деньги, затем финализирует.** Транзиентный
   сбой Telegram теперь оставляет заказ оплаченным и доступным для повтора, а не
-  отзывает грант с невозвращёнными деньгами — как в админском пути возврата.
+  отзывает грант с невозвращёнными деньгами - как в админском пути возврата.
 - **Опрос CryptoBot пере-проверяет сумму и валюту платежа** против серверного
   снимка заказа перед выдачей (как в Telegram-native пути).
 - **Тарифы отвергают отрицательные значения** (цена, stars, дни, трафик, сортировка)
@@ -157,17 +157,17 @@ changes** below. This is a beta — test first.
   одного источника), вход с нового IP, доступ к чужому заказу в клиент-боте,
   срабатывание IP-лимита и маркер сброса событий в пайплайне аудита.
 - **Оповещения в реальном времени** теперь отправляются при блокировке аккаунта и
-  при полном экспорте БД — двух самых сигнальных событиях компрометации админа.
+  при полном экспорте БД - двух самых сигнальных событиях компрометации админа.
 
 ### Интерфейс (Nexus)
 
-- **Подтверждение несохранённых изменений теперь во всех формах сущностей** — все
+- **Подтверждение несохранённых изменений теперь во всех формах сущностей** - все
   дроверы и классические диалоги (клиенты, DNS, endpoint'ы, правила, rule-set'ы,
-  массовые) — в обоих режимах интерфейса: закрытие формы с правками спрашивает
+  массовые) - в обоих режимах интерфейса: закрытие формы с правками спрашивает
   перед сбросом.
 - **Набор исправлений корректности и безопасности:** поиск в списке клиентов
   теперь регистронезависимый (как в остальных списках); дефолты TLS-опций больше
-  не «протекают» между формами; кнопка «Сохранить» во входящих недоступна, пока
+  не «протекают» между формами; кнопка «Сохранить» в Inbounds недоступна, пока
   конфиг невалиден; чекбокс выбора строки имеет корректную метку для скринридеров;
   удалён неиспользуемый UI-код.
 - **Опрос статуса на дашборде приостанавливается, пока вкладка скрыта**, и
@@ -176,7 +176,7 @@ changes** below. This is a beta — test first.
 ### Цепочка поставок (CI)
 
 - **Сторонние и Docker GitHub Actions запинены на commit-SHA**, а новая
-  конфигурация Dependabot держит их — и зависимости Go, npm, Docker — в актуальном
+  конфигурация Dependabot держит их - и зависимости Go, npm, Docker - в актуальном
   состоянии.
 - **Docker-сборка фронтенда использует `npm ci`**, чтобы образ собирался из
   точного проверенного lockfile.
@@ -194,12 +194,12 @@ changes** below. This is a beta — test first.
 
 ## Проверка
 
-- Go: `go build`, `go vet`, `staticcheck`, `golangci-lint` — чисто; `gosec` 0
-  замечаний; `govulncheck` — уязвимостей нет.
+- Go: `go build`, `go vet`, `staticcheck`, `golangci-lint` - чисто; `gosec` 0
+  замечаний; `govulncheck` - уязвимостей нет.
 - Go-тесты: каждый пакет проходит `go test` по отдельности (api, service, paidsub,
   sub, ipmonitor, database, importxui и остальные), с новыми тестами для таймаута
   CryptoBot, счётчиков возврата, валидации тарифа и tarpit-логина.
-- Фронтенд: `vue-tsc --noEmit`, `vite build` и `eslint` — чисто; `vitest` проходит
+- Фронтенд: `vue-tsc --noEmit`, `vite build` и `eslint` - чисто; `vitest` проходит
   (123 теста).
 - CI: каждый изменённый workflow и конфиг Dependabot парсятся как валидный YAML;
   каждый запиненный SHA экшена проверен через GitHub API.

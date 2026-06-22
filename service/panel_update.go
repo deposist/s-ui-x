@@ -114,7 +114,7 @@ func (s *PanelUpdateService) run(target ReleaseTarget) {
 	s.setStage(UpdateStageRestarting)
 	// Mark the swap pending so the next boot can roll back a non-starting new
 	// binary (SR-012). If the marker cannot be written, the boot-time rollback
-	// safety net would be gone — restore the previous binary and abort the
+	// safety net would be gone - restore the previous binary and abort the
 	// restart rather than boot unprotected, instead of swallowing the error.
 	if err := writePendingMarker(deps.execPath); err != nil {
 		s.fail(fmt.Errorf("rollback marker could not be written after apply: %w", err), deps.execPath)

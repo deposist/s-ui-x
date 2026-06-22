@@ -389,7 +389,7 @@ func decryptWithCandidate(candidates []secretboxCandidate, key, value string) (i
 // A row is only rewritten after it successfully decrypts, and it is re-sealed
 // with that exact recovered plaintext, so the round-trip cannot lose data. Once
 // re-sealed under SUI_SECRETBOX_KEY a value can no longer be recovered from the
-// database alone — that is the intended hardening. Returns the rows re-sealed.
+// database alone - that is the intended hardening. Returns the rows re-sealed.
 func (s *SettingService) ResealSecretSettings() (int, error) {
 	if strings.TrimSpace(os.Getenv("SUI_SECRETBOX_KEY")) == "" {
 		return 0, nil

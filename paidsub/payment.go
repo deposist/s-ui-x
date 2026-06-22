@@ -21,8 +21,8 @@ var errRefundNotApplicable = errors.New("order is not refundable")
 
 // isAlreadyRefunded reports whether a refundStarPayment error means the charge
 // was already refunded (e.g. by a concurrent refund via the other path).
-// Telegram is idempotent at the charge level, so this is a success — not a
-// failure — and must not be reported to the admin/user as "refund failed".
+// Telegram is idempotent at the charge level, so this is a success, not a
+// failure, and must not be reported to the admin/user as "refund failed".
 func isAlreadyRefunded(err error) bool {
 	var apiErr *tgAPIError
 	if errors.As(err, &apiErr) {
@@ -248,7 +248,7 @@ func (p *PaymentService) ApplyPaidOrder(orderID uint, chargeID string, raw []byt
 			updates["down"] = 0
 			// Snapshot the pre-renewal usage counters onto the order so a later
 			// refund can restore the pre-purchase accounting state symmetrically
-			// (the reset above is otherwise irreversible — see finalizeRefund).
+			// (the reset above is otherwise irreversible; see finalizeRefund).
 			if err := tx.Model(&PaymentOrder{}).Where("id = ?", orderID).
 				Updates(map[string]any{"granted_up": client.Up, "granted_down": client.Down}).Error; err != nil {
 				return err
@@ -309,7 +309,7 @@ func (p *PaymentService) ExpireStaleOrders() error {
 }
 
 // ExpireStalePolledOrders reaps pending polled-provider (CryptoBot) orders whose
-// creation is older than graceSeconds — a hard ceiling far beyond the local
+// creation is older than graceSeconds. This hard ceiling is far beyond the local
 // order TTL so a late out-of-band payment is still caught by polling, while
 // genuinely abandoned invoices do not accumulate forever.
 func (p *PaymentService) ExpireStalePolledOrders(graceSeconds int64) error {
@@ -421,7 +421,7 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 			updates["total_up"] = newTotalUp
 			updates["total_down"] = newTotalDown
 			// Only restore the live up/down baseline when THIS is the most recent
-			// paid traffic order — its apply is what zeroed the current counters.
+			// paid traffic order because its apply zeroed the current counters.
 			// For an older (non-latest) order a newer purchase already opened a
 			// fresh window, so the live up/down belong to that window and must not
 			// be clobbered with this order's stale snapshot (which would silently
@@ -492,7 +492,7 @@ func (p *PaymentService) RefundOrder(ctx context.Context, orderID uint, revoke b
 		return "", errRefundNotApplicable
 	}
 	// Defensive: a paid order always has Amount > 0 (CreateOrder rejects zero),
-	// so a non-positive amount means a corrupted row — never act on it.
+	// so a non-positive amount means a corrupted row; never act on it.
 	if order.Amount <= 0 {
 		return "", errRefundNotApplicable
 	}
@@ -506,7 +506,7 @@ func (p *PaymentService) RefundOrder(ctx context.Context, orderID uint, revoke b
 			return "", fmt.Errorf("order has no Stars charge id")
 		}
 		// An "already refunded" response means a concurrent refund (e.g. the bot
-		// path) returned the money first — treat it as success, not a failure.
+		// path) returned the money first. Treat it as success, not a failure.
 		if err := sender.refundStarPayment(ctx, order.TelegramUserId, charge); err != nil && !isAlreadyRefunded(err) {
 			return "", fmt.Errorf("stars refund failed")
 		}
@@ -717,7 +717,7 @@ func tariffButtonLabel(t *Tariff) string {
 	if price == "" {
 		return t.Name
 	}
-	return fmt.Sprintf("%s — %s", t.Name, price)
+	return fmt.Sprintf("%s: %s", t.Name, price)
 }
 
 // formatOrderAmount renders an order amount: Telegram Stars (XTR) are whole

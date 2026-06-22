@@ -1,4 +1,4 @@
-# S-UI v1.5.2-beta-hotfix2 — drop legacy `client_ips` unique index
+# S-UI v1.5.2-beta-hotfix2 - drop legacy `client_ips` unique index
 
 > Hotfix on top of `v1.5.2-beta-hotfix`. No schema additions. No
 > behaviour changes in the embedded `sing-box` runtime. Drop the new
@@ -34,10 +34,10 @@
 
 ### What changed
 
-- `database/model/model.go` — removed `index:idx_client_ips_client_ip,unique`
+- `database/model/model.go` - removed `index:idx_client_ips_client_ip,unique`
   from `ClientIP.ClientName` and `ClientIP.IP`. The only unique index
   left on the model is `(client_name, ip_hash)`.
-- `cmd/migration/1_5.go` — schema migration now drops the obsolete
+- `cmd/migration/1_5.go` - schema migration now drops the obsolete
   `idx_client_ips_client_ip` and creates a partial non-unique index
   `idx_client_ips_client_legacy_ip ON client_ips(client_name, ip)
   WHERE ip IS NOT NULL AND ip != ''` to keep legacy lookup fast.
@@ -45,19 +45,19 @@
   `CREATE INDEX IF NOT EXISTS`), so panels already on 1.5.2-beta
   re-run it cleanly when the runner re-evaluates the `1.5` branch
   during the next start.
-- `database/db.go: ensureIndexes` — also drops the obsolete unique
+- `database/db.go: ensureIndexes` - also drops the obsolete unique
   index at every `InitDB`. This is a runtime safety net for installs
   that bypass `MigrateDb` (for example, restoring an older legacy
   backup outside the panel) and means the in-memory backup database
   built by `GetDb("")` no longer carries the bad index either.
 - Regression coverage:
-  - `cmd/migration/migration_1_5_test.go` — fails if `to1_5` ever
+  - `cmd/migration/migration_1_5_test.go` - fails if `to1_5` ever
     re-introduces the obsolete index, and inserts two rows with
     `ip=""` for one client to prove the legacy-IP collision is gone.
-  - `database/db_test.go: TestInitDBDropsObsoleteClientIPUniqueIndex` —
+  - `database/db_test.go: TestInitDBDropsObsoleteClientIPUniqueIndex` -
     boots an old-shape DB with the legacy unique index already in place
     and verifies `InitDB` removes it.
-  - `database/backup_test.go: TestGetDbHandlesHashedClientIPsWithEmptyLegacyIP` —
+  - `database/backup_test.go: TestGetDbHandlesHashedClientIPsWithEmptyLegacyIP` -
     backs up a DB with multiple `ip_hash` rows and empty `ip` for the
     same client and verifies `GetDb("")` round-trips them.
 
@@ -117,11 +117,11 @@ CI logs or support chats.
 
 | Command | Result |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./cmd/migration ./database ./database/importxui ./api ./ipmonitor` | ✅ |
-| `go test -race ./...` | ✅ (CGO + C compiler required) |
-| `npm run build` | ✅ |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./cmd/migration ./database ./database/importxui ./api ./ipmonitor` | OK |
+| `go test -race ./...` | OK (CGO + C compiler required) |
+| `npm run build` | OK |
 
 ### Rollback
 
@@ -141,8 +141,8 @@ stable across upgrade and rollback.
 
 - **Ошибка `UNIQUE constraint failed: client_ips.client_name,
   client_ips.ip` при автобэкапе перед миграцией с 3x-ui.** Начиная с
-  1.5.x колонка `client_ips.ip` — legacy-поле только для backfill, для
-  новых строк она пустая; настоящий уникальный ключ —
+  1.5.x колонка `client_ips.ip` - legacy-поле только для backfill, для
+  новых строк она пустая; настоящий уникальный ключ -
   `(client_name, ip_hash)`. В модели остался устаревший
   `gorm:"index:idx_client_ips_client_ip,unique"` на пару
   `(client_name, ip)`, из-за чего:
@@ -154,17 +154,17 @@ stable across upgrade and rollback.
     `s-ui.db`, потому что миграция, которая его создавала, числилась
     выполненной.
 
-  После этого хотфикса единственный unique-индекс —
+  После этого хотфикса единственный unique-индекс -
   `(client_name, ip_hash)`. Live-БД и backup-БД получают одинаковую
   схему.
 
 ### Что изменилось
 
-- `database/model/model.go` — убран
+- `database/model/model.go` - убран
   `index:idx_client_ips_client_ip,unique` с `ClientIP.ClientName` и
-  `ClientIP.IP`. Единственный unique-индекс модели —
+  `ClientIP.IP`. Единственный unique-индекс модели -
   `(client_name, ip_hash)`.
-- `cmd/migration/1_5.go` — миграция теперь дропает устаревший
+- `cmd/migration/1_5.go` - миграция теперь дропает устаревший
   `idx_client_ips_client_ip` и создаёт partial non-unique индекс
   `idx_client_ips_client_legacy_ip ON client_ips(client_name, ip)
   WHERE ip IS NOT NULL AND ip != ''` для быстрых legacy-lookup.
@@ -172,19 +172,19 @@ stable across upgrade and rollback.
   `CREATE INDEX IF NOT EXISTS`), поэтому уже обновившиеся до
   1.5.2-beta панели чисто прогонят её повторно при следующем старте,
   когда runner снова войдёт в ветку `1.5`.
-- `database/db.go: ensureIndexes` — также дропает устаревший
+- `database/db.go: ensureIndexes` - также дропает устаревший
   unique-индекс на каждом `InitDB`. Это рантайм-страховка для случаев,
   когда `MigrateDb` обходится (например, восстановление старого
   бэкапа мимо панели), и заодно гарантирует, что временная backup-БД,
   собранная `GetDb("")`, не получит плохой индекс.
 - Регресс:
-  - `cmd/migration/migration_1_5_test.go` — падает, если `to1_5` снова
+  - `cmd/migration/migration_1_5_test.go` - падает, если `to1_5` снова
     создаёт устаревший индекс, и вставляет две строки с `ip=""` для
     одного клиента, чтобы проверить, что коллизии больше нет.
-  - `database/db_test.go: TestInitDBDropsObsoleteClientIPUniqueIndex` —
+  - `database/db_test.go: TestInitDBDropsObsoleteClientIPUniqueIndex` -
     поднимает БД старой формы с уже созданным legacy-индексом и
     проверяет, что `InitDB` его убирает.
-  - `database/backup_test.go: TestGetDbHandlesHashedClientIPsWithEmptyLegacyIP` —
+  - `database/backup_test.go: TestGetDbHandlesHashedClientIPsWithEmptyLegacyIP` -
     бэкапит БД с несколькими `ip_hash` и пустым `ip` для одного
     клиента и проверяет, что `GetDb("")` это переносит.
 
@@ -194,7 +194,7 @@ stable across upgrade and rollback.
   окружения нет.
 - Данные `audit_events`, `client_ips`, `xui_known_hosts` и
   `xui_sync_profiles` не меняются.
-- Совмещается с чанковыми helper'ами из предыдущего hotfix'а — оба
+- Совмещается с чанковыми helper'ами из предыдущего hotfix'а - оба
   фикса теперь идут вместе.
 
 ### Установка / обновление
@@ -244,11 +244,11 @@ backup-БД при каждом снэпшоте.
 
 | Команда | Результат |
 | --- | --- |
-| `go vet ./...` | ✅ |
-| `go build ./...` | ✅ |
-| `go test ./cmd/migration ./database ./database/importxui ./api ./ipmonitor` | ✅ |
-| `go test -race ./...` | ✅ (нужен CGO и C-компилятор) |
-| `npm run build` | ✅ |
+| `go vet ./...` | OK |
+| `go build ./...` | OK |
+| `go test ./cmd/migration ./database ./database/importxui ./api ./ipmonitor` | OK |
+| `go test -race ./...` | OK (нужен CGO и C-компилятор) |
+| `npm run build` | OK |
 
 ### Откат
 

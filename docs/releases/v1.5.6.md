@@ -3,12 +3,12 @@
 Release date: 2026-06-04
 
 First stable release of the 1.5.6 line. It consolidates the 1.5.6-beta1..beta9
-series — whose headline is the **3x-ui (x-ui) → s-ui-x migration** — and adds the
+series. Its main item is the **3x-ui (x-ui) → s-ui-x migration**, and it adds the
 import-correctness fixes below. No schema migrations; existing data is preserved.
 
 ## What changed
 
-- **3x-ui / x-ui migration (the 1.5.6 headline).** Import a 3x-ui or x-ui SQLite
+- **3x-ui / x-ui migration.** Import a 3x-ui or x-ui SQLite
   database into s-ui-x: inbounds and clients (with generated subscription links),
   proxy / WARP / system outbounds, routing rules and matchers, the DNS block, and
   inline TLS certificates are converted to their sing-box equivalents and merged
@@ -20,11 +20,11 @@ import-correctness fixes below. No schema migrations; existing data is preserved
   - An Xray **`blackhole`** outbound now migrates to a sing-box `reject` rule
     action instead of a dangling `outbound: "block"` reference. sing-box 1.11+ has
     no `block` outbound, so the old reference made the imported config fail at
-    route time with *"outbound not found: block"* — the whole config would not
+    route time with *"outbound not found: block"* - the whole config would not
     apply. (Supersedes the `blackhole`→`block` mapping shipped in beta7/beta8.)
   - The migration **preserves a DNS-only source**: a config whose only migratable
-    content was DNS (no routing rules, no proxy outbounds, no endpoints) was
-    silently skipped and its DNS dropped — it now imports.
+    content was DNS (no routing rules, no proxy Outbounds, no endpoints) was
+    silently skipped and its DNS dropped - it now imports.
   - A built-in **`direct`** outbound is ensured whenever migrated routing routes
     to it (a rule, or a remote rule-set download detour); the check consults the
     database, so the default `direct` outbound is no longer re-reported as a
@@ -44,7 +44,7 @@ per-step history.
 ## Upgrade
 
 No manual migration; existing data is preserved. To migrate from a 3x-ui / x-ui
-panel use *Migrate from 3x-ui* (Backup & Restore) or the import CLI — a
+panel use *Migrate from 3x-ui* (Backup & Restore) or the import CLI - a
 pre-import backup is written automatically.
 
 ---
@@ -53,16 +53,16 @@ pre-import backup is written automatically.
 
 Дата релиза: 2026-06-04
 
-Первый стабильный релиз линейки 1.5.6. Он объединяет серию 1.5.6-beta1..beta9 —
-главная тема которой **миграция 3x-ui (x-ui) → s-ui-x** — и добавляет
+Первый стабильный релиз линейки 1.5.6. Он объединяет серию 1.5.6-beta1..beta9 -
+главная тема которой **миграция 3x-ui (x-ui) → s-ui-x** - и добавляет
 исправления корректности импорта ниже. Без миграций схемы; существующие данные
 сохраняются.
 
 ## Что изменилось
 
 - **Миграция 3x-ui / x-ui (главное в 1.5.6).** Импорт базы 3x-ui или x-ui (SQLite)
-  в s-ui-x: входящие и клиенты (со сгенерированными ссылками подписки),
-  proxy- / WARP- / системные outbound'ы, правила маршрутизации и матчеры, блок
+  в s-ui-x: Inbounds и клиенты (со сгенерированными ссылками подписки),
+  proxy- / WARP- / системные Outbounds, правила маршрутизации и матчеры, блок
   DNS и встроенные TLS-сертификаты конвертируются в эквиваленты sing-box и
   сливаются в живой конфиг. Совпадения `geosite`/`geoip` становятся удалёнными
   rule-set'ами (sing-box 1.12 убрал встроенные поля); повторный импорт и плановая
@@ -72,11 +72,11 @@ pre-import backup is written automatically.
   - Xray-outbound **`blackhole`** теперь мигрирует в действие правила `reject`, а
     не в висячую ссылку `outbound: "block"`. В sing-box 1.11+ нет outbound
     `block`, поэтому прежняя ссылка ломала импортированный конфиг во время
-    маршрутизации с ошибкой *«outbound not found: block»* — конфиг не применялся
+    маршрутизации с ошибкой *«outbound not found: block»* - конфиг не применялся
     целиком. (Заменяет отображение `blackhole`→`block` из beta7/beta8.)
   - Миграция **сохраняет источник только с DNS**: конфиг, у которого мигрируемым
-    был только DNS (без правил маршрутизации, proxy-outbound'ов и endpoint'ов),
-    раньше тихо пропускался, а его DNS терялся — теперь импортируется.
+    был только DNS (без правил маршрутизации, proxy-Outbounds и endpoint'ов),
+    раньше тихо пропускался, а его DNS терялся - теперь импортируется.
   - Встроенный outbound **`direct`** гарантируется всякий раз, когда мигрированная
     маршрутизация ссылается на него (правило или download-detour rule-set'а);
     проверка обращается к базе, поэтому стандартный `direct` больше не отмечается
@@ -97,5 +97,5 @@ pre-import backup is written automatically.
 ## Обновление
 
 Ручная миграция не нужна, данные сохраняются. Для переезда с панели 3x-ui / x-ui
-используйте *Migrate from 3x-ui* (Backup & Restore) или CLI импорта — резервная
+используйте *Migrate from 3x-ui* (Backup & Restore) или CLI импорта - резервная
 копия перед импортом создаётся автоматически.
