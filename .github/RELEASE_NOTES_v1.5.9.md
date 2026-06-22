@@ -38,10 +38,6 @@ is required.
   editor loads all fields on first open, and `(i)` hints and field labels are
   readable in the dark theme.
 
-## Breaking Changes Vs v1.5.8
-
-None. This is a drop-in upgrade from the previous stable.
-
 ## Upgrade
 
 Upgrade normally. There is no manual database or configuration migration. The
@@ -92,10 +88,6 @@ Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and
 - **Nexus polish.** Редактор failover-групп работает в основном интерфейсе,
   межполевые отступы единообразны, редактор WireGuard-эндпойнта загружает
   все поля сразу, `(i)`-подсказки и подписи полей читаемы в тёмной теме.
-
-## Ломающие Изменения Относительно v1.5.8
-
-Нет. Это прямое обновление с предыдущей стабильной версии.
 
 ## Обновление
 
