@@ -46,7 +46,7 @@ development, security hardening, testing, and release work.
 
 Web panel built on `SagerNet/Sing-Box`.
 
-**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.8`).
+**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.9`).
 
 **This fork keeps the original project structure and maintains the documentation and install links for this repository. You can use these scripts directly, or fork the repository and build it yourself.**
 
@@ -59,7 +59,7 @@ The full per-release notes live in the language-specific changelog files:
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Latest release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md)
+- Latest release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
@@ -141,7 +141,26 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Run `install-windows.bat` as Administrator.
 4. Follow the installation wizard.
 
-## Install v1.5.8 Stable
+## Install v1.5.9 Stable
+
+Stable v1.5.9 consolidates v1.5.9-beta1..beta6: web self-update from the panel
+UI, automatic outbound failover groups, security and supply-chain hardening,
+settings UX with defaults and hints, reliability fixes, and Nexus interface
+polish. No manual database migration.
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.9
+```
+
+Or from a local clone:
+
+```sh
+git clone https://github.com/deposist/s-ui-x.git
+cd s-ui-x
+sudo bash install.sh v1.5.9
+```
+
+## Install v1.5.8 (previous stable)
 
 Stable v1.5.8 consolidates the full v1.5.8-beta1..beta4 line: no-restart apply
 for all managed sing-box objects, Personal Ops Pack diagnostics, IP-address TLS
@@ -454,7 +473,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 Web-панель на базе `SagerNet/Sing-Box`.
 
-**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.8`).
+**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.9`).
 
 **Этот fork сохраняет структуру оригинального проекта и поддерживает документацию и ссылки установки для этого репозитория. Можно использовать эти скрипты напрямую или сделать fork и собрать проект самостоятельно.**
 
@@ -549,7 +568,26 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 3. Запустите `install-windows.bat` от имени администратора.
 4. Следуйте инструкциям мастера установки.
 
-## Установка стабильной версии v1.5.8
+## Установка стабильной версии v1.5.9
+
+Стабильная v1.5.9 объединяет v1.5.9-beta1..beta6: веб-обновление из панели,
+автоматическое переключение Outbounds, усиление безопасности и цепочки поставок,
+UX настроек с подсказками, исправления надёжности и polish интерфейса Nexus.
+Ручная миграция базы не требуется.
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.9
+```
+
+Или из локального клона:
+
+```sh
+git clone https://github.com/deposist/s-ui-x.git
+cd s-ui-x
+sudo bash install.sh v1.5.9
+```
+
+## Установка v1.5.8 (предыдущая стабильная версия)
 
 Стабильная v1.5.8 объединяет всю линейку v1.5.8-beta1..beta4: применение без
 рестарта для всех управляемых объектов sing-box, Personal Ops Pack с

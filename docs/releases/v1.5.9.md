@@ -38,21 +38,15 @@ is required.
   editor loads all fields on first open, and `(i)` hints and field labels are
   readable in the dark theme.
 
-## Breaking Changes Vs v1.5.7
+## Breaking Changes Vs v1.5.8
 
-- Referenced-tag safety: deleting or renaming a referenced outbound, endpoint,
-  or managed inbound is blocked until the reference is removed or pointed
-  elsewhere.
-- IP-certificate issuance is no longer available from the web UI; use the
-  terminal menu or `sui ip-cert`.
+None. This is a drop-in upgrade from the previous stable.
 
 ## Upgrade
 
-Upgrade normally. There is no manual database or configuration migration. If
-you use IP certificates, issue or re-issue them from the terminal menu or
-`sui ip-cert`. The web self-update is available for installations that run the
-panel as a systemd service; other setups update through the terminal menu or
-`s-ui.sh`.
+Upgrade normally. There is no manual database or configuration migration. The
+web self-update is available for installations that run the panel as a systemd
+service; other setups update through the terminal menu or `s-ui.sh`.
 
 Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and
 `CHANGELOG-ZH.md`.
@@ -99,21 +93,15 @@ Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and
   межполевые отступы единообразны, редактор WireGuard-эндпойнта загружает
   все поля сразу, `(i)`-подсказки и подписи полей читаемы в тёмной теме.
 
-## Ломающие Изменения Относительно v1.5.7
+## Ломающие Изменения Относительно v1.5.8
 
-- Защита referenced tags: удаление или переименование referenced outbound,
-  endpoint или managed inbound блокируется, пока ссылка не удалена или не
-  переведена на другой объект.
-- Выпуск IP-сертификата больше не доступен из web UI; используйте
-  терминальное меню или `sui ip-cert`.
+Нет. Это прямое обновление с предыдущей стабильной версии.
 
 ## Обновление
 
 Обновляйтесь обычным образом. Ручной миграции базы или конфигурации нет.
-Если используете IP-сертификаты, выпускайте или перевыпускайте их из
-терминального меню или через `sui ip-cert`. Веб-обновление доступно для
-установок с systemd-службой; остальные обновляются через терминальное меню
-или `s-ui.sh`.
+Веб-обновление доступно для установок с systemd-службой; остальные обновляются
+через терминальное меню или `s-ui.sh`.
 
 Полная история beta-релизов остаётся в `CHANGELOG-EN.md`, `CHANGELOG-RU.md` и
 `CHANGELOG-ZH.md`.
