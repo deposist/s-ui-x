@@ -40,9 +40,28 @@
 
       <template #col.server="{ item }">
         <template v-if="item.type === 'failover'">
-          <span v-if="failoverActive(item.tag)" class="nexus-mono outbounds-nexus__active">→ {{ failoverActive(item.tag) }}</span>
-          <nexus-badge v-if="failoverAllDown(item.tag)" :label="$t('types.failover.allDown')" variant="secondary" class="ml-1" />
-          <span v-if="!failoverActive(item.tag) && !failoverAllDown(item.tag)" class="outbounds-nexus__muted">—</span>
+          <div class="outbounds-nexus__failover">
+            <span v-if="failoverActive(item.tag)" class="nexus-mono outbounds-nexus__active">→ {{ failoverActive(item.tag) }}</span>
+            <span v-if="failoverMembers(item.tag).length" class="outbounds-nexus__dots">
+              <span
+                v-for="m in failoverMembers(item.tag)"
+                :key="m.tag"
+                class="outbounds-nexus__dot"
+                :class="{
+                  'outbounds-nexus__dot--up': m.healthy,
+                  'outbounds-nexus__dot--down': !m.healthy,
+                  'outbounds-nexus__dot--active': m.tag === failoverActive(item.tag),
+                }"
+                :title="m.tag + ': ' + (m.healthy ? $t('online') : $t('nexus.status.offline'))"
+                :aria-label="m.tag + ': ' + (m.healthy ? $t('online') : $t('nexus.status.offline'))"
+              />
+            </span>
+            <nexus-badge v-if="failoverAllDown(item.tag)" :label="$t('types.failover.allDown')" variant="secondary" class="ml-1" />
+            <span
+              v-if="!failoverActive(item.tag) && !failoverAllDown(item.tag) && !failoverMembers(item.tag).length"
+              class="outbounds-nexus__muted"
+            >—</span>
+          </div>
         </template>
         <span v-else-if="item.server" class="nexus-mono">{{ item.server }}</span>
         <span v-else class="outbounds-nexus__muted">—</span>
@@ -107,10 +126,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import api from '@/plugins/api'
+
+import type { FailoverStatusEntry, FailoverMemberStatus } from '@/types/outbounds'
 
 import type { Column } from '@/components/nexus/data/dataTableColumns'
 import NexusDataTable from '@/components/nexus/data/NexusDataTable.vue'
@@ -143,6 +164,7 @@ interface OutboundRow {
 const props = defineProps<{
   outbounds: OutboundRow[]
   onlines: string[]
+  failover: Record<string, FailoverStatusEntry>
   enableTraffic: boolean
   checkResults: Record<string, CheckResult>
   testingAll: boolean
@@ -162,36 +184,29 @@ const { t } = useI18n()
 const { confirm } = useConfirm()
 const search = ref('')
 
-// Failover groups expose their currently-active member + all-down state via a
-// lightweight polled endpoint (the failover manager owns the live selection).
-const failoverByTag = ref<Record<string, { active: string; allDown: boolean }>>({})
+// Failover groups expose their active member + per-member health live through the
+// onlines realtime push (the `failover` prop). A single fetch on mount seeds the
+// crash-safe state (from failover_state) for the brief window after a panel
+// restart, before the manager's first probe repopulates the live snapshot.
+const initialFailover = ref<Record<string, FailoverStatusEntry>>({})
+
+const failoverByTag = computed<Record<string, FailoverStatusEntry>>(() => {
+  return Object.keys(props.failover ?? {}).length ? props.failover : initialFailover.value
+})
+
 const failoverActive = (tag: string): string => failoverByTag.value[tag]?.active || ''
 const failoverAllDown = (tag: string): boolean => failoverByTag.value[tag]?.allDown === true
+const failoverMembers = (tag: string): FailoverMemberStatus[] => failoverByTag.value[tag]?.members ?? []
 
-let failoverTimer: ReturnType<typeof setInterval> | undefined
-
-const fetchFailover = async () => {
-  if (!props.outbounds.some(item => item.type === 'failover')) {
-    failoverByTag.value = {}
-    return
-  }
+onMounted(async () => {
+  if (!props.outbounds.some(item => item.type === 'failover')) return
   try {
     const resp = await api.get('api/failover-status')
-    const list = (resp?.data?.obj ?? []) as Array<{ tag: string; active: string; allDown: boolean }>
-    const next: Record<string, { active: string; allDown: boolean }> = {}
-    for (const entry of list) next[entry.tag] = { active: entry.active, allDown: entry.allDown }
-    failoverByTag.value = next
+    const entries = (resp?.data?.obj ?? []) as FailoverStatusEntry[]
+    initialFailover.value = Object.fromEntries(entries.map(entry => [entry.tag, entry]))
   } catch {
-    // Silent: keep the last known state, no error toast on a background poll.
+    // Silent: the realtime onlines.failover push will populate shortly.
   }
-}
-
-onMounted(() => {
-  fetchFailover()
-  failoverTimer = setInterval(fetchFailover, 5000)
-})
-onUnmounted(() => {
-  if (failoverTimer) clearInterval(failoverTimer)
 })
 
 const subtitle = computed(() => {
@@ -261,6 +276,39 @@ const handleAction = async (key: string, item: OutboundRow) => {
 .outbounds-nexus__active {
   color: var(--nexus-text-primary);
   font-weight: 600;
+}
+
+.outbounds-nexus__failover {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nexus-gap-2);
+}
+
+.outbounds-nexus__dots {
+  align-items: center;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.outbounds-nexus__dot {
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  width: 8px;
+}
+
+.outbounds-nexus__dot--up {
+  background: rgb(var(--v-theme-success));
+}
+
+.outbounds-nexus__dot--down {
+  background: rgb(var(--v-theme-error));
+}
+
+.outbounds-nexus__dot--active {
+  outline: 1.5px solid rgb(var(--v-theme-primary));
+  outline-offset: 1px;
 }
 
 .outbounds-nexus__delay {

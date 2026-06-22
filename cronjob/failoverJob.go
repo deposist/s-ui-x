@@ -11,14 +11,10 @@ import (
 	"github.com/deposist/s-ui-x/service"
 )
 
-// failoverProbeConcurrency bounds how many member probes run at once per cycle,
-// matching DoctorService.outboundChecks so a many-member panel can't exhaust
-// dialers.
-const failoverProbeConcurrency = 4
-
 type failoverGroupState struct {
-	lastProbe time.Time
-	health    map[string]service.MemberHealth
+	lastProbe   time.Time
+	prevAllDown bool
+	health      map[string]service.MemberHealth
 }
 
 // FailoverJob is the in-process auto-failover manager. Every base tick it probes
@@ -40,13 +36,17 @@ type FailoverJob struct {
 	switchMember func(groupTag, memberTag string) error
 	// activeMember is injectable for tests; defaults to the live core.
 	activeMember func(groupTag string) (string, bool)
+	// alert fires once on the down->all-down edge; defaults to alertAllDown.
+	alert func(group service.FailoverGroupConfig)
 }
 
 func NewFailoverJob() *FailoverJob {
-	return &FailoverJob{
+	j := &FailoverJob{
 		states: make(map[string]*failoverGroupState),
 		now:    time.Now,
 	}
+	j.alert = j.alertAllDown
+	return j
 }
 
 func (j *FailoverJob) Run() {
@@ -56,6 +56,11 @@ func (j *FailoverJob) Run() {
 		logger.Warning("failover: load groups: ", err)
 		return
 	}
+	tags := make([]string, 0, len(groups))
+	for _, group := range groups {
+		tags = append(tags, group.Tag)
+	}
+	service.PruneFailoverLiveStatus(tags)
 	if len(groups) == 0 {
 		return
 	}
@@ -123,42 +128,29 @@ func (j *FailoverJob) runGroup(coreInst *core.Core, group service.FailoverGroupC
 		Hysteresis:     group.Hysteresis,
 		DirectFallback: fallback,
 	})
-	if !decision.ShouldSwitch {
-		return
-	}
-	if err := j.switch0(coreInst, group.Tag, decision.Target); err != nil {
-		logger.Warning("failover: switch ", group.Tag, " -> ", decision.Target, ": ", err)
-		return
-	}
-	logger.Info("failover: group ", group.Tag, " -> ", decision.Target, " (", decision.Reason, ")")
-}
 
-func (j *FailoverJob) probeMembers(group service.FailoverGroupConfig) map[string]bool {
-	results := make(map[string]bool, len(group.Members))
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, failoverProbeConcurrency)
-	ctx, cancel := context.WithTimeout(context.Background(), group.Interval)
-	defer cancel()
-	for _, member := range group.Members {
-		wg.Add(1)
-		go func(tag string) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			var ok bool
-			if j.probe != nil {
-				ok = j.probe(ctx, tag, group.ProbeTarget)
-			} else {
-				ok = j.ConfigService.CheckOutboundWithContext(ctx, tag, group.ProbeTarget).OK
-			}
-			mu.Lock()
-			results[tag] = ok
-			mu.Unlock()
-		}(member)
+	active := current
+	if decision.ShouldSwitch {
+		if err := j.switch0(coreInst, group.Tag, decision.Target); err != nil {
+			logger.Warning("failover: switch ", group.Tag, " -> ", decision.Target, ": ", err)
+		} else {
+			active = decision.Target
+			logger.Info("failover: group ", group.Tag, " -> ", decision.Target, " (", decision.Reason, ")")
+		}
 	}
-	wg.Wait()
-	return results
+
+	// Publish the live status every due cycle (not only on a switch) so the UI
+	// reflects per-member health without a dedicated poll.
+	j.publishLiveStatus(group, snapshot, active, decision.AllDown)
+
+	// Edge-triggered all-down alert: fire once on the down->all-down transition.
+	j.mu.Lock()
+	edge := decision.AllDown && !st.prevAllDown
+	st.prevAllDown = decision.AllDown
+	j.mu.Unlock()
+	if edge && j.alert != nil {
+		j.alert(group)
+	}
 }
 
 // now0 reads the group's active member, preferring the test hook.
@@ -175,25 +167,6 @@ func (j *FailoverJob) switch0(coreInst *core.Core, groupTag, memberTag string) e
 		return j.switchMember(groupTag, memberTag)
 	}
 	return coreInst.SelectGroupMember(groupTag, memberTag)
-}
-
-// persistState records the per-member health to the observability table. A nil
-// database (unit tests) makes this a no-op.
-func (j *FailoverJob) persistState(group service.FailoverGroupConfig, snapshot map[string]service.MemberHealth) {
-	nowUnix := j.now().Unix()
-	states := make([]service.FailoverMemberState, 0, len(group.Members))
-	for _, m := range group.Members {
-		h := snapshot[m]
-		states = append(states, service.FailoverMemberState{
-			GroupTag:    group.Tag,
-			MemberTag:   m,
-			Healthy:     h.ConsecutiveUp >= 1,
-			ConsecUp:    h.ConsecutiveUp,
-			ConsecDown:  h.ConsecutiveDown,
-			LastProbeAt: nowUnix,
-		})
-	}
-	_ = service.WriteFailoverMemberStates(database.GetDB(), states)
 }
 
 func memberListContains(list []string, s string) bool {

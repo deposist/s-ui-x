@@ -26,6 +26,7 @@
     v-if="mode === 'nexus'"
     :outbounds="<any[]>outbounds"
     :onlines="onlines"
+    :failover="failover"
     :enable-traffic="enableTraffic"
     :check-results="checkResults"
     :testing-all="testingAll"
@@ -230,6 +231,12 @@ const outboundTags = computed((): string[] => {
 
 const onlines = computed(() => {
   return Data().onlines.outbound?? []
+})
+
+// Live failover status (active member + per-member health) rides the onlines
+// realtime push, so the list needs no dedicated status poll.
+const failover = computed(() => {
+  return Data().onlines.failover?? {}
 })
 
 const enableTraffic = computed((): boolean => {

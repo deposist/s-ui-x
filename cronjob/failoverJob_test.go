@@ -64,6 +64,40 @@ func TestFailoverJobAllDownToDirect(t *testing.T) {
 	}
 }
 
+// The down->all-down transition is edge-triggered: the alert fires once when
+// the group enters all-down, stays quiet while it remains down, and re-arms after
+// any recovery so a later all-down alerts again.
+func TestFailoverJobAllDownEdgeAlertsOnce(t *testing.T) {
+	cur := time.Unix(1000, 0)
+	active := "a"
+	var switches []string
+	var alerts int
+	health := map[string]bool{"a": false, "b": false}
+
+	j := newTestFailoverJob(func() time.Time { return cur }, func(tag string) bool { return health[tag] }, &active, &switches)
+	j.alert = func(service.FailoverGroupConfig) { alerts++ }
+	group := service.FailoverGroupConfig{Tag: "g", Members: []string{"a", "b"}, ProbeTarget: "x", Interval: 30 * time.Second, Hysteresis: 2, Enabled: true}
+
+	tick := func() {
+		j.runGroup(nil, group, "")
+		cur = cur.Add(group.Interval)
+	}
+
+	tick() // all down -> edge -> alert #1
+	tick() // still all down -> no new edge
+	if alerts != 1 {
+		t.Fatalf("alerts after sustained all-down = %d, want 1", alerts)
+	}
+
+	health["a"] = true
+	tick() // primary recovers -> all-down cleared, edge re-armed
+	health["a"] = false
+	tick() // all down again -> edge -> alert #2
+	if alerts != 2 {
+		t.Fatalf("alerts after re-entering all-down = %d, want 2", alerts)
+	}
+}
+
 // A disabled group must never be probed or switched.
 func TestFailoverJobDisabledGroupIsSkipped(t *testing.T) {
 	cur := time.Unix(1000, 0)

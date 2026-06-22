@@ -1005,8 +1005,11 @@ export default {
       backup: "Backup",
       addMember: "Add member",
       probeTarget: "Probe target (domain or IP)",
+      probeTargetHint: "HTTP(S) URL probed through each member to judge its health. Default: https://www.gstatic.com/generate_204",
       interval: "Probe interval",
+      intervalHint: "How often each member is probed. Default 30s, minimum 5s.",
       hysteresis: "Failback confirmations",
+      hysteresisHint: "Consecutive healthy probes a higher-priority member needs before traffic fails back to it. Default 2.",
       enabled: "Auto-failover enabled",
       activeNow: "Active",
       allDown: "All members down"

@@ -35,7 +35,11 @@
           :placeholder="defaultTarget"
           persistent-placeholder
           hide-details
-        ></v-text-field>
+        >
+          <template #append-inner>
+            <SettingInfo :text="$t('types.failover.probeTargetHint')" />
+          </template>
+        </v-text-field>
       </v-col>
       <v-col cols="12" sm="6">
         <v-text-field
@@ -43,9 +47,15 @@
           :label="$t('types.failover.interval')"
           type="number"
           min="5"
+          placeholder="30"
+          persistent-placeholder
           :suffix="$t('date.s')"
           hide-details
-        ></v-text-field>
+        >
+          <template #append-inner>
+            <SettingInfo :text="$t('types.failover.intervalHint')" />
+          </template>
+        </v-text-field>
       </v-col>
       <v-col cols="12" sm="6">
         <v-text-field
@@ -53,8 +63,14 @@
           :label="$t('types.failover.hysteresis')"
           type="number"
           min="1"
+          placeholder="2"
+          persistent-placeholder
           hide-details
-        ></v-text-field>
+        >
+          <template #append-inner>
+            <SettingInfo :text="$t('types.failover.hysteresisHint')" />
+          </template>
+        </v-text-field>
       </v-col>
     </v-row>
     <v-row>
@@ -69,7 +85,10 @@
 </template>
 
 <script lang="ts">
+import SettingInfo from '@/components/SettingInfo.vue'
+
 export default {
+  components: { SettingInfo },
   props: ['data', 'tags'],
   created() {
     if (!Array.isArray(this.$props.data.outbounds)) this.$props.data.outbounds = []

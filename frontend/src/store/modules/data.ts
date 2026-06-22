@@ -4,6 +4,7 @@ import { push } from 'notivue'
 import { i18n } from '@/locales'
 import { Inbound } from '@/types/inbounds'
 import { Client } from '@/types/clients'
+import { FailoverStatusEntry } from '@/types/outbounds'
 
 type ActionableLogLevel = 'warning' | 'error'
 
@@ -22,7 +23,7 @@ const Data = defineStore('Data', {
     subJsonURI: "",
     subClashURI: "",
     enableTraffic: false,
-    onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[]},
+    onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[], failover: <Record<string, FailoverStatusEntry>>{}},
     config: <any>{},
     inbounds: <any[]>[],
     outbounds: <any[]>[],

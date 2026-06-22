@@ -250,6 +250,19 @@ export interface Failover extends OutboundBasics {
   }
 }
 
+export interface FailoverMemberStatus {
+  tag: string
+  healthy: boolean
+  priority: number
+}
+
+export interface FailoverStatusEntry {
+  tag: string
+  active: string
+  allDown: boolean
+  members?: FailoverMemberStatus[]
+}
+
 // Create interfaces dynamically based on OutTypes keys
 type InterfaceMap = {
   [Key in keyof typeof OutTypes]: {
