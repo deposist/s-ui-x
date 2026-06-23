@@ -32,6 +32,7 @@ const USED_ICONS = [
   'mdi-account-plus-outline',
   'mdi-account-remove-outline',
   'mdi-account-tie',
+  'mdi-alert',
   'mdi-alert-circle-outline',
   'mdi-application-cog',
   'mdi-arrow-down',

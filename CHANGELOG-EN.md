@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.10-beta3] - 2026-06-23 - fix regional preset drawer rendering and button state
+
+Third beta of the 1.5.10 line. No database or configuration migration is required. Frontend tests, lint, and build pass.
+
+- Fixed a bug where Vuetify components inside the Regional Presets drawer failed to resolve because of dynamically resolved components in JS render functions (bypassing the `vite-plugin-vuetify` compiler).
+- Fixed a bug where the "Preview Changes" button was permanently locked (disabled) because the switches were not functional and the "disable presets" state was not considered a previewable state.
+- Fixed layout and spacing issues in the Regional Presets drawer by using standard Vuetify cards, dividers, and typography for better visual separation.
+
+Full release notes: [`docs/releases/v1.5.10-beta3.md`](docs/releases/v1.5.10-beta3.md).
+
 ## [1.5.10-beta2] - 2026-06-23 - RU/ZH preset drawer with preview and security warnings
 
 Second beta of the 1.5.10 line. No manual database, API, or configuration migration is required. Frontend tests, lint, and build pass.
