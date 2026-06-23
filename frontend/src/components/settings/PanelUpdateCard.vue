@@ -70,14 +70,50 @@
       {{ $t('update.upToDate') }}
     </v-alert>
 
-    <!-- Release notes are external content: rendered as plain text only (SR-011), never v-html. -->
+    <!-- Release notes are external content: render a small Markdown subset without v-html. -->
     <v-sheet
       v-if="status?.updateAvailable && status?.releaseNotes"
       class="panel-update__notes"
       rounded
     >
       <div class="panel-update__notes-title">{{ $t('update.releaseNotes') }}</div>
-      <pre class="panel-update__notes-body">{{ status.releaseNotes }}</pre>
+      <div class="panel-update__notes-body">
+        <template v-for="(block, index) in releaseNoteBlocks" :key="index">
+          <component
+            :is="headingTag(block.level)"
+            v-if="block.type === 'heading'"
+            class="panel-update__notes-heading"
+          >
+            <template v-for="(segment, segmentIndex) in block.inline" :key="segmentIndex">
+              <code v-if="segment.type === 'code'">{{ segment.text }}</code>
+              <strong v-else-if="segment.type === 'strong'">{{ segment.text }}</strong>
+              <span v-else>{{ segment.text }}</span>
+            </template>
+          </component>
+          <p v-else-if="block.type === 'paragraph'" class="panel-update__notes-paragraph">
+            <template v-for="(segment, segmentIndex) in block.inline" :key="segmentIndex">
+              <code v-if="segment.type === 'code'">{{ segment.text }}</code>
+              <strong v-else-if="segment.type === 'strong'">{{ segment.text }}</strong>
+              <span v-else>{{ segment.text }}</span>
+            </template>
+          </p>
+          <component
+            :is="block.ordered ? 'ol' : 'ul'"
+            v-else-if="block.type === 'list'"
+            class="panel-update__notes-list"
+          >
+            <li v-for="(item, itemIndex) in block.items" :key="itemIndex">
+              <template v-for="(segment, segmentIndex) in item" :key="segmentIndex">
+                <code v-if="segment.type === 'code'">{{ segment.text }}</code>
+                <strong v-else-if="segment.type === 'strong'">{{ segment.text }}</strong>
+                <span v-else>{{ segment.text }}</span>
+              </template>
+            </li>
+          </component>
+          <pre v-else-if="block.type === 'code'" class="panel-update__notes-code"><code>{{ block.text }}</code></pre>
+          <v-divider v-else-if="block.type === 'rule'" class="my-3" />
+        </template>
+      </div>
     </v-sheet>
 
     <div v-if="jobActive" class="panel-update__progress">
@@ -148,6 +184,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import HttpUtils from '@/plugins/httputil'
+import { parseMarkdownBlocks } from '@/plugins/markdown'
 
 interface UpdateJob {
   stage: string
@@ -181,6 +218,8 @@ const jobActive = computed(() => RUNNING_STAGES.includes(status.value?.job?.stag
 const canUpdate = computed(() =>
   !!status.value?.updateAvailable && !!status.value?.assetAvailable && !jobActive.value && !applying.value,
 )
+const releaseNoteBlocks = computed(() => parseMarkdownBlocks(status.value?.releaseNotes || ''))
+const headingTag = (level = 3) => `h${Math.min(Math.max(level + 2, 4), 6)}`
 
 const applyStatus = (obj: unknown) => {
   status.value = obj as UpdateStatus
@@ -324,12 +363,44 @@ onUnmounted(stopPolling)
 }
 
 .panel-update__notes-body {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  margin: 0;
-  white-space: pre-wrap;
+  font-size: 0.84rem;
+  line-height: 1.5;
   word-break: break-word;
+}
+
+.panel-update__notes-heading {
+  font-size: 0.92rem;
+  font-weight: 650;
+  margin: 10px 0 4px;
+}
+
+.panel-update__notes-heading:first-child,
+.panel-update__notes-paragraph:first-child,
+.panel-update__notes-list:first-child,
+.panel-update__notes-code:first-child {
+  margin-top: 0;
+}
+
+.panel-update__notes-paragraph {
+  margin: 0 0 8px;
+}
+
+.panel-update__notes-list {
+  margin: 0 0 8px 18px;
+  padding: 0;
+}
+
+.panel-update__notes-code {
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 6px;
+  margin: 0 0 8px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.panel-update__notes-body code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.82em;
 }
 
 .panel-update__progress {

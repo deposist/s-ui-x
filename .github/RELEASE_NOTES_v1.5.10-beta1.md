@@ -1,79 +1,91 @@
 # Release Notes: v1.5.10-beta1
 Release date: 2026-06-23
 
-First beta of the 1.5.10 line. This release focuses on performance remediation from the 2026-06-23 audit: faster stats charts, less database work on full panel reloads, safer backup downloads for large databases, safer stats writes on large installations, subscription output caching, and smaller/cache-friendlier frontend chunks.
+This is the first beta in the 1.5.10 line. It contains the performance fixes from the 2026-06-23 audit: faster stats chart preparation, fewer database reads during a full panel reload, streamed local DB export, safer stats inserts, a short cache for subscription output, and smaller entry chunks in the frontend build.
 
-No manual database migration or configuration change is required. Public API and UI behaviour are preserved.
+You do not need to run a database migration or change configuration. The public API and UI behavior stay the same.
 
-**EN**
+## Faster dashboard stats
 
-## 1. Faster dashboard stats
+Stats chart downsampling now sorts the rows once and assigns them to buckets in a single pass. Before this release, the code scanned the full result set for every bucket and traffic direction. Large stats windows should take less CPU when the dashboard or `/api/stats` requests chart data.
 
-The stats chart downsampling path now buckets rows in a single pass after sorting instead of scanning all rows for every bucket and direction. Large stats windows should use substantially less CPU when the dashboard or stats API requests chart data.
+Stats writes now use explicit SQLite-safe batches. This avoids oversized insert statements on installations with many clients, inbounds, outbounds, or endpoints.
 
-Stats writes also use SQLite-safe explicit batching, avoiding oversized multi-row inserts on installations with many clients, inbounds, outbounds, or endpoints.
+## Lighter `/api/load` full reloads
 
-## 2. Lighter `/api/load` full reloads
+The full reload path now reads the settings needed for load data through one request-local snapshot. It no longer repeats several settings queries for the same response.
 
-The full reload path now reads the panel settings needed for load data through one request-local snapshot instead of several duplicate settings queries. Independent entity reads for clients, TLS, inbounds, outbounds, endpoints, services, and settings are also parallelized, reducing latency when the frontend needs a full refresh.
+The backend also reads clients, TLS records, inbounds, outbounds, endpoints, services, and load settings in parallel. These reads are independent, so the response no longer waits for them one by one.
 
-## 3. Safer database backup downloads
+## Streamed unencrypted DB export
 
-Unencrypted local database export now streams the prepared backup file to the HTTP response instead of reading the whole SQLite backup into memory first. This reduces memory spikes on large databases. Encrypted Telegram-style backup downloads still buffer plaintext internally because the current authenticated envelope format encrypts the complete payload at once.
+Unencrypted local database export now streams the prepared SQLite backup file to the HTTP response. It no longer reads the whole backup into memory before sending it to the browser.
 
-## 4. Subscription output cache
+Encrypted backup downloads still use the existing whole-payload envelope. That path still buffers plaintext because the current encrypted envelope seals the complete payload at once.
 
-Base, JSON, and Clash subscription outputs are cached for a short TTL and cleared after a successful config save. This reduces repeated CPU work when many clients poll subscriptions at the same time, for example after a restart. Successful responses only are cached; not-found and error responses are not cached.
+## Subscription output cache
 
-Note: subscription headers are cached together with the response for up to 45 seconds, so traffic/userinfo values can lag slightly on repeated requests during that window.
+Base, JSON, and Clash subscription outputs now use a short TTL cache. The cache is cleared after a successful config save. This reduces repeated link generation when many clients poll subscriptions at the same time, for example after a restart.
 
-## 5. Frontend bundle and cache improvements
+Only successful responses are cached. Missing clients and errors are not cached.
 
-The main app entry is split into stable vendor chunks for Vue, Vuetify, and HTTP dependencies, improving browser cache reuse between releases. The DateTime picker path is lazy-loaded from client modals and no longer imports extra Moment locale files globally.
+Subscription headers are cached with the response for up to 45 seconds. During that window, traffic and userinfo headers can lag behind the latest counters on repeated requests.
 
-The full Moment removal was intentionally deferred: the current Persian datetime picker directly depends on `moment-jalaali`, so replacing Moment safely requires replacing the picker component. Chart.js and YAML replacements were evaluated and deferred because they need visual/config compatibility coverage.
+## Frontend chunks
+
+The frontend build now separates stable vendor chunks for Vue, Vuetify, and HTTP dependencies. The main app entry is smaller, and browsers can reuse vendor chunks more often between releases.
+
+The DateTime picker is lazy-loaded from client modals. Extra Moment locale imports were removed. Moment itself is still present because the current Persian datetime picker depends on `moment-jalaali`; removing it safely means replacing that picker. Chart.js and YAML were reviewed but left in place because replacing them needs chart and Clash config compatibility checks.
 
 ## Upgrade
 
-Upgrade normally. There is no manual database or configuration migration. Because this is a beta, publish it as a GitHub pre-release and keep it out of the Latest stable slot.
+Upgrade normally. No manual database migration or configuration change is needed.
+
+This is a beta release. Publish it as a GitHub pre-release and keep it out of the Latest stable slot.
 
 ---
 
 # Примечания к релизу: v1.5.10-beta1
 Дата релиза: 2026-06-23
 
-Первая бета линейки 1.5.10. Релиз закрывает performance remediation по аудиту от 2026-06-23: быстрее графики статистики, меньше работы с базой при полном обновлении панели, безопаснее скачивание больших backup-файлов, устойчивее запись статистики на крупных установках, кеширование подписок и более cache-friendly frontend chunks.
+Это первая бета линейки 1.5.10. В ней собраны исправления производительности по аудиту от 2026-06-23: быстрее подготовка графиков статистики, меньше чтений из базы при полном обновлении панели, streaming для локального экспорта БД, безопасные batch-вставки статистики, короткий кеш output подписок и меньший entry chunk во frontend build.
 
-Ручная миграция базы и изменение конфигурации не требуются. Публичное поведение API и UI сохранено.
+Ручная миграция базы и изменение конфигурации не требуются. Публичное поведение API и UI не менялось.
 
-**RU**
+## Быстрее статистика на dashboard
 
-## 1. Быстрее статистика на dashboard
+Downsampling для графиков статистики теперь один раз сортирует строки и за один проход раскладывает их по bucket'ам. Раньше код заново сканировал весь результат для каждого bucket и направления трафика. На больших окнах статистики запросы dashboard или `/api/stats` должны потреблять меньше CPU.
 
-Downsampling для графиков статистики теперь раскладывает строки по bucket'ам за один проход после сортировки, вместо повторного сканирования всех строк для каждого bucket и направления. На больших окнах статистики это снижает CPU-нагрузку при запросах dashboard/stats API.
+Запись статистики теперь использует явные SQLite-safe batch-вставки. Это защищает крупные установки от слишком больших insert statements при большом числе клиентов, inbounds, outbounds или endpoints.
 
-Запись статистики также переведена на явные безопасные SQLite batch-вставки, чтобы не упираться в лимит переменных SQLite на установках с большим числом клиентов, inbounds, outbounds или endpoints.
+## Легче полный `/api/load`
 
-## 2. Легче полный `/api/load`
+Полный reload теперь читает settings, нужные для load data, через один request-local snapshot. Несколько повторных settings-запросов для одного ответа больше не выполняются.
 
-Полная загрузка данных панели теперь получает нужные settings через один request-local snapshot вместо нескольких повторных запросов к settings. Независимые чтения clients, TLS, inbounds, outbounds, endpoints, services и settings выполняются параллельно, что уменьшает задержку при полном refresh фронтенда.
+Backend также читает clients, TLS records, inbounds, outbounds, endpoints, services и load settings параллельно. Эти чтения независимы, поэтому ответ больше не ждёт их строго по очереди.
 
-## 3. Безопаснее скачивание backup базы
+## Streaming для незашифрованного экспорта БД
 
-Незашифрованный локальный экспорт базы теперь стримит подготовленный backup-файл в HTTP-ответ, а не читает весь SQLite backup в память целиком. Это уменьшает memory spikes на больших базах. Зашифрованные Telegram-style backup downloads пока по-прежнему буферизуют plaintext, потому что текущий authenticated envelope шифрует весь payload целиком.
+Незашифрованный локальный экспорт базы теперь стримит подготовленный SQLite backup-файл в HTTP-ответ. Он больше не читает весь backup в память перед отправкой в браузер.
 
-## 4. Кеш output подписок
+Зашифрованные backup downloads пока используют прежний whole-payload envelope. Этот путь всё ещё буферизует plaintext, потому что текущий encrypted envelope шифрует весь payload целиком.
 
-Base, JSON и Clash подписки кешируются на короткий TTL и очищаются после успешного сохранения конфигурации. Это уменьшает повторную CPU-работу, когда много клиентов одновременно запрашивают подписки, например после рестарта. Кешируются только успешные ответы; not-found и ошибки не кешируются.
+## Кеш output подписок
 
-Замечание: headers подписки кешируются вместе с ответом до 45 секунд, поэтому traffic/userinfo значения могут немного отставать при повторных запросах в этом окне.
+Base, JSON и Clash подписки теперь используют короткий TTL cache. Кеш очищается после успешного сохранения конфигурации. Это уменьшает повторную генерацию ссылок, когда много клиентов одновременно запрашивают подписки, например после рестарта.
 
-## 5. Frontend bundle и кеширование
+Кешируются только успешные ответы. Missing clients и ошибки не кешируются.
 
-Главный app entry разделён на стабильные vendor chunks для Vue, Vuetify и HTTP-зависимостей, что улучшает browser cache reuse между релизами. Путь DateTime picker теперь lazy-loaded из client modals и больше не импортирует лишние Moment locale files глобально.
+Headers подписки кешируются вместе с ответом до 45 секунд. В этом окне traffic и userinfo headers при повторных запросах могут немного отставать от текущих счётчиков.
 
-Полное удаление Moment намеренно отложено: текущий Persian datetime picker напрямую зависит от `moment-jalaali`, поэтому безопасная замена требует замены самого picker component. Замены Chart.js и YAML оценены и отложены, потому что требуют visual/config compatibility coverage.
+## Frontend chunks
+
+Frontend build теперь отделяет стабильные vendor chunks для Vue, Vuetify и HTTP-зависимостей. Главный app entry стал меньше, а браузеры чаще смогут переиспользовать vendor chunks между релизами.
+
+DateTime picker загружается lazy из client modals. Лишние Moment locale imports удалены. Сам Moment остаётся, потому что текущий Persian datetime picker зависит от `moment-jalaali`; безопасное удаление требует замены picker. Chart.js и YAML проверены, но оставлены: их замена требует проверки графиков и совместимости Clash config.
 
 ## Обновление
 
-Обновляйтесь обычным образом. Ручной миграции базы или конфигурации нет. Так как это beta, публикуйте её как GitHub pre-release и не помечайте как Latest stable.
+Обновляйтесь обычным способом. Ручная миграция базы или изменение конфигурации не нужны.
+
+Это beta release. Публикуйте его как GitHub pre-release и не помечайте как Latest stable.

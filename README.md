@@ -127,33 +127,34 @@ security and reliability.
 - Username: admin
 - Password (fresh install only): a random 24-character string is generated on first start and written to the application log. Look for the line `created initial admin user. username=admin password=...` in `journalctl -u s-ui` (Linux) or in the panel log on first run. After that, change it from the panel.
 
-## Install or Upgrade to the Latest Stable Version
+## Install or upgrade
 
-### Linux/macOS
+Use the stable build for normal installations. Use the beta only if you want to test the newest changes before they become stable.
+
+| Channel | Version | Notes |
+|---|---|---|
+| Stable | `v1.5.9` | Recommended for production. Release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md). |
+| Beta | `v1.5.10-beta1` | Newer than stable. Pre-release build for testing. Release notes: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md). |
+
+### Linux/macOS, stable
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh)
 ```
 
-### Windows
-
-1. Download the latest Windows version from [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest).
-2. Extract the ZIP file.
-3. Run `install-windows.bat` as Administrator.
-4. Follow the installation wizard.
-
-## Install v1.5.9 Stable
-
-Stable v1.5.9 consolidates v1.5.9-beta1..beta6: web self-update from the panel
-UI, automatic outbound failover groups, security and supply-chain hardening,
-settings UX with defaults and hints, reliability fixes, and Nexus interface
-polish. No manual database migration.
+The command above installs the latest stable release. To pin the current stable version explicitly:
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.9
 ```
 
-Or from a local clone:
+### Linux/macOS, beta
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta1
+```
+
+### Local clone
 
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
@@ -161,99 +162,14 @@ cd s-ui-x
 sudo bash install.sh v1.5.9
 ```
 
-## Install v1.5.8 (previous stable)
+For the beta build, replace `v1.5.9` with `v1.5.10-beta1`.
 
-Stable v1.5.8 consolidates the full v1.5.8-beta1..beta4 line: no-restart apply
-for all managed sing-box objects, Personal Ops Pack diagnostics, IP-address TLS
-certificates with terminal/CLI issuance, embedded sing-box v1.13.13, and final
-Nexus polish. No manual database migration.
+### Windows
 
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8
-```
+- Stable: download from [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest), extract the ZIP, and run `install-windows.bat` as Administrator.
+- Beta: download `v1.5.10-beta1` from [its release page](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta1), extract the ZIP, and run `install-windows.bat` as Administrator.
 
-Or from a local clone:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.8
-```
-
-## Install v1.5.7-hotfix1 (previous stable)
-
-Hotfix on top of the stable v1.5.7 (recommended over plain v1.5.7): deleting a
-client whose row was already gone no longer fails with "record not found".
-Client deletes are idempotent now. The `s-ui` menu gains a `SUI_COOKIE_KEY`
-generator (with no-logout rotation), and the installer creates the key
-automatically when absent. Everything else is the stable 1.5.7 line:
-the experimental Paid Subscriptions Telegram bot (off by default), the
-refreshed dark "technical" Nexus interface, three rounds of independent
-security hardening, and client/TLS edits applied via hot reload without
-restarting the sing-box core. No manual migration. Review the breaking changes
-in the v1.5.7 release notes if you use scoped API tokens or relied on 3x-ui
-scheduled sync / remote import.
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.7-hotfix1
-```
-
-Or from a local clone:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.7-hotfix1
-```
-
-## Install v1.5.6 Stable
-
-This stable release ships the 3x-ui (x-ui) → s-ui-x migration: import a 3x-ui
-SQLite database into s-ui-x, including Inbounds, clients, Outbounds, routing,
-DNS and inline TLS. It also corrects imports of `blackhole` and DNS-only configs and
-keeps the panel-recovery terminal menu (clear domain/address, force-reissue SSL).
-See the release notes for details.
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.6
-```
-
-Or from a local clone:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.6
-```
-
-## Install v1.5.5 Stable
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.5
-```
-
-Or from a local clone:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.5
-```
-
-The installer is fully compatible with existing installations: settings,
-inbounds, outbounds, clients, TLS, services and tokens are kept; the DB
-schema is migrated automatically on first start; plaintext admin
-passwords are upgraded to bcrypt on the next successful login. Full
-upgrade procedure and rollback notes are in the per-language changelog
-([EN](CHANGELOG-EN.md) · [RU](CHANGELOG-RU.md) · [中文](CHANGELOG-ZH.md)).
-
-## Install an Older Version
-
-Append the version tag with `v` to the installation command. For example, version `v1.0.0`:
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.0.0
-```
+Existing installations keep their settings, users, inbounds, outbounds, clients, TLS, services, and tokens. Database migrations run automatically on first start. Upgrade and rollback notes are in the changelog files: [EN](CHANGELOG-EN.md), [RU](CHANGELOG-RU.md), [中文](CHANGELOG-ZH.md).
 
 ## Manual Installation
 
@@ -555,33 +471,34 @@ README оставляет только установку и общий обзо
 - Имя пользователя: admin
 - Пароль (только для свежей установки): при первом запуске генерируется случайная строка из 24 символов, которая выводится в журнал приложения. Найдите строку `created initial admin user. username=admin password=...` в `journalctl -u s-ui` (Linux) или в журнале панели после первого запуска. После входа смените пароль в настройках.
 
-## Установка или обновление до последней стабильной версии
+## Установка или обновление
 
-### Linux/macOS
+Для обычных установок используйте stable. Beta нужна только если вы хотите проверить свежие изменения до стабильного релиза.
+
+| Канал | Версия | Заметки |
+|---|---|---|
+| Stable | `v1.5.9` | Рекомендуется для production. Release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md). |
+| Beta | `v1.5.10-beta1` | Новее stable. Pre-release для тестирования. Release notes: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md). |
+
+### Linux/macOS, stable
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh)
 ```
 
-### Windows
-
-1. Скачайте последнюю версию для Windows из [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest).
-2. Распакуйте ZIP-файл.
-3. Запустите `install-windows.bat` от имени администратора.
-4. Следуйте инструкциям мастера установки.
-
-## Установка стабильной версии v1.5.9
-
-Стабильная v1.5.9 объединяет v1.5.9-beta1..beta6: веб-обновление из панели,
-автоматическое переключение Outbounds, усиление безопасности и цепочки поставок,
-UX настроек с подсказками, исправления надёжности и polish интерфейса Nexus.
-Ручная миграция базы не требуется.
+Эта команда ставит последнюю stable-версию. Чтобы явно закрепить текущую stable:
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.9
 ```
 
-Или из локального клона:
+### Linux/macOS, beta
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta1
+```
+
+### Локальный clone
 
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
@@ -589,101 +506,14 @@ cd s-ui-x
 sudo bash install.sh v1.5.9
 ```
 
-## Установка v1.5.8 (предыдущая стабильная версия)
+Для beta-сборки замените `v1.5.9` на `v1.5.10-beta1`.
 
-Стабильная v1.5.8 объединяет всю линейку v1.5.8-beta1..beta4: применение без
-рестарта для всех управляемых объектов sing-box, Personal Ops Pack с
-диагностикой, TLS-сертификаты для IP-адресов с выпуском из терминала/CLI,
-встроенный sing-box v1.13.13 и финальный polish Nexus. Ручная миграция базы не
-требуется.
+### Windows
 
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.8
-```
+- Stable: скачайте архив из [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest), распакуйте ZIP и запустите `install-windows.bat` от имени администратора.
+- Beta: скачайте `v1.5.10-beta1` на [странице релиза](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta1), распакуйте ZIP и запустите `install-windows.bat` от имени администратора.
 
-Или из локального клона:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.8
-```
-
-## Установка v1.5.7-hotfix1 (предыдущая стабильная версия)
-
-Хотфикс поверх стабильной v1.5.7 (рекомендуется вместо чистой v1.5.7): удаление
-клиента, строки которого уже нет, больше не падает с «record not found».
-Удаление клиентов теперь идемпотентно. В меню `s-ui` добавлен генератор
-`SUI_COOKIE_KEY` (с ротацией без разлогина), а установщик создаёт ключ
-автоматически при его отсутствии. Во всём остальном это стабильная линейка
-1.5.7: экспериментальный Telegram-бот «Платные подписки» (выключен по
-умолчанию), обновлённый тёмный «технический» интерфейс Nexus, три раунда
-независимого аудита безопасности и применение изменений клиентов и TLS горячей
-перезагрузкой без перезапуска ядра sing-box. Ручная миграция не нужна.
-Просмотрите ломающие изменения в release notes v1.5.7, если используете
-скоупированные API-токены или полагались на плановую синхронизацию / удалённый
-импорт 3x-ui.
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.7-hotfix1
-```
-
-Или из локального клона:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.7-hotfix1
-```
-
-## Установка стабильной версии v1.5.6
-
-Этот стабильный релиз приносит миграцию 3x-ui (x-ui) → s-ui-x: импорт SQLite-базы
-3x-ui в s-ui-x, включая Inbounds, клиенты, Outbounds, маршрутизацию, DNS и встроенный
-TLS. Также исправлен импорт `blackhole`- и DNS-only-конфигов и сохранено
-терминальное меню восстановления панели (очистка домена/адреса, принудительный
-перевыпуск SSL). Подробности в release notes.
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.6
-```
-
-Или из локального клона:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.6
-```
-
-## Установка стабильной версии v1.5.5
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.5
-```
-
-Или из локального клона:
-
-```sh
-git clone https://github.com/deposist/s-ui-x.git
-cd s-ui-x
-sudo bash install.sh v1.5.5
-```
-
-Установщик полностью совместим с уже работающими установками: настройки,
-inbounds, outbounds, клиенты, TLS, services и токены сохраняются; схема
-БД мигрируется автоматически при первом запуске; пароль администратора
-в открытом виде заменяется на bcrypt-хеш при следующем успешном входе.
-Полный гайд по обновлению и откату находится в changelog'е на нужном языке
-([EN](CHANGELOG-EN.md) · [RU](CHANGELOG-RU.md) · [中文](CHANGELOG-ZH.md)).
-
-## Установка старой версии
-
-Чтобы установить определённую старую версию, добавьте тег версии с `v` в конец команды установки. Например, версия `v1.0.0`:
-
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.0.0
-```
+Существующие установки сохраняют settings, users, inbounds, outbounds, clients, TLS, services и tokens. Миграции базы запускаются автоматически при первом старте. Заметки по обновлению и откату находятся в changelog: [EN](CHANGELOG-EN.md), [RU](CHANGELOG-RU.md), [中文](CHANGELOG-ZH.md).
 
 ## Ручная установка
 

@@ -8,11 +8,11 @@
 
 1.5.10 线的首个 beta。无需手动迁移数据库、API 或配置。完整 Go 测试、Go vet、前端 lint、前端构建和前端单元测试均通过。
 
-- **性能：统计图更快。** 统计下采样现在排序后单次遍历分配到 bucket，不再为每个图表 bucket 和方向重复扫描所有行。统计写入改用显式 SQLite-safe 批量插入，适合大型安装。
-- **性能：完整面板 reload 更轻。** `/api/load` 通过一个 snapshot 读取所需 settings，并并行读取 clients、TLS、inbounds、outbounds、endpoints、services 和 settings 等独立实体。
-- **备份：未加密导出改为流式传输。** 本地未加密数据库导出会把准备好的 SQLite backup 文件流式写入浏览器，不再把整个 backup 先读入内存。加密 backup 下载仍保留现有 whole-payload envelope 路径。
-- **订阅：短 TTL 输出缓存。** Base、JSON 和 Clash 订阅输出会短暂缓存，并在配置保存后清空，减少 polling 高峰下的重复生成。仅缓存成功响应。
-- **前端：更利于缓存的 chunks。** Vite 现在为 Vue、Vuetify 和 HTTP 依赖拆分稳定 vendor chunks。DateTime picker 从 client modals 懒加载，并且不再全局导入额外 Moment locale 文件。
+- 统计图现在先排序，再通过一次 bucket assignment 处理大结果集，不再为每个 bucket 和方向重复扫描所有行。统计写入改用显式 SQLite-safe 批量插入。
+- `/api/load` 通过一个 snapshot 读取完整 reload 所需的 settings，并并行读取相互独立的实体。
+- 本地未加密数据库导出会把准备好的 SQLite backup 文件流式写入浏览器，不再把整个 backup 先读入内存。加密 backup 下载仍保留现有 whole-payload envelope 路径。
+- Base、JSON 和 Clash 订阅输出现在使用短 TTL 缓存，并在配置保存后清空。仅缓存成功响应。
+- 前端构建现在为 Vue、Vuetify 和 HTTP 依赖拆分稳定 vendor chunks。DateTime picker 从 client modals 懒加载，并移除了额外的全局 Moment locale imports。
 
 完整发布说明：[`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md)。
 
