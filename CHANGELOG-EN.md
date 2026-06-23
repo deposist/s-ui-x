@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.10-beta2] - 2026-06-23 - RU/ZH preset drawer with preview and security warnings
+
+Second beta of the 1.5.10 line. No manual database, API, or configuration migration is required. Frontend tests, lint, and build pass.
+
+- The old flat preset gallery on the Rules and DNS pages is replaced by a side drawer. RU and ZH are independent cards with a Direct / Through proxy direction switch.
+- A preview step shows what will be added, changed, and kept before applying. Security warnings appear when direction is Through proxy (DNS leak risk, route exposure risk).
+- Per-region domain exceptions in Advanced options route excepted domains to the opposite direction.
+- Preset-managed items are labeled in both nexus and classic interfaces (badge column in nexus, chip in classic).
+- The preset catalog changed from three overlapping presets to four bidirectional ones (ru-direct, ru-proxy, zh-direct, zh-proxy). Preset-managed items use deterministic tag names; no unknown metadata fields are written to sing-box config.
+- RU private ranges always route direct regardless of direction (safety constraint).
+- Old RoutingDnsPresetGallery component removed.
+
+Full release notes: [`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md).
+
 ## [1.5.10-beta1] - 2026-06-23 - performance fixes and safer large-database paths
 
 First beta of the 1.5.10 line. No manual database, API, or configuration migration is required. The full Go suite, Go vet, frontend lint, frontend build, and frontend unit tests pass.

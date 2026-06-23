@@ -60,7 +60,7 @@ The full per-release notes live in the language-specific changelog files:
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
 - Latest stable release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md)
-- Latest pre-release notes: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md)
+- Latest pre-release notes: [`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the

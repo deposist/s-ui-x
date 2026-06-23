@@ -4,6 +4,20 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [1.5.10-beta2] - 2026-06-23 - RU/ZH 预设侧边栏与预览和安全警告
+
+1.5.10 线的第二个 beta。无需手动迁移数据库、API 或配置。前端测试、lint 和构建均通过。
+
+- Rules 和 DNS 页面上的旧预设画廊替换为侧边栏。RU 和 ZH 是独立卡片，各带 Direct / Through proxy 方向切换。
+- 预览步骤在应用前显示将要添加、更改和保留的内容。方向为 Through proxy 时显示安全警告（DNS 泄露风险、路由暴露风险）。
+- 每个区域的 Advanced options 中可添加域名例外，例外域名走相反方向。
+- 预设管理的条目在 nexus 和 classic 两个界面中都有标签（nexus 中为徽章列，classic 中为卡片标记）。
+- 预设目录从三个重叠预设改为四个双向预设（ru-direct、ru-proxy、zh-direct、zh-proxy）。预设管理的条目使用确定性标签名；不向 sing-box 配置写入未知 metadata 字段。
+- RU 私有范围始终走 direct，不受方向影响（安全约束）。
+- 旧的 RoutingDnsPresetGallery 组件已移除。
+
+完整发布说明：[`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md)。
+
 ## [1.5.10-beta1] - 2026-06-23 - 性能修复与大数据库路径优化
 
 1.5.10 线的首个 beta。无需手动迁移数据库、API 或配置。完整 Go 测试、Go vet、前端 lint、前端构建和前端单元测试均通过。
