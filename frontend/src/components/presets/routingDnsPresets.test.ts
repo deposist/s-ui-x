@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import type { Config } from '@/types/config'
 import {
+  applyPresets,
   applyRoutingDnsPreset,
+  computePreview,
+  detectPresetState,
+  isPresetManagedItem,
   routingDnsPresetCatalog,
+  type RegionalPresetState,
   validatePresetCatalogShape,
 } from './routingDnsPresets'
 
@@ -16,9 +21,30 @@ const baseConfig = (): Config => ({
   experimental: {},
 })
 
+const state = (region: 'RU' | 'ZH', enabled: boolean, direction: 'direct' | 'proxy', exceptions: string[] = []): RegionalPresetState => ({
+  region,
+  enabled,
+  direction,
+  exceptions,
+})
+
+const options = {
+  proxyOutbound: 'my-proxy',
+  directOutbound: 'my-direct',
+}
+
+const hasUnknownPresetMetadata = (value: unknown): boolean => JSON.stringify(value).includes('"x-preset-')
+
 describe('routing DNS preset catalog', () => {
   it('uses safe HTTPS SRS source URLs', () => {
     expect(validatePresetCatalogShape()).toBe(true)
+    expect(routingDnsPresetCatalog.map(preset => preset.id)).toEqual([
+      'ru-direct',
+      'ru-proxy',
+      'zh-direct',
+      'zh-proxy',
+    ])
+
     for (const preset of routingDnsPresetCatalog) {
       for (const source of preset.sources) {
         expect(source.url).toMatch(/^https:\/\//)
@@ -29,55 +55,149 @@ describe('routing DNS preset catalog', () => {
     }
   })
 
-  it('applies selected outbound tags without hardcoded proxy tags', () => {
-    const result = applyRoutingDnsPreset(baseConfig(), 'ru-blocked-proxy', {
-      proxyOutbound: 'my-proxy',
-      directOutbound: 'my-direct',
-    })
+  it('applies RU proxy with preset tags and keeps private RU direct', () => {
+    const result = applyRoutingDnsPreset(baseConfig(), 'ru-proxy', options)
 
     expect(result.config.experimental.cache_file?.enabled).toBe(true)
-    expect(result.config.route.rule_set.map((item: any) => item.download_detour)).toEqual(['my-proxy', 'my-direct'])
-    expect(result.config.route.rules.map((item: any) => item.outbound)).toEqual(['my-direct', 'my-proxy'])
-    expect(JSON.stringify(result.config)).not.toContain('"proxy"')
+    expect(result.config.route.rule_set.map((item: any) => item.tag)).toEqual([
+      'preset-ru-proxy-blocked',
+      'preset-ru-proxy-private',
+    ])
+
+    const outboundByRuleSet = Object.fromEntries(
+      (result.config.route.rules as any[]).map(rule => [rule.rule_set?.join(','), rule.outbound]),
+    )
+    expect(outboundByRuleSet['preset-ru-proxy-blocked']).toBe('my-proxy')
+    expect(outboundByRuleSet['preset-ru-proxy-private']).toBe('my-direct')
+    expect(hasUnknownPresetMetadata(result.config)).toBe(false)
   })
 
-  it('routes each side of zh-mainland-direct through its own outbound', () => {
-    const { config } = applyRoutingDnsPreset(baseConfig(), 'zh-mainland-direct', {
-      proxyOutbound: 'my-proxy',
-      directOutbound: 'my-direct',
+  it('applies RU direct with blocked and private RU direct', () => {
+    const { config } = applyRoutingDnsPreset(baseConfig(), 'ru-direct', options)
+
+    const outboundByRuleSet = Object.fromEntries(
+      (config.route.rules as any[]).map(rule => [rule.rule_set?.join(','), rule.outbound]),
+    )
+    expect(outboundByRuleSet['preset-ru-direct-blocked']).toBe('my-direct')
+    expect(outboundByRuleSet['preset-ru-direct-private']).toBe('my-direct')
+  })
+
+  it('applies ZH direct and ZH proxy in opposite directions', () => {
+    const zhDirect = applyRoutingDnsPreset(baseConfig(), 'zh-direct', options).config
+    const zhProxy = applyRoutingDnsPreset(baseConfig(), 'zh-proxy', options).config
+
+    const directOutboundByRuleSet = (zhDirect.route.rules as any[]).map(rule => ({ rule_set: rule.rule_set, outbound: rule.outbound }))
+    expect(directOutboundByRuleSet).toContainEqual({
+      rule_set: ['preset-zh-direct-geosite-cn', 'preset-zh-direct-geoip-cn'],
+      outbound: 'my-direct',
+    })
+    expect(directOutboundByRuleSet).toContainEqual({
+      rule_set: ['preset-zh-direct-geosite-non-cn'],
+      outbound: 'my-proxy',
     })
 
-    const detourByTag = Object.fromEntries(
-      (config.route.rule_set as any[]).map(rs => [rs.tag, rs.download_detour]))
-    expect(detourByTag['geosite-cn']).toBe('my-direct')
-    expect(detourByTag['geoip-cn']).toBe('my-direct')
-    expect(detourByTag['geosite-non-cn']).toBe('my-proxy')
-
-    const outboundByRuleSet = (config.route.rules as any[]).map(r => ({ rule_set: r.rule_set, outbound: r.outbound }))
-    expect(outboundByRuleSet).toContainEqual({ rule_set: ['geosite-cn', 'geoip-cn'], outbound: 'my-direct' })
-    expect(outboundByRuleSet).toContainEqual({ rule_set: ['geosite-non-cn'], outbound: 'my-proxy' })
+    const proxyOutboundByRuleSet = (zhProxy.route.rules as any[]).map(rule => ({ rule_set: rule.rule_set, outbound: rule.outbound }))
+    expect(proxyOutboundByRuleSet).toContainEqual({
+      rule_set: ['preset-zh-proxy-geosite-cn', 'preset-zh-proxy-geoip-cn'],
+      outbound: 'my-proxy',
+    })
+    expect(proxyOutboundByRuleSet).toContainEqual({
+      rule_set: ['preset-zh-proxy-geosite-non-cn'],
+      outbound: 'my-direct',
+    })
+    expect(hasUnknownPresetMetadata(zhDirect)).toBe(false)
+    expect(hasUnknownPresetMetadata(zhProxy)).toBe(false)
   })
 
   it('throws for an unknown preset id instead of silently doing nothing', () => {
-    expect(() => applyRoutingDnsPreset(baseConfig(), 'does-not-exist', {
-      proxyOutbound: 'my-proxy',
-      directOutbound: 'my-direct',
-    })).toThrow(/unknown preset/)
+    expect(() => applyRoutingDnsPreset(baseConfig(), 'does-not-exist', options)).toThrow(/unknown preset/)
   })
 
-  it('updates existing tagged objects instead of duplicating them', () => {
-    const first = applyRoutingDnsPreset(baseConfig(), 'zh-mainland-direct', {
-      proxyOutbound: 'proxy-a',
-      directOutbound: 'direct-a',
-    }).config
-    const second = applyRoutingDnsPreset(first, 'zh-mainland-direct', {
-      proxyOutbound: 'proxy-b',
-      directOutbound: 'direct-b',
-    }).config
+  it('detects preset state from deterministic tags', () => {
+    const first = applyPresets(baseConfig(), state('RU', true, 'proxy', ['Example.RU']), state('ZH', true, 'direct'), options).config
+    const detected = detectPresetState(first)
 
-    expect(second.route.rule_set.filter((item: any) => item.tag === 'geosite-cn')).toHaveLength(1)
-    expect(second.dns.servers.filter((item: any) => item.tag === 'preset-dns-proxy')).toHaveLength(1)
-    expect(second.route.rules.filter((item: any) => item.rule_set?.includes('geosite-non-cn'))).toHaveLength(1)
-    expect(JSON.stringify(second)).toContain('proxy-b')
+    expect(detected.ru).toEqual({
+      region: 'RU',
+      enabled: true,
+      direction: 'proxy',
+      exceptions: ['example.ru'],
+    })
+    expect(detected.zh).toMatchObject({
+      region: 'ZH',
+      enabled: true,
+      direction: 'direct',
+    })
+  })
+
+  it('preserves custom items when applying presets', () => {
+    const cfg = baseConfig()
+    cfg.route.rule_set.push({ type: 'remote', tag: 'custom-rs', format: 'binary', url: 'https://example.test/custom.srs' } as any)
+    cfg.route.rules.push({ rule_set: ['custom-rs'], outbound: 'custom-out' } as any)
+    cfg.dns.servers.push({ type: 'udp', tag: 'custom-dns', server: '9.9.9.9' } as any)
+    cfg.dns.rules.push({ action: 'route', domain_suffix: ['custom.test'], server: 'custom-dns' } as any)
+
+    const result = applyPresets(cfg, state('RU', true, 'direct'), state('ZH', false, 'direct'), options).config
+
+    expect(result.route.rule_set).toContainEqual(expect.objectContaining({ tag: 'custom-rs' }))
+    expect(result.route.rules).toContainEqual(expect.objectContaining({ rule_set: ['custom-rs'], outbound: 'custom-out' }))
+    expect(result.dns.servers).toContainEqual(expect.objectContaining({ tag: 'custom-dns' }))
+    expect(result.dns.rules).toContainEqual(expect.objectContaining({ domain_suffix: ['custom.test'], server: 'custom-dns' }))
+  })
+
+  it('disables a preset by removing only managed items', () => {
+    const withPreset = applyPresets(baseConfig(), state('RU', true, 'proxy'), state('ZH', false, 'direct'), options).config
+    withPreset.route.rules.push({ domain_suffix: ['keep.test'], outbound: 'custom-out' } as any)
+
+    const disabled = applyPresets(withPreset, state('RU', false, 'direct'), state('ZH', false, 'direct'), options).config
+
+    expect(disabled.route.rule_set.some((item: any) => String(item.tag).startsWith('preset-ru-'))).toBe(false)
+    expect(disabled.route.rules.some((item: any) => item.rule_set?.some((tag: string) => tag.startsWith('preset-ru-')))).toBe(false)
+    expect(disabled.route.rules).toContainEqual(expect.objectContaining({ domain_suffix: ['keep.test'], outbound: 'custom-out' }))
+  })
+
+  it('computes preview groups and proxy security warnings', () => {
+    const cfg = baseConfig()
+    cfg.route.rules.push({ domain_suffix: ['custom.test'], outbound: 'custom-out' } as any)
+    cfg.dns.rules.push({ domain_suffix: ['custom.test'], server: 'custom-dns' } as any)
+
+    const preview = computePreview(cfg, state('RU', true, 'proxy'), state('ZH', false, 'direct'), options)
+
+    expect(preview.ru.willAdd).toContain('rule-set preset-ru-proxy-blocked')
+    expect(preview.ru.willKeep).toContain('1 custom route rule(s)')
+    expect(preview.ru.willKeep).toContain('1 custom DNS rule(s)')
+    expect(preview.ru.securityWarnings).toContain('regionalPresets.security.dnsLeakRisk')
+    expect(preview.zh.securityWarnings).toHaveLength(0)
+  })
+
+  it('adds exception rule sets and routes exceptions to the opposite direction', () => {
+    const { config, preview } = applyPresets(
+      baseConfig(),
+      state('RU', true, 'proxy', ['Example.RU']),
+      state('ZH', false, 'direct'),
+      options,
+    )
+
+    expect(config.route.rule_set).toContainEqual(expect.objectContaining({
+      type: 'inline',
+      tag: 'preset-ru-proxy-exceptions',
+      rules: [{ domain_suffix: ['example.ru'] }],
+    }))
+    expect(config.route.rules).toContainEqual(expect.objectContaining({
+      rule_set: ['preset-ru-proxy-exceptions'],
+      outbound: 'my-direct',
+    }))
+    expect(config.dns.rules).toContainEqual(expect.objectContaining({
+      rule_set: ['preset-ru-proxy-exceptions'],
+      server: 'preset-dns-direct',
+    }))
+    expect(preview.ru.willAdd).toContain('rule-set preset-ru-proxy-exceptions')
+  })
+
+  it('identifies preset-managed items without metadata fields', () => {
+    expect(isPresetManagedItem({ tag: 'preset-zh-direct-geosite-cn' })).toBe(true)
+    expect(isPresetManagedItem({ tag: 'preset-dns-direct' })).toBe(true)
+    expect(isPresetManagedItem({ rule_set: ['preset-ru-proxy-blocked'] })).toBe(true)
+    expect(isPresetManagedItem({ tag: 'custom-rs' })).toBe(false)
   })
 })

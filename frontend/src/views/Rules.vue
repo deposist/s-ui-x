@@ -37,6 +37,12 @@
     @save="saveImportRulesets"
     @close="closeImportRulesets"
   />
+  <RegionalPresetDrawer
+    v-model="regionalPresetDrawer"
+    :config="appConfig"
+    :outbound-tags="outboundTags"
+    @apply="applyPresetConfig"
+  />
   <page-header
     v-if="nexus"
     :search="search"
@@ -50,6 +56,7 @@
     <template #secondary-actions>
       <v-btn color="primary" prepend-icon="lucide:plus" variant="flat" @click="showRuleModal(-1)">{{ $t('rule.add') }}</v-btn>
       <v-btn prepend-icon="lucide:plus" variant="text" @click="showRulesetModal(-1)">{{ $t('ruleset.add') }}</v-btn>
+      <v-btn prepend-icon="mdi-routes" variant="text" @click="regionalPresetDrawer = true">{{ $t('regionalPresets.open') }}</v-btn>
       <v-menu :close-on-content-click="false" location="bottom center">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" :aria-label="$t('rule.import.title')" icon="lucide:wrench" variant="text" />
@@ -71,6 +78,7 @@
     <v-col cols="12" justify="center" align="center">
       <v-btn color="primary" @click="showRuleModal(-1)" style="margin: 0 5px;">{{ $t('rule.add') }}</v-btn>
       <v-btn color="primary" @click="showRulesetModal(-1)" style="margin: 0 5px;">{{ $t('ruleset.add') }}</v-btn>
+      <v-btn color="primary" @click="regionalPresetDrawer = true" style="margin: 0 5px;">{{ $t('regionalPresets.open') }}</v-btn>
       <v-menu v-model="actionMenu" :close-on-content-click="false" location="bottom center">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" hide-details variant="text" icon>
@@ -97,11 +105,6 @@
       </v-btn>
     </v-col>
   </v-row>
-  <RoutingDnsPresetGallery
-    :config="appConfig"
-    :outbound-tags="outboundTags"
-    @apply="applyPresetConfig"
-  />
   <v-row>
     <v-col class="v-card-subtitle" cols="12">{{ $t('basic.routing.title') }}</v-col>
     <v-col cols="12">
@@ -193,6 +196,9 @@
       <template #col.type="{ item }">{{ $t('ruleset.' + item.type) }}</template>
       <template #col.download_detour="{ item }">{{ item.download_detour ?? '-' }}</template>
       <template #col.update_interval="{ item }">{{ item.update_interval ?? '-' }}</template>
+      <template #col.source="{ item }">
+        <nexus-badge :label="presetSourceLabel(item)" :variant="isPresetManagedItem(item) ? 'success' : 'secondary'" />
+      </template>
       <template #actions="{ item }">
         <row-actions :actions="rulesetActions()" @action="(key) => handleRulesetAction(key, item)" />
       </template>
@@ -204,7 +210,12 @@
     <v-col cols="12" sm="4" md="3" lg="2" v-for="(item, index) in <any[]>rulesets" :key="item.tag">
       <v-card rounded="xl" elevation="5" min-width="200" :title="item.tag">
         <v-card-subtitle style="margin-top: -15px;">
-          <v-row><v-col>{{ $t('ruleset.' + item.type) }}</v-col></v-row>
+          <v-row>
+            <v-col>{{ $t('ruleset.' + item.type) }}</v-col>
+            <v-col cols="auto" v-if="isPresetManagedItem(item)">
+              <v-chip color="primary" label size="x-small" variant="tonal">{{ $t('presets.presetManaged') }}</v-chip>
+            </v-col>
+          </v-row>
         </v-card-subtitle>
         <v-card-text>
           <v-row><v-col>{{ $t('ruleset.format') }}</v-col><v-col>{{ item.format }}</v-col></v-row>
@@ -240,6 +251,9 @@
       <template #col.type="{ item }">{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</template>
       <template #col.outbound="{ item }">{{ item.outbound ?? '-' }}</template>
       <template #col.invert="{ item }">{{ $t((item.invert ?? false) ? 'yes' : 'no') }}</template>
+      <template #col.source="{ item }">
+        <nexus-badge :label="presetSourceLabel(item)" :variant="isPresetManagedItem(item) ? 'success' : 'secondary'" />
+      </template>
       <template #actions="{ item }">
         <row-actions :actions="ruleActions(item)" @action="(key) => handleRuleAction(key, item)" />
       </template>
@@ -253,7 +267,12 @@
         @dragstart="onDragStart(index)" @dragover.prevent @drop="onDrop(index)">
       <v-card rounded="xl" elevation="5" min-width="200" :title="index+1">
         <v-card-subtitle style="margin-top: -15px;">
-          <v-row><v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col></v-row>
+          <v-row>
+            <v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col>
+            <v-col cols="auto" v-if="isPresetManagedItem(item)">
+              <v-chip color="primary" label size="x-small" variant="tonal">{{ $t('presets.presetManaged') }}</v-chip>
+            </v-col>
+          </v-row>
         </v-card-subtitle>
         <v-card-text>
           <v-row><v-col>{{ $t('admin.action') }}</v-col><v-col>{{ item.action }}</v-col></v-row>
@@ -293,7 +312,8 @@ import RulesetVue from '@/layouts/modals/Ruleset.vue'
 import RulesetImport from '@/layouts/modals/RulesetImport.vue'
 import RuleImport from '@/layouts/modals/RuleImport.vue'
 import DomainResolver from '@/components/DomainResolver.vue'
-import RoutingDnsPresetGallery from '@/components/presets/RoutingDnsPresetGallery.vue'
+import RegionalPresetDrawer from '@/components/presets/RegionalPresetDrawer.vue'
+import { isPresetManagedItem } from '@/components/presets/routingDnsPresets'
 import { Config } from '@/types/config'
 import { actionKeys, ruleset } from '@/types/rules'
 import { FindDiff } from '@/plugins/utils'
@@ -303,6 +323,7 @@ import NexusDataTable from '@/components/nexus/data/NexusDataTable.vue'
 import RowActions from '@/components/nexus/data/RowActions.vue'
 import type { RowAction } from '@/components/nexus/data/rowActions'
 import EmptyState from '@/components/nexus/primitives/EmptyState.vue'
+import NexusBadge from '@/components/nexus/primitives/Badge.vue'
 import PageHeader from '@/components/nexus/primitives/PageHeader.vue'
 import PageToolbar from '@/components/nexus/primitives/PageToolbar.vue'
 import { useConfirm } from '@/components/nexus/primitives/useConfirm'
@@ -312,11 +333,13 @@ const { confirm } = useConfirm()
 const { mode } = useUiMode()
 const nexus = computed(() => mode.value === 'nexus')
 const tt = (key: string) => i18n.global.t(key)
+const presetSourceLabel = (item: any) => isPresetManagedItem(item) ? tt('presets.presetManaged') : tt('presets.custom')
 
 const oldConfig = ref(<any>{})
 const loading = ref(false)
 const actionMenu = ref(false)
 const search = ref('')
+const regionalPresetDrawer = ref(false)
 // Edit a LOCAL clone of the store config. A background reload (data.ts setNewData
 // replaces Data().config wholesale, driven by the 10s poll / WS events) must not wipe
 // unsaved edits, so the form binds to this clone instead of the live store object.
@@ -493,6 +516,7 @@ const rulesetColumns: Column<any>[] = [
   { key: 'format', labelKey: 'ruleset.format' },
   { key: 'download_detour', labelKey: 'objects.outbound' },
   { key: 'update_interval', labelKey: 'actions.update' },
+  { key: 'source', labelKey: 'presets.source' },
 ]
 
 const ruleColumns: Column<any>[] = [
@@ -502,6 +526,7 @@ const ruleColumns: Column<any>[] = [
   { key: 'outbound', labelKey: 'objects.outbound' },
   { key: '_rulesCount', labelKey: 'pages.rules' },
   { key: 'invert', labelKey: 'rule.invert' },
+  { key: 'source', labelKey: 'presets.source' },
 ]
 
 const subtitle = computed(() =>

@@ -21,6 +21,12 @@
     @close="closeDnsRuleModal"
     @save="saveDnsRuleModal"
   />
+  <RegionalPresetDrawer
+    v-model="regionalPresetDrawer"
+    :config="appConfig"
+    :outbound-tags="outboundTags"
+    @apply="applyPresetConfig"
+  />
   <page-header
     v-if="nexus"
     :search="search"
@@ -34,6 +40,7 @@
     <template #secondary-actions>
       <v-btn color="primary" prepend-icon="lucide:plus" variant="flat" @click="showDnsModal(-1)">{{ $t('dns.add') }}</v-btn>
       <v-btn prepend-icon="lucide:plus" variant="text" @click="showDnsRuleModal(-1)">{{ $t('dns.rule.add') }}</v-btn>
+      <v-btn prepend-icon="mdi-routes" variant="text" @click="regionalPresetDrawer = true">{{ $t('regionalPresets.open') }}</v-btn>
     </template>
     <template #primary-actions>
       <v-btn variant="tonal" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
@@ -45,16 +52,12 @@
     <v-col cols="12" justify="center" align="center">
       <v-btn color="primary" @click="showDnsModal(-1)" style="margin: 0 5px;">{{ $t('dns.add') }}</v-btn>
       <v-btn color="primary" @click="showDnsRuleModal(-1)" style="margin: 0 5px;">{{ $t('dns.rule.add') }}</v-btn>
+      <v-btn color="primary" @click="regionalPresetDrawer = true" style="margin: 0 5px;">{{ $t('regionalPresets.open') }}</v-btn>
       <v-btn variant="outlined" color="warning" @click="saveConfig" :loading="loading" :disabled="stateChange">
         {{ $t('actions.save') }}
       </v-btn>
     </v-col>
   </v-row>
-  <RoutingDnsPresetGallery
-    :config="appConfig"
-    :outbound-tags="outboundTags"
-    @apply="applyPresetConfig"
-  />
   <v-row>
     <v-col class="v-card-subtitle" cols="12">{{ $t('pages.basics') }}</v-col>
     <v-col cols="12">
@@ -125,6 +128,9 @@
         />
         <span v-else class="dns-nexus__muted">—</span>
       </template>
+      <template #col.source="{ item }">
+        <nexus-badge :label="presetSourceLabel(item)" :variant="isPresetManagedItem(item) ? 'success' : 'secondary'" />
+      </template>
       <template #actions="{ item }">
         <row-actions :actions="serverActions()" @action="(key) => handleServerAction(key, item)" />
       </template>
@@ -138,6 +144,9 @@
         <v-card-subtitle style="margin-top: -15px;">
           <v-row>
             <v-col>{{ item.type }}</v-col>
+            <v-col cols="auto" v-if="isPresetManagedItem(item)">
+              <v-chip color="primary" label size="x-small" variant="tonal">{{ $t('presets.presetManaged') }}</v-chip>
+            </v-col>
           </v-row>
         </v-card-subtitle>
         <v-card-text>
@@ -195,6 +204,9 @@
       <template #col.type="{ item }">{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</template>
       <template #col.server="{ item }">{{ item.server ?? '-' }}</template>
       <template #col.invert="{ item }">{{ $t((item.invert ?? false) ? 'yes' : 'no') }}</template>
+      <template #col.source="{ item }">
+        <nexus-badge :label="presetSourceLabel(item)" :variant="isPresetManagedItem(item) ? 'success' : 'secondary'" />
+      </template>
       <template #actions="{ item }">
         <row-actions :actions="ruleActions(item)" @action="(key) => handleRuleAction(key, item)" />
       </template>
@@ -214,6 +226,9 @@
         <v-card-subtitle style="margin-top: -15px;">
           <v-row>
             <v-col>{{ item.type != undefined ? $t('rule.logical') + ' (' + item.mode + ')' : $t('rule.simple') }}</v-col>
+            <v-col cols="auto" v-if="isPresetManagedItem(item)">
+              <v-chip color="primary" label size="x-small" variant="tonal">{{ $t('presets.presetManaged') }}</v-chip>
+            </v-col>
           </v-row>
         </v-card-subtitle>
         <v-card-text>
@@ -278,7 +293,8 @@ import { computed, ref, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DnsVue from '@/layouts/modals/Dns.vue'
 import DnsRuleVue from '@/layouts/modals/DnsRule.vue'
-import RoutingDnsPresetGallery from '@/components/presets/RoutingDnsPresetGallery.vue'
+import RegionalPresetDrawer from '@/components/presets/RegionalPresetDrawer.vue'
+import { isPresetManagedItem } from '@/components/presets/routingDnsPresets'
 import { Config } from '@/types/config'
 import { actionDnsRuleKeys, dnsRule } from '@/types/dns'
 import { FindDiff } from '@/plugins/utils'
@@ -297,10 +313,12 @@ const { t } = useI18n()
 const { confirm } = useConfirm()
 const { mode } = useUiMode()
 const nexus = computed(() => mode.value === 'nexus')
+const presetSourceLabel = (item: any) => isPresetManagedItem(item) ? t('presets.presetManaged') : t('presets.custom')
 
 const oldConfig = ref(<any>{})
 const loading = ref(false)
 const search = ref('')
+const regionalPresetDrawer = ref(false)
 
 // Edit a LOCAL clone of the store config. A background reload (data.ts setNewData
 // replaces Data().config wholesale, driven by the 10s poll / WS events) must not wipe
@@ -483,6 +501,7 @@ const serverColumns: Column<any>[] = [
   { key: 'server', labelKey: 'dns.server' },
   { key: 'server_port', labelKey: 'in.port' },
   { key: 'tls', labelKey: 'objects.tls' },
+  { key: 'source', labelKey: 'presets.source' },
 ]
 
 const ruleColumns: Column<any>[] = [
@@ -492,6 +511,7 @@ const ruleColumns: Column<any>[] = [
   { key: 'server', labelKey: 'dns.server' },
   { key: '_rulesCount', labelKey: 'pages.rules' },
   { key: 'invert', labelKey: 'rule.invert' },
+  { key: 'source', labelKey: 'presets.source' },
 ]
 
 const subtitle = computed(() => {
