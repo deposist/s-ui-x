@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [Unreleased] - session timeout handling
+
+No database, API, or configuration migration is required.
+
+- Fixed a frontend loop that could show `Invalid login` together with `Error: CSRF token was not returned` after a session expired or was lost. The panel now clears local auth state and returns to the login page without first calling the CSRF-protected logout endpoint.
+- CSRF token loading now keeps backend errors such as `Invalid login` instead of replacing them with a missing-token message. Repeated invalid-session responses from polling are collapsed into one notification until the next successful login.
+- Simplified code: removed unnecessary `else` in `main.go`, removed commented-out `setBool` method in `service/setting.go`, fixed tautological `make(map[string]interface{}, 0)` in `api/apiService.go`.
+- Removed obsolete loop variable capture `action := action` in `api/apiHandler.go` (no longer needed in Go 1.22+).
+- Removed duplicate scope arguments in `requireTokenScopeAny` calls (`"telegram"` and `"observability"`) in `api/apiFoundation.go`.
+
 ## [1.5.10-beta3] - 2026-06-23 - fix regional preset drawer rendering and button state
 
 Third beta of the 1.5.10 line. No database or configuration migration is required. Frontend tests, lint, and build pass.

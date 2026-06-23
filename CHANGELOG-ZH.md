@@ -4,6 +4,16 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
+## [Unreleased] - 会话过期处理
+
+无需数据库、API 或配置迁移。
+
+- 修复了会话过期或丢失后前端可能同时显示 `Invalid login` 和 `Error: CSRF token was not returned` 的循环。面板现在会清除本地登录状态并返回登录页，不会先调用受 CSRF 保护的 logout endpoint。
+- CSRF token 加载现在保留后端返回的错误，例如 `Invalid login`，不会把它替换成缺少 token 的提示。polling 产生的重复 invalid-session 响应会合并成一次提示，直到下一次成功登录。
+- 简化代码：移除 `main.go` 中多余的 `else`，移除 `service/setting.go` 中注释掉的 `setBool` 方法，修正 `api/apiService.go` 中的 `make(map[string]interface{}, 0)`。
+- 移除 `api/apiHandler.go` 中过时的循环变量捕获 `action := action`（Go 1.22+ 不再需要）。
+- 移除 `api/apiFoundation.go` 中 `requireTokenScopeAny` 调用的重复 scope 参数。
+
 ## [1.5.10-beta3] - 2026-06-23 - 修复区域预设抽屉渲染与按钮状态
 
 1.5.10 线的第三个 beta。无需数据库或配置迁移。前端测试、lint 和构建均通过。

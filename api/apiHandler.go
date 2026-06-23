@@ -73,7 +73,6 @@ func (a *APIHandler) registerGroupedRoutes(g *gin.RouterGroup) {
 	g.POST("/logout", a.ApiService.Logout)
 	g.GET("/load", a.ApiService.LoadData)
 	for _, action := range []string{"inbounds", "outbounds", "endpoints", "services", "tls", "clients", "config"} {
-		action := action
 		g.GET("/"+action, a.loadPartialData(action))
 	}
 	g.GET("/users", a.ApiService.GetUsers)

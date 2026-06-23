@@ -43,7 +43,6 @@ func main() {
 	if len(os.Args) < 2 {
 		runApp()
 		return
-	} else {
-		cmd.ParseCmd()
 	}
+	cmd.ParseCmd()
 }

@@ -119,7 +119,7 @@ func (a *ApiService) LoadData(c *gin.Context) {
 }
 
 func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
-	data := make(map[string]interface{}, 0)
+	data := make(map[string]interface{})
 	lu := c.Query("lu")
 	isUpdated, err := a.ConfigService.CheckChanges(lu)
 	if err != nil {
@@ -204,7 +204,7 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 }
 
 func (a *ApiService) LoadPartialData(c *gin.Context, objs []string) error {
-	data := make(map[string]interface{}, 0)
+	data := make(map[string]interface{})
 	id := c.Query("id")
 
 	for _, obj := range objs {
