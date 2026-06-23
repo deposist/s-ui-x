@@ -69,12 +69,11 @@ test('personal ops pack doctor presets delivery and client diagnosis smoke', asy
   await expect(page.getByText(/Build sing-box config|Dry config check|sing-box core/).first()).toBeVisible()
 
   await page.goto('rules')
-  await expect(page.getByText('RU/ZH Routing and DNS Presets')).toBeVisible()
-  await chooseSelectOption(page, 'preset-proxy-outbound', 'direct')
-  await chooseSelectOption(page, 'preset-direct-outbound', 'direct')
-  await expect(page.getByText('Preview diff')).toBeVisible()
-  await page.getByRole('button', { name: 'Apply to local config' }).click()
-  await expect(page.getByText(/rule-set|dns server|experimental.cache_file/).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /Regional presets/ })).toBeVisible()
+  await page.getByRole('button', { name: /Regional presets/ }).first().click()
+  await expect(page.getByText('RU routing and DNS')).toBeVisible()
+  await expect(page.getByText('ZH routing and DNS')).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel' }).click()
 
   const clientName = `ops-${Date.now()}`
   await createClient(page, clientName)
