@@ -5,6 +5,18 @@
 Это русскоязычный changelog. Английская версия - в `CHANGELOG-EN.md`,
 китайская - в `CHANGELOG-ZH.md`.
 
+## [1.5.10-beta1] - 2026-06-23 - performance remediation и безопаснее большие базы
+
+Первая бета линейки 1.5.10. Ручная миграция базы, API или конфигурации не требуется. Полный Go suite, Go vet, frontend lint, frontend build и frontend unit tests проходят.
+
+- **Производительность: быстрее графики статистики.** Downsampling статистики теперь раскладывает строки по bucket'ам за один проход после сортировки, вместо повторного сканирования всех строк для каждого bucket и направления. Запись статистики использует явные SQLite-safe batch-вставки для крупных установок.
+- **Производительность: легче полный reload панели.** `/api/load` теперь читает нужные settings через один snapshot и параллелит независимые чтения clients, TLS, inbounds, outbounds, endpoints, services и settings.
+- **Backup: streaming незашифрованного экспорта.** Локальный незашифрованный экспорт БД стримит подготовленный SQLite backup-файл в браузер, не буферизуя весь backup в памяти. Зашифрованные backup downloads сохраняют существующий whole-payload envelope path.
+- **Подписки: короткий output cache.** Base, JSON и Clash подписки кешируются на короткое время и очищаются после сохранения конфигурации, снижая повторную генерацию при всплесках polling. Кешируются только успешные ответы.
+- **Frontend: chunks удобнее для кеша.** Vite разделяет стабильные vendor chunks для Vue, Vuetify и HTTP-зависимостей. DateTime picker lazy-loaded из client modals и больше не импортирует лишние Moment locale files глобально.
+
+Полные заметки о релизе: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md).
+
 ## [1.5.9-beta6] - 2026-06-18 - редактор WireGuard-эндпойнта открывается стабильно
 
 Небольшое дополнение к v1.5.9-beta5. Изменений базы данных, API или конфигурации

@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"github.com/deposist/s-ui-x/util/redact"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 )
 
 type ApiService struct {
@@ -137,65 +139,62 @@ func (a *ApiService) getData(c *gin.Context) (interface{}, error) {
 		return "", err
 	}
 	if isUpdated {
-		config, err := a.SettingService.GetConfig()
-		if err != nil {
+		var loadSettings service.PanelLoadSettings
+		var clients, tlsConfigs, inbounds, outbounds, endpoints, services any
+		var group errgroup.Group
+		group.Go(func() error {
+			settings, err := a.SettingService.LoadPanelSettingsForData(getHostname(c))
+			loadSettings = settings
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.ClientService.GetAll()
+			clients = result
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.TlsService.GetAll()
+			tlsConfigs = result
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.InboundService.GetAll()
+			inbounds = result
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.OutboundService.GetAll()
+			outbounds = result
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.EndpointService.GetAll()
+			endpoints = result
+			return err
+		})
+		group.Go(func() error {
+			result, err := a.ServicesService.GetAll()
+			services = result
+			return err
+		})
+		if err := group.Wait(); err != nil {
 			return "", err
 		}
-		clients, err := a.ClientService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		tlsConfigs, err := a.TlsService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		inbounds, err := a.InboundService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		outbounds, err := a.OutboundService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		endpoints, err := a.EndpointService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		services, err := a.ServicesService.GetAll()
-		if err != nil {
-			return "", err
-		}
-		subURI, err := a.SettingService.GetFinalSubURI(getHostname(c))
-		if err != nil {
-			return "", err
-		}
-		subJsonURI, err := a.SettingService.GetSubJsonURI()
-		if err != nil {
-			return "", err
-		}
-		subClashURI, err := a.SettingService.GetSubClashURI()
-		if err != nil {
-			return "", err
-		}
-		trafficAge, err := a.SettingService.GetTrafficAge()
-		if err != nil {
-			return "", err
-		}
-		data["config"] = json.RawMessage(config)
+		data["config"] = json.RawMessage(loadSettings.Config)
 		data["clients"] = clients
 		data["tls"] = tlsConfigs
 		data["inbounds"] = inbounds
 		data["outbounds"] = outbounds
 		data["endpoints"] = endpoints
 		data["services"] = services
-		data["subURI"] = subURI
-		if subJsonURI != "" {
-			data["subJsonURI"] = subJsonURI
+		data["subURI"] = loadSettings.SubURI
+		if loadSettings.SubJsonURI != "" {
+			data["subJsonURI"] = loadSettings.SubJsonURI
 		}
-		if subClashURI != "" {
-			data["subClashURI"] = subClashURI
+		if loadSettings.SubClashURI != "" {
+			data["subClashURI"] = loadSettings.SubClashURI
 		}
-		data["enableTraffic"] = trafficAge > 0
+		data["enableTraffic"] = loadSettings.TrafficAge > 0
 		data["onlines"] = onlines
 	} else {
 		data["onlines"] = onlines
@@ -360,7 +359,7 @@ func (a *ApiService) GetDb(c *gin.Context) {
 		a.getEncryptedDb(c, exclude)
 		return
 	}
-	db, err := database.GetDb(exclude)
+	backupPath, cleanup, err := database.PrepareDbBackup(exclude)
 	if err != nil {
 		a.recordAudit(c, requestActor(c), "db_export_failed", "database", service.AuditSeverityWarn, map[string]any{
 			"channel": "download",
@@ -368,6 +367,17 @@ func (a *ApiService) GetDb(c *gin.Context) {
 		jsonMsg(c, "", err)
 		return
 	}
+	defer cleanup()
+	// #nosec G304 -- backupPath is a freshly-created local backup file path.
+	backupFile, err := os.Open(backupPath)
+	if err != nil {
+		a.recordAudit(c, requestActor(c), "db_export_failed", "database", service.AuditSeverityWarn, map[string]any{
+			"channel": "download",
+		})
+		jsonMsg(c, "", err)
+		return
+	}
+	defer backupFile.Close()
 	a.recordAudit(c, requestActor(c), "db_exported", "database", service.AuditSeverityWarn, map[string]any{
 		"channel": "download",
 		"exclude": exclude,
@@ -380,7 +390,7 @@ func (a *ApiService) GetDb(c *gin.Context) {
 	})
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", "attachment; filename=s-ui_"+time.Now().Format("20060102-150405")+".db")
-	_, _ = c.Writer.Write(db)
+	_, _ = io.Copy(c.Writer, backupFile)
 }
 
 func (a *ApiService) getEncryptedDb(c *gin.Context, exclude string) {

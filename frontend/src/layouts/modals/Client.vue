@@ -221,12 +221,14 @@
 </template>
 
 <script lang="ts">
+import { defineAsyncComponent } from 'vue'
 import { createClient, randomConfigs, updateConfigs, Link, shuffleConfigs } from '@/types/clients'
-import DatePick from '@/components/DateTime.vue'
 import { HumanReadable } from '@/plugins/utils'
 import Data from '@/store/modules/data'
 import { locale } from '@/locales'
 import FormShell from '@/components/nexus/drawers/FormShell.vue'
+
+const DatePick = defineAsyncComponent(() => import('@/components/DateTime.vue'))
 
 export default {
   props: ['visible', 'id', 'inboundTags', 'groups'],

@@ -75,6 +75,11 @@ var removeEndpointsFromCoreAfterSave = func(s *ConfigService, tags []string) err
 }
 
 var invalidateClientPolicyCacheAfterSave = ipmonitor.InvalidateAllCache
+var invalidateSubscriptionCacheAfterSave func()
+
+func RegisterSubscriptionCacheInvalidator(fn func()) {
+	invalidateSubscriptionCacheAfterSave = fn
+}
 
 func NewConfigService(core *core.Core) *ConfigService {
 	runtime := NewRuntime(core)
@@ -295,6 +300,9 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 			}
 			if invalidateClientPolicyCache {
 				invalidateClientPolicyCacheAfterSave()
+			}
+			if invalidateSubscriptionCacheAfterSave != nil {
+				invalidateSubscriptionCacheAfterSave()
 			}
 			// Advance the change marker only after the tx actually committed,
 			// so a failed commit cannot make CheckChanges report phantom changes.

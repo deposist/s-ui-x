@@ -6,7 +6,7 @@ on:
       tag:
         description: "Release tag"
         required: true
-        default: "v1.5.6-beta2"
+        default: "v1.5.10-beta1"
         type: string
   push:
     tags:
@@ -148,8 +148,19 @@ jobs:
             TAG="${GITHUB_REF_NAME}"
           fi
           case "$TAG" in
-            v*) echo "tag=$TAG" >> "$GITHUB_OUTPUT" ;;
-            *) echo "tag=v$TAG" >> "$GITHUB_OUTPUT" ;;
+            v*) ;;
+            *) TAG="v$TAG" ;;
+          esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          case "$TAG" in
+            *-alpha*|*-beta*|*-rc*|*-pre*)
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+              echo "make_latest=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+              echo "make_latest=true" >> "$GITHUB_OUTPUT"
+              ;;
           esac
 
       - name: Download Windows build artifacts
@@ -165,5 +176,7 @@ jobs:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: s-ui ${{ steps.vars.outputs.tag }}
           target_commitish: ${{ github.sha }}
+          prerelease: ${{ steps.vars.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.vars.outputs.make_latest }}
           fail_on_unmatched_files: true
           files: release-assets/*

@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
+## [1.5.10-beta1] - 2026-06-23 - performance remediation and safer large-database paths
+
+First beta of the 1.5.10 line. No manual database, API, or configuration migration is required. The full Go suite, Go vet, frontend lint, frontend build, and frontend unit tests pass.
+
+- **Performance: faster stats charts.** Stats downsampling now buckets rows in one pass after sorting instead of scanning all rows for every chart bucket and direction. Stats writes use explicit SQLite-safe batches for large installations.
+- **Performance: lighter full panel reloads.** `/api/load` now reads required settings through one snapshot and parallelizes independent entity reads for clients, TLS, inbounds, outbounds, endpoints, services, and settings.
+- **Backup: streamed unencrypted export.** Local unencrypted DB export streams the prepared SQLite backup file to the browser instead of buffering the whole backup in memory. Encrypted backup downloads keep the existing whole-payload envelope path.
+- **Subscriptions: short-TTL output cache.** Base, JSON, and Clash subscription outputs are cached briefly and cleared on config save, reducing repeated generation work during polling bursts. Successful responses only are cached.
+- **Frontend: cache-friendlier chunks.** Vite now splits stable vendor chunks for Vue, Vuetify, and HTTP dependencies. The DateTime picker is lazy-loaded from client modals and no longer imports extra Moment locale files globally.
+
+Full release notes: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md).
+
 ## [1.5.9-beta6] - 2026-06-18 - WireGuard endpoint editor opens reliably
 
 Small follow-up to v1.5.9-beta5. No database, API, or configuration changes

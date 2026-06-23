@@ -6,7 +6,7 @@ on:
       tag:
         description: "Release tag"
         required: true
-        default: "v1.5.6-beta2"
+        default: "v1.5.10-beta1"
         type: string
   push:
     tags:
@@ -50,8 +50,26 @@ jobs:
             TAG="${GITHUB_REF_NAME}"
           fi
           case "$TAG" in
-            v*) echo "tag=$TAG" >> "$GITHUB_OUTPUT" ;;
-            *) echo "tag=v$TAG" >> "$GITHUB_OUTPUT" ;;
+            v*) ;;
+            *) TAG="v$TAG" ;;
+          esac
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          case "$TAG" in
+            *-alpha*|*-beta*|*-rc*|*-pre*)
+              {
+                echo "tags<<EOF"
+                echo "${{ env.IMAGE_NAME }}:$TAG"
+                echo "EOF"
+              } >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              {
+                echo "tags<<EOF"
+                echo "${{ env.IMAGE_NAME }}:$TAG"
+                echo "${{ env.IMAGE_NAME }}:latest"
+                echo "EOF"
+              } >> "$GITHUB_OUTPUT"
+              ;;
           esac
 
       - name: Build and push Docker image
@@ -61,6 +79,4 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
-            ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.vars.outputs.tags }}

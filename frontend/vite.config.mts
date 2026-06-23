@@ -41,6 +41,13 @@ export default defineConfig({
             return 'assets/style-[hash].css'
           return 'assets/[name][extname]'
         },
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('/vue/') || id.includes('/vue-router/') || id.includes('/pinia/') || id.includes('/vue-i18n/')) return 'vendor-vue'
+          if (id.includes('/vuetify/')) return 'vendor-vuetify'
+          if (id.includes('/axios/')) return 'vendor-http'
+          return undefined
+        },
       },
     }
   },

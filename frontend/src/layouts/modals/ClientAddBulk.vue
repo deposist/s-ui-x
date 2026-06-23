@@ -82,13 +82,15 @@
 </template>
 
 <script lang="ts">
-import DatePick from '@/components/DateTime.vue'
+import { defineAsyncComponent } from 'vue'
 import FormShell from '@/components/nexus/drawers/FormShell.vue'
 import { push } from 'notivue'
 import RandomUtil from '@/plugins/randomUtil'
 import { Client, createClient, randomConfigs } from '@/types/clients'
 import { i18n } from '@/locales'
 import Data from '@/store/modules/data'
+
+const DatePick = defineAsyncComponent(() => import('@/components/DateTime.vue'))
 
 export default {
   props: ['visible', 'inboundTags', 'groups'],

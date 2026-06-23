@@ -155,7 +155,7 @@ func (s *StatsService) SaveStats(enableTraffic bool) (err error) {
 	if !enableTraffic {
 		return ipmonitor.FlushTo(tx)
 	}
-	if err := tx.Create(&stats).Error; err != nil {
+	if err := database.CreateInBatchesSafe(tx, stats); err != nil {
 		return err
 	}
 	return ipmonitor.FlushTo(tx)
@@ -280,25 +280,33 @@ func (s *StatsService) downsampleStats(stats []model.Stats, maxRows int) []model
 	if bucketSpan == 0 {
 		bucketSpan = 1
 	}
+	type bucketTotals struct {
+		sum   [2]int64
+		count [2]int
+	}
+	buckets := make([]bucketTotals, numBuckets)
+	for _, r := range stats {
+		idx := int((r.DateTime - timeMin) / bucketSpan)
+		if idx < 0 {
+			idx = 0
+		} else if idx >= numBuckets {
+			idx = numBuckets - 1
+		}
+		dirIdx := 0
+		if r.Direction {
+			dirIdx = 1
+		}
+		buckets[idx].sum[dirIdx] += r.Traffic
+		buckets[idx].count[dirIdx]++
+	}
+
 	downsampled := make([]model.Stats, 0, maxRows)
 	for i := 0; i < numBuckets; i++ {
 		bucketStart := timeMin + int64(i)*bucketSpan
-		bucketEnd := timeMin + int64(i+1)*bucketSpan
-		if i == numBuckets-1 {
-			bucketEnd = timeMax + 1
-		}
-		for _, dir := range []bool{false, true} {
-			var sum int64
-			var count int
-			for _, r := range stats {
-				if r.DateTime >= bucketStart && r.DateTime < bucketEnd && r.Direction == dir {
-					sum += r.Traffic
-					count++
-				}
-			}
+		for dirIdx, dir := range []bool{false, true} {
 			avg := int64(0)
-			if count > 0 {
-				avg = sum / int64(count)
+			if buckets[i].count[dirIdx] > 0 {
+				avg = buckets[i].sum[dirIdx] / int64(buckets[i].count[dirIdx])
 			}
 			downsampled = append(downsampled, model.Stats{
 				DateTime:  bucketStart,

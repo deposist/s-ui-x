@@ -167,6 +167,66 @@ func TestSaveConfigCreatesMissingConfigSetting(t *testing.T) {
 	}
 }
 
+func TestLoadPanelSettingsForDataUsesDefaultsForMissingRows(t *testing.T) {
+	settingService := initSettingTestDB(t)
+	if err := database.GetDB().Where("key IN ?", []string{"config", "subURI", "subPort", "subPath", "trafficAge"}).Delete(&model.Setting{}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := settingService.LoadPanelSettingsForData("example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.Config != defaultConfig {
+		t.Fatalf("config default mismatch: %q", settings.Config)
+	}
+	if settings.SubURI != "http://example.com:2096/sub/" {
+		t.Fatalf("unexpected default sub URI: %s", settings.SubURI)
+	}
+	if settings.TrafficAge != 30 {
+		t.Fatalf("traffic age default = %d, want 30", settings.TrafficAge)
+	}
+}
+
+func TestLoadPanelSettingsForDataMatchesFinalSubURI(t *testing.T) {
+	settingService := initSettingTestDB(t)
+	if _, err := settingService.GetAllSetting(); err != nil {
+		t.Fatal(err)
+	}
+	updates := map[string]string{
+		"subPort":     "443",
+		"subCertFile": "/tmp/cert.pem",
+		"subKeyFile":  "/tmp/key.pem",
+		"subPath":     "/sub/",
+		"subJsonURI":  "https://json.example/sub/",
+		"subClashURI": "https://clash.example/sub/",
+		"trafficAge":  "0",
+	}
+	for key, value := range updates {
+		if err := database.GetDB().Model(model.Setting{}).Where("key = ?", key).Update("value", value).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	settings, err := settingService.LoadPanelSettingsForData("example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalURI, err := settingService.GetFinalSubURI("example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.SubURI != finalURI {
+		t.Fatalf("SubURI = %q, want %q", settings.SubURI, finalURI)
+	}
+	if settings.SubJsonURI != updates["subJsonURI"] || settings.SubClashURI != updates["subClashURI"] {
+		t.Fatalf("sub extension URIs not preserved: %#v", settings)
+	}
+	if settings.TrafficAge != 0 {
+		t.Fatalf("traffic age = %d, want 0", settings.TrafficAge)
+	}
+}
+
 func TestGetFinalSubURIOmitsDefaultPorts(t *testing.T) {
 	t.Setenv("SUI_DB_FOLDER", t.TempDir())
 	if err := database.InitDB("file::memory:?cache=shared"); err != nil {

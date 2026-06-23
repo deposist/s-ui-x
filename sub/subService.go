@@ -22,6 +22,11 @@ type SubService struct {
 }
 
 func (s *SubService) GetSubs(subId string) (*string, []string, error) {
+	now := time.Now()
+	cacheKey := "base:" + subId
+	if body, headers, ok := subscriptionCacheGet(cacheKey, now); ok {
+		return &body, headers, nil
+	}
 	client, err := s.getClientBySubId(subId)
 	if err != nil {
 		return nil, nil, err
@@ -46,6 +51,7 @@ func (s *SubService) GetSubs(subId string) (*string, []string, error) {
 		result = base64.StdEncoding.EncodeToString([]byte(result))
 	}
 
+	subscriptionCacheSet(cacheKey, result, headers, now)
 	return &result, headers, nil
 }
 

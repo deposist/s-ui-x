@@ -6,7 +6,7 @@ on:
       tag:
         description: "Release tag"
         required: true
-        default: "v1.5.6-beta2"
+        default: "v1.5.10-beta1"
         type: string
   push:
     tags:
@@ -215,8 +215,14 @@ jobs:
             *) TAG="v$TAG"; echo "tag=$TAG" >> "$GITHUB_OUTPUT" ;;
           esac
           case "$TAG" in
-            *-alpha*|*-beta*|*-rc*|*-pre*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
-            *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+            *-alpha*|*-beta*|*-rc*|*-pre*)
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+              echo "make_latest=false" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+              echo "make_latest=true" >> "$GITHUB_OUTPUT"
+              ;;
           esac
           NOTES_FILE=".github/RELEASE_NOTES_${TAG}.md"
           if [ -f "$NOTES_FILE" ]; then
@@ -239,6 +245,7 @@ jobs:
           name: s-ui ${{ steps.vars.outputs.tag }}
           target_commitish: ${{ github.sha }}
           prerelease: ${{ steps.vars.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.vars.outputs.make_latest }}
           body_path: ${{ steps.vars.outputs.notes_path }}
           fail_on_unmatched_files: true
           files: release-assets/*

@@ -181,6 +181,14 @@ var ipCertInternalSettingKeys = []string{
 type SettingService struct {
 }
 
+type PanelLoadSettings struct {
+	Config      string
+	SubURI      string
+	SubJsonURI  string
+	SubClashURI string
+	TrafficAge  int
+}
+
 func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	db := database.GetDB()
 	if err := s.ensureDefaultSettings(db); err != nil {
@@ -509,6 +517,56 @@ func (s *SettingService) GetTrafficAge() (int, error) {
 	return s.getInt("trafficAge")
 }
 
+func (s *SettingService) LoadPanelSettingsForData(host string) (PanelLoadSettings, error) {
+	keys := []string{"config", "subURI", "subKeyFile", "subCertFile", "subDomain", "subPort", "subPath", "subJsonURI", "subClashURI", "trafficAge"}
+	values, err := s.getSettingsSnapshot(keys...)
+	if err != nil {
+		return PanelLoadSettings{}, err
+	}
+	trafficAge, err := strconv.Atoi(values["trafficAge"])
+	if err != nil {
+		return PanelLoadSettings{}, err
+	}
+	return PanelLoadSettings{
+		Config:      values["config"],
+		SubURI:      finalSubURIFromSettings(host, values),
+		SubJsonURI:  values["subJsonURI"],
+		SubClashURI: values["subClashURI"],
+		TrafficAge:  trafficAge,
+	}, nil
+}
+
+func (s *SettingService) getSettingsSnapshot(keys ...string) (map[string]string, error) {
+	db := database.GetDB()
+	if db == nil {
+		return nil, common.NewError("database is not initialized")
+	}
+	settings := make([]model.Setting, 0, len(keys))
+	if err := db.Model(model.Setting{}).Where("key IN ?", keys).Find(&settings).Error; err != nil {
+		return nil, err
+	}
+	values := make(map[string]string, len(keys))
+	for _, key := range keys {
+		value, ok := defaultSettingValue(key)
+		if !ok {
+			return nil, common.NewErrorf("key <%v> not in defaultValueMap", key)
+		}
+		values[key] = value
+	}
+	for _, setting := range settings {
+		if isEncryptedSettingKey(setting.Key) {
+			value, err := s.decryptSettingValue(setting.Key, setting.Value)
+			if err != nil {
+				return nil, err
+			}
+			values[setting.Key] = value
+			continue
+		}
+		values[setting.Key] = setting.Value
+	}
+	return values, nil
+}
+
 func (s *SettingService) GetAuditRetentionDays() (int, error) {
 	return s.getInt("auditRetentionDays")
 }
@@ -685,18 +743,22 @@ func (s *SettingService) GetFinalSubURI(host string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	SubURI := (*allSetting)["subURI"]
+	return finalSubURIFromSettings(host, *allSetting), nil
+}
+
+func finalSubURIFromSettings(host string, settings map[string]string) string {
+	SubURI := settings["subURI"]
 	if SubURI != "" {
-		return SubURI, nil
+		return SubURI
 	}
 	protocol := "http"
-	if (*allSetting)["subKeyFile"] != "" && (*allSetting)["subCertFile"] != "" {
+	if settings["subKeyFile"] != "" && settings["subCertFile"] != "" {
 		protocol = "https"
 	}
-	if (*allSetting)["subDomain"] != "" {
-		host = (*allSetting)["subDomain"]
+	if settings["subDomain"] != "" {
+		host = settings["subDomain"]
 	}
-	portValue := (*allSetting)["subPort"]
+	portValue := settings["subPort"]
 	authority := hostForURL(host)
 	if (portValue == "80" && protocol == "http") || (portValue == "443" && protocol == "https") {
 		portValue = ""
@@ -704,7 +766,7 @@ func (s *SettingService) GetFinalSubURI(host string) (string, error) {
 	if portValue != "" {
 		authority = net.JoinHostPort(host, portValue)
 	}
-	return protocol + "://" + authority + (*allSetting)["subPath"], nil
+	return protocol + "://" + authority + settings["subPath"]
 }
 
 func hostForURL(host string) string {
