@@ -55,10 +55,8 @@ import {
 import {
   auditEventsFromPayload,
   networkRateFromSamples,
-  overviewInboundTags,
   overviewStatusMetrics,
   overviewStatusNetworkSample,
-  payloadItems,
   type NetworkTrafficRate,
 } from '@/components/nexus/overview/overviewPayloads'
 import HttpUtils from '@/plugins/httputil'
@@ -82,9 +80,8 @@ const liveTraffic = ref<NetworkTrafficRate>({
   uploadBps: 0,
 })
 const trafficRange = ref<TrafficRange>('24h')
-const trafficStats = ref<unknown[]>([])
+const trafficSummary = ref<unknown>()
 const trafficLoading = ref(false)
-const trafficUnavailable = ref(false)
 
 let statusInterval: ReturnType<typeof setInterval> | undefined
 let trafficInterval: ReturnType<typeof setInterval> | undefined
@@ -96,11 +93,9 @@ const storeLoading = computed(() => data.lastLoad === 0)
 const dashboardLoading = computed(() => storeLoading.value || statusLoading.value || trafficLoading.value)
 const systemStatus = computed(() => selectSystemStatus(statusPayload.value, nowSec.value))
 const systemMetrics = computed(() => overviewStatusMetrics(statusPayload.value))
-const inboundTags = computed(() => overviewInboundTags(data.inbounds))
 const trafficSeries = computed(() => selectTrafficSeries({
   range: trafficRange.value,
-  stats: trafficStats.value,
-  bucketCount: 48,
+  summary: trafficSummary.value,
 }))
 const topClients = computed(() => selectTopClients({
   clients: data.clients,
@@ -141,31 +136,20 @@ const loadTrafficStats = async () => {
   const requestId = ++trafficRequestId
 
   if (!browserOnline.value) {
-    trafficStats.value = []
+    trafficSummary.value = undefined
     trafficLoading.value = false
-    trafficUnavailable.value = true
     return
   }
 
-  const tags = inboundTags.value
-  if (tags.length === 0) {
-    trafficStats.value = []
-    trafficLoading.value = false
-    trafficUnavailable.value = false
-    return
-  }
+  trafficLoading.value = trafficSummary.value === undefined
 
-  trafficLoading.value = trafficStats.value.length === 0
-
-  const responses = await Promise.all(tags.map(tag => HttpUtils.get('api/stats', {
-    resource: 'inbound',
-    tag,
+  const response = await HttpUtils.get('api/stats/traffic', {
     limit: trafficRangeHours[trafficRange.value],
-  })))
+    buckets: 48,
+  })
 
   if (requestId === trafficRequestId) {
-    trafficStats.value = responses.flatMap(response => response.success ? payloadItems(response.obj) : [])
-    trafficUnavailable.value = responses.some(response => !response.success)
+    trafficSummary.value = response.success ? response.obj : undefined
     trafficLoading.value = false
   }
 }
@@ -241,17 +225,12 @@ const setOffline = () => {
   browserOnline.value = false
   statusUnavailable.value = true
   auditUnavailable.value = true
-  trafficUnavailable.value = true
   previousNetworkSample = undefined
   liveTraffic.value = { downloadBps: 0, uploadBps: 0 }
-  trafficStats.value = []
+  trafficSummary.value = undefined
 }
 
 watch(trafficRange, () => {
-  void loadTrafficStats()
-})
-
-watch(inboundTags, () => {
   void loadTrafficStats()
 })
 

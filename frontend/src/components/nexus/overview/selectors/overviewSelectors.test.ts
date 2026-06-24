@@ -170,7 +170,35 @@ describe('overview selectors', () => {
     ])
   })
 
-  it('buckets traffic stats into the selected dashboard range', () => {
+  it('uses exact traffic summary buckets from the dashboard stats endpoint', () => {
+    expect(selectTrafficSeries({
+      range: '24h',
+      summary: {
+        startTime: 1710000000,
+        endTime: 1710003600,
+        download: 40,
+        upload: 9,
+        buckets: [
+          { startTime: 1710000000, endTime: 1710001800, download: 10, upload: 4 },
+          { startTime: 1710001800, endTime: 1710003600, download: 30, upload: 5 },
+        ],
+      },
+      bucketCount: 48,
+      stats: [
+        { dateTime: 1710000000, direction: false, traffic: 999 },
+      ],
+    })).toEqual({
+      labels: [
+        '2024-03-09T16:00:00.000Z',
+        '2024-03-09T16:30:00.000Z',
+      ],
+      download: [10, 30],
+      upload: [4, 5],
+      range: '24h',
+    })
+  })
+
+  it('buckets legacy traffic stats into the selected dashboard range', () => {
     expect(selectTrafficSeries({
       range: '1h',
       bucketCount: 4,

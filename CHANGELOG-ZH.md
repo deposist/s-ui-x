@@ -8,6 +8,18 @@
 
 暂无未发布变更。
 
+## [1.5.10-beta7] - 2026-06-25 - Dashboard 流量 totals 改为精确统计
+
+1.5.10 分支的第七个 beta。此版本修复 Nexus Dashboard 的 Traffic statistics KPI。无需手动迁移。
+
+- 新增 `GET /api/stats/traffic`，用于返回 Dashboard 流量汇总和精确 bucket sums。
+- Traffic statistics KPI 现在读取新的 summary endpoint，不再在浏览器中合并多个 inbound 的 `/api/stats` 响应。
+- Download 和 upload totals 现在按所选时间范围使用 `SUM(traffic)` 计算，长时间范围不再使用 `/api/stats` 的 average-downsampled rows。
+- Dashboard 汇总会统计所选时间范围内的全部历史 inbound 流量，包括之后被禁用或删除的 inbound 已产生的流量。
+- 新增 `stats(resource, date_time)` 索引，用于按全部 inbound 查询时间范围统计。
+
+完整 release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md)。
+
 ## [1.5.10-beta6] - 2026-06-24 - Dashboard 卡片高度与流量历史
 
 1.5.10 分支的第六个 beta。此版本更新 Nexus Dashboard。无需迁移数据库、API 或 sing-box 配置。

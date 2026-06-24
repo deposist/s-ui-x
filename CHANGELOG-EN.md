@@ -9,6 +9,18 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10-beta7] - 2026-06-25 - exact dashboard traffic totals
+
+Seventh beta of the 1.5.10 line. This update fixes the Nexus Dashboard Traffic statistics KPI. No manual migration is required.
+
+- Added `GET /api/stats/traffic` for dashboard traffic summaries with exact bucket sums.
+- The Traffic statistics KPI now reads the new summary endpoint instead of combining per-inbound `/api/stats` responses in the browser.
+- Download and upload totals now come from `SUM(traffic)` over the selected period, so long ranges no longer use average-downsampled `/api/stats` rows.
+- The dashboard summary covers all historical inbound traffic for the selected period, including traffic from inbounds that were later disabled or removed.
+- Added an index on `stats(resource, date_time)` for the all-inbound time-range query.
+
+Full release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md).
+
 ## [1.5.10-beta6] - 2026-06-24 - dashboard card heights and traffic history
 
 Sixth beta of the 1.5.10 line. This is a Nexus dashboard update. No database, API, or sing-box configuration migration is required.

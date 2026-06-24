@@ -12,6 +12,7 @@ export interface TrafficSelectorInput {
   nowMs?: number
   range?: unknown
   stats?: readonly unknown[] | null
+  summary?: unknown
 }
 
 export type TrafficRange = '1h' | '6h' | '12h' | '24h' | '7d' | '30d'
@@ -46,8 +47,28 @@ const trafficLabel = (dateTime: number): string => {
   return Number.isNaN(date.getTime()) ? String(dateTime) : date.toISOString()
 }
 
+const summaryBucketStart = (bucket: unknown, fallback: number): number => {
+  return isSelectorRecord(bucket) ? nonNegativeNumber(bucket.startTime) ?? fallback : fallback
+}
+
+const summaryBucketTraffic = (bucket: unknown, key: 'download' | 'upload'): number => {
+  return isSelectorRecord(bucket) ? nonNegativeNumber(bucket[key]) ?? 0 : 0
+}
+
 export const selectTrafficSeries = (input?: TrafficSelectorInput | null): TrafficSeries => {
   const range = isTrafficRange(input?.range) ? input.range : defaultRange
+  const summary = isSelectorRecord(input?.summary) ? input.summary : undefined
+  const summaryBuckets = Array.isArray(summary?.buckets) ? summary.buckets : undefined
+
+  if (summaryBuckets?.length) {
+    return {
+      labels: summaryBuckets.map((bucket, index) => trafficLabel(summaryBucketStart(bucket, index))),
+      download: summaryBuckets.map(bucket => summaryBucketTraffic(bucket, 'download')),
+      upload: summaryBuckets.map(bucket => summaryBucketTraffic(bucket, 'upload')),
+      range,
+    }
+  }
+
   const bucketCount = typeof input?.bucketCount === 'number' && Number.isFinite(input.bucketCount)
     ? Math.max(1, Math.floor(input.bucketCount))
     : undefined

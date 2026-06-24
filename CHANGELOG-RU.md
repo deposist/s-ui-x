@@ -9,6 +9,18 @@
 
 Пока нет unreleased-изменений.
 
+## [1.5.10-beta7] - 2026-06-25 - точные totals трафика на Dashboard
+
+Седьмая beta в ветке 1.5.10. Это обновление исправляет KPI Traffic statistics в Nexus Dashboard. Ручная миграция не требуется.
+
+- Добавлен `GET /api/stats/traffic` для сводной статистики трафика на Dashboard с точными суммами по bucket'ам.
+- KPI Traffic statistics теперь читает новый summary endpoint, а не объединяет в браузере ответы `/api/stats` по отдельным inbound'ам.
+- Totals для download и upload теперь считаются через `SUM(traffic)` за выбранный период, поэтому длинные периоды больше не используют average-downsampled строки `/api/stats`.
+- Сводка Dashboard учитывает весь исторический inbound-трафик за выбранный период, включая трафик inbound'ов, которые позже отключили или удалили.
+- Добавлен индекс `stats(resource, date_time)` для запроса по всем inbound'ам за период.
+
+Полные release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md).
+
 ## [1.5.10-beta6] - 2026-06-24 - высоты карточек Dashboard и история трафика
 
 Шестая beta в ветке 1.5.10. Это обновление Nexus Dashboard. Миграция базы данных, API или конфигурации sing-box не требуется.
