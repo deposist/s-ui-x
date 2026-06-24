@@ -2,12 +2,11 @@
   <div class="nexus-overview-kpis">
     <kpi-card
       class="nexus-overview-kpis__traffic"
-      :delta="$t('nexus.overview.kpi.liveTrafficDelta')"
-      :label="$t('nexus.overview.kpi.liveTraffic')"
-      :value="loading ? '-' : formatOverviewRate(summary.liveTrafficBps)"
+      :delta="trafficDeltaLabel"
+      :label="$t('nexus.overview.kpi.trafficStats')"
+      :value="loading ? '-' : formatOverviewSize(trafficTotal)"
     >
       <template #meta>
-        <!-- Time window selector for sparkline -->
         <div class="nexus-overview-kpis__window-selector">
           <v-menu>
             <template #activator="{ props }">
@@ -18,16 +17,16 @@
                 class="nexus-overview-kpis__window-btn"
                 v-bind="props"
               >
-                {{ timeWindowLabel }}
+                {{ trafficRangeLabel }}
                 <v-icon icon="lucide:chevron-down" size="14" class="ms-1" />
               </v-btn>
             </template>
             <v-list density="compact" min-width="120">
               <v-list-item
-                v-for="opt in timeWindowOptions"
+                v-for="opt in trafficRangeOptions"
                 :key="opt.value"
-                :active="opt.value === sparkWindowSize"
-                @click="sparkWindowSize = opt.value"
+                :active="opt.value === trafficRange"
+                @click="trafficRange = opt.value"
               >
                 <v-list-item-title class="text-caption">{{ opt.label }}</v-list-item-title>
               </v-list-item>
@@ -37,10 +36,12 @@
       </template>
 
       <template #trend>
-        <area-spark
+        <area-series
+          compact
           :aria-label="$t('nexus.overview.kpi.trafficTrend')"
           :labels="traffic.labels"
-          :values="trafficTrend"
+          :series="trafficSeries"
+          :value-formatter="formatOverviewSize"
         />
       </template>
     </kpi-card>
@@ -77,16 +78,16 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import AreaSpark from '@/components/nexus/primitives/AreaSpark.vue'
+import AreaSeries from '@/components/nexus/primitives/AreaSeries.vue'
 import KpiCard from '@/components/nexus/primitives/KpiCard.vue'
 import type { WsConnectionState } from '@/store/ws'
 import {
   formatOverviewCount,
-  formatOverviewRate,
+  formatOverviewSize,
 } from './overviewFormatters'
 import type { KpiSummary } from './selectors/kpiSelectors'
 import type { SystemStatus } from './selectors/systemStatusSelectors'
-import type { TrafficSeries } from './selectors/trafficSelectors'
+import type { TrafficRange, TrafficSeries } from './selectors/trafficSelectors'
 
 const props = defineProps<{
   loading: boolean
@@ -94,40 +95,59 @@ const props = defineProps<{
   status: SystemStatus
   traffic: TrafficSeries
   wsState: WsConnectionState
-  sparkWindowSize: number
+  trafficRange: TrafficRange
 }>()
 
 const emit = defineEmits<{
-  'update:sparkWindowSize': [value: number]
+  'update:trafficRange': [value: TrafficRange]
 }>()
 
-const sparkWindowSize = computed({
-  get: () => props.sparkWindowSize,
-  set: (val) => emit('update:sparkWindowSize', val),
+const trafficRange = computed({
+  get: () => props.trafficRange,
+  set: (val) => emit('update:trafficRange', val),
 })
 
-const { t } = useI18n()
+const { n, t } = useI18n()
 
-const timeWindowOptions = [
-  { value: 6, label: '1 min' },
-  { value: 30, label: '5 min' },
-  { value: 180, label: '30 min' },
-  { value: 360, label: '60 min' },
-  { value: 1800, label: '5 hours' },
-  { value: 4320, label: '12 hours' },
-  { value: 8640, label: '24 hours' },
-]
+const trafficRangeOptions = computed<{ value: TrafficRange; label: string }[]>(() => [
+  { value: '1h', label: `${n(1)}${t('date.h')}` },
+  { value: '6h', label: `${n(6)}${t('date.h')}` },
+  { value: '12h', label: `${n(12)}${t('date.h')}` },
+  { value: '24h', label: `${n(24)}${t('date.h')}` },
+  { value: '7d', label: `${n(7)}${t('date.d')}` },
+  { value: '30d', label: `${n(30)}${t('date.d')}` },
+])
 
-const timeWindowLabel = computed(() => {
-  const activeOpt = timeWindowOptions.find(opt => opt.value === sparkWindowSize.value)
-  return activeOpt ? activeOpt.label : '24 hours'
+const trafficRangeLabel = computed(() => {
+  const activeOpt = trafficRangeOptions.value.find(opt => opt.value === trafficRange.value)
+  return activeOpt ? activeOpt.label : `${n(24)}${t('date.h')}`
 })
 
-const trafficTrend = computed(() => {
-  return props.traffic.download.map((download, index) => {
-    return download + (props.traffic.upload[index] ?? 0)
+const trafficTotal = computed(() => {
+  return props.traffic.download.reduce((sum, value) => sum + value, 0)
+    + props.traffic.upload.reduce((sum, value) => sum + value, 0)
+})
+
+const trafficDeltaLabel = computed(() => {
+  const download = props.traffic.download.reduce((sum, value) => sum + value, 0)
+  const upload = props.traffic.upload.reduce((sum, value) => sum + value, 0)
+
+  return t('nexus.overview.kpi.trafficStatsDelta', {
+    download: formatOverviewSize(download),
+    upload: formatOverviewSize(upload),
   })
 })
+
+const trafficSeries = computed(() => [
+  {
+    label: t('stats.download'),
+    values: props.traffic.download,
+  },
+  {
+    label: t('stats.upload'),
+    values: props.traffic.upload,
+  },
+])
 
 const wsStateLabel = computed(() => {
   if (props.wsState === 'connected') return t('nexus.status.realtime')

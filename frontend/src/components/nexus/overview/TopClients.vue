@@ -1,5 +1,5 @@
 <template>
-  <overview-panel :title="$t('nexus.overview.clients.title')">
+  <overview-panel class="nexus-top-clients" :title="$t('nexus.overview.clients.title')">
     <template #action>
       <span class="nexus-top-clients__count">
         {{ $t('nexus.overview.clients.shown', { count: clients.length }) }}
@@ -31,29 +31,31 @@
         </div>
       </div>
 
-      <dense-table>
-        <thead>
-          <tr>
-            <th>{{ $t('objects.client') }}</th>
-            <th>{{ $t('nexus.overview.clients.state') }}</th>
-            <th>{{ $t('stats.download') }}</th>
-            <th>{{ $t('nexus.overview.clients.total') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="client in clients" :key="client.id ?? client.name" class="nexus-dense-table__row-hoverable">
-            <td>{{ client.name }}</td>
-            <td>
-              <status-badge
-                :label="client.online ? $t('nexus.status.online') : $t('nexus.status.offline')"
-                :tone="client.online ? 'success' : 'neutral'"
-              />
-            </td>
-            <td class="nexus-mono">{{ formatOverviewSize(client.download) }}</td>
-            <td class="nexus-mono">{{ formatOverviewSize(client.total) }}</td>
-          </tr>
-        </tbody>
-      </dense-table>
+      <div class="nexus-top-clients__table-scroll">
+        <dense-table>
+          <thead>
+            <tr>
+              <th>{{ $t('objects.client') }}</th>
+              <th>{{ $t('nexus.overview.clients.state') }}</th>
+              <th>{{ $t('stats.download') }}</th>
+              <th>{{ $t('nexus.overview.clients.total') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="client in clients" :key="client.id ?? client.name" class="nexus-dense-table__row-hoverable">
+              <td>{{ client.name }}</td>
+              <td>
+                <status-badge
+                  :label="client.online ? $t('nexus.status.online') : $t('nexus.status.offline')"
+                  :tone="client.online ? 'success' : 'neutral'"
+                />
+              </td>
+              <td class="nexus-mono">{{ formatOverviewSize(client.download) }}</td>
+              <td class="nexus-mono">{{ formatOverviewSize(client.total) }}</td>
+            </tr>
+          </tbody>
+        </dense-table>
+      </div>
 
       <div class="nexus-top-clients__footer">
         <v-btn
@@ -95,6 +97,12 @@ const onlineCount = computed(() => {
 </script>
 
 <style scoped>
+.nexus-top-clients {
+  height: var(--nexus-overview-primary-panel-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
 .nexus-top-clients__count {
   color: rgb(var(--v-theme-on-surface) / 68%);
   font-size: 0.76rem;
@@ -106,6 +114,7 @@ const onlineCount = computed(() => {
   flex-direction: column;
   gap: var(--nexus-gap-3);
   height: 100%;
+  min-height: 0;
 }
 
 .nexus-top-clients__summary {
@@ -139,9 +148,18 @@ const onlineCount = computed(() => {
   line-height: 1.3;
 }
 
+.nexus-top-clients__table-scroll {
+  border-radius: var(--nexus-radius-md);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
 .nexus-top-clients__footer {
   margin-top: auto;
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-end;
   padding-top: var(--nexus-gap-1);
 }
@@ -165,6 +183,13 @@ const onlineCount = computed(() => {
 
 :deep(.nexus-dense-table tr) {
   line-height: 1.25;
+}
+
+.nexus-top-clients__table-scroll :deep(.nexus-dense-table__table th) {
+  background: var(--nexus-surface-2);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 :deep(.nexus-dense-table tbody tr.nexus-dense-table__row-hoverable:hover td) {

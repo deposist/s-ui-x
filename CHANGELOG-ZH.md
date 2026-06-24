@@ -8,6 +8,18 @@
 
 暂无未发布变更。
 
+## [1.5.10-beta6] - 2026-06-24 - Dashboard 卡片高度与流量历史
+
+1.5.10 分支的第六个 beta。此版本更新 Nexus Dashboard。无需迁移数据库、API 或 sing-box 配置。
+
+- Top clients 现在最多显示 10 个客户端，并在与 System status 对齐的固定高度卡片内滚动。
+- Recent events 使用相同的卡片高度，事件列表过长时在卡片内滚动。
+- System status 高度降低，并按当前 8 个状态值调整尺寸。
+- Dashboard 第一个 KPI 现在显示 Traffic statistics，而不是 Live traffic。它读取已有的 `/api/stats` 数据，按启用的 inbound tags 汇总，并分别绘制 download 和 upload 曲线。
+- 流量时间范围现在支持 1 小时、6 小时、12 小时、24 小时、7 天和 30 天。
+- 流量历史仍由 Traffic Maximum Age 控制。大于 `0` 时保存 stats；`0` 会关闭历史统计。
+完整 release notes: [`docs/releases/v1.5.10-beta6.md`](docs/releases/v1.5.10-beta6.md)。
+
 ## [1.5.10-beta5] - 2026-06-24 - Nexus 仪表盘与设置页面布局调整
 
 1.5.10 线的第五个 beta。此版本仅涉及前端。无需数据库、API 或 sing-box 配置迁移。

@@ -314,6 +314,8 @@ export default {
       kpi: {
         liveTraffic: "实时流量",
         liveTrafficDelta: "下行 + 上行",
+        trafficStats: "流量统计",
+        trafficStatsDelta: "下行 {download} · 上行 {upload}",
         trafficTrend: "流量历史趋势",
         onlineClients: "在线客户端",
         clientSignal: "当前客户端在线信号。",

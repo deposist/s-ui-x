@@ -33,21 +33,6 @@ The sing-box Basics page is now available as a Settings tab: Basics (Singbox). T
 
 The migrated Basics tab keeps the original Log, NTP, Certificate Trust, Cache File, Debug, Clash API, and V2Ray API controls. The Save button is enabled only when the sing-box config has changed, and the loading state is cleared even if a save fails.
 
-## Verification
-
-The following checks pass on the release tree:
-
-- `git diff --check`
-- `go vet ./...`
-- `go test -p 1 ./... -count=1 -skip TestSaveXUIUploadTriggersStaleCleanupIssue38`
-- `cd frontend && npm run lint`
-- `cd frontend && npm run build`
-- `cd frontend && npm run test`
-
-The skipped Go test is the known Windows path-separator case documented in the project error journal.
-
-This is a beta release. Publish it as a GitHub pre-release and keep it out of the Latest stable slot.
-
 ---
 
 # Примечания к релизу: v1.5.10-beta5
@@ -84,18 +69,3 @@ Nexus Settings теперь разбиты на карточки с более �
 sing-box Basics теперь доступен как вкладка Settings: Basics (Singbox). Старый маршрут `/basics` ведёт на `/settings?tab=basics`, а пункт Basics удалён из Nexus и Classic navigation, чтобы у одной страницы не было двух разных входов.
 
 Перенесённая вкладка Basics сохраняет исходные группы Log, NTP, Certificate Trust, Cache File, Debug, Clash API и V2Ray API. Кнопка Save включается только при изменении sing-box config, а loading state сбрасывается даже при неудачном сохранении.
-
-## Проверка
-
-На релизном дереве проходят:
-
-- `git diff --check`
-- `go vet ./...`
-- `go test -p 1 ./... -count=1 -skip TestSaveXUIUploadTriggersStaleCleanupIssue38`
-- `cd frontend && npm run lint`
-- `cd frontend && npm run build`
-- `cd frontend && npm run test`
-
-Пропущенный Go-тест - известный Windows-случай с разделителями путей, уже описанный в журнале ошибок проекта.
-
-Это beta-релиз. Публикуйте его как GitHub pre-release и не помечайте как Latest stable.

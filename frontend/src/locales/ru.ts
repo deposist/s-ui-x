@@ -589,6 +589,8 @@ export default {
       kpi: {
         liveTraffic: "Текущий трафик",
         liveTrafficDelta: "Загрузка + отправка суммарно",
+        trafficStats: "Статистика трафика",
+        trafficStatsDelta: "Входящий {download} · Исходящий {upload}",
         trafficTrend: "Тренд истории трафика",
         onlineClients: "Клиенты онлайн",
         clientSignal: "Текущий сигнал присутствия клиентов.",

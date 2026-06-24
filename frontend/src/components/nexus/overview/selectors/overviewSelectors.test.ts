@@ -170,6 +170,30 @@ describe('overview selectors', () => {
     ])
   })
 
+  it('buckets traffic stats into the selected dashboard range', () => {
+    expect(selectTrafficSeries({
+      range: '1h',
+      bucketCount: 4,
+      nowMs: 1710003600 * 1000,
+      stats: [
+        { dateTime: 1710000060, direction: false, traffic: 10 },
+        { dateTime: 1710000120, direction: true, traffic: 4 },
+        { dateTime: 1710001800, direction: false, traffic: 6 },
+        { dateTime: 1709999900, direction: false, traffic: 99 },
+      ],
+    })).toEqual({
+      labels: [
+        '2024-03-09T16:00:00.000Z',
+        '2024-03-09T16:15:00.000Z',
+        '2024-03-09T16:30:00.000Z',
+        '2024-03-09T16:45:00.000Z',
+      ],
+      download: [10, 0, 6, 0],
+      upload: [4, 0, 0, 0],
+      range: '1h',
+    })
+  })
+
   it('maps known and unknown audit or partial API payloads to plain display data', () => {
     expect(mapAuditDisplayItem({
       id: 12,

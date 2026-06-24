@@ -589,6 +589,8 @@ export default {
       kpi: {
         liveTraffic: "Live traffic",
         liveTrafficDelta: "Combined down + up rate",
+        trafficStats: "Traffic statistics",
+        trafficStatsDelta: "Down {download} · Up {upload}",
         trafficTrend: "Traffic history trend",
         onlineClients: "Online clients",
         clientSignal: "Current client presence signal.",

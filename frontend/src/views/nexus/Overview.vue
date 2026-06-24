@@ -1,11 +1,11 @@
 <template>
   <section class="nexus-overview">
     <kpi-row
-      v-model:spark-window-size="sparkWindowSize"
+      v-model:traffic-range="trafficRange"
       :loading="dashboardLoading"
       :summary="kpiSummary"
       :status="systemStatus"
-      :traffic="trafficSparkSeries"
+      :traffic="trafficSeries"
       :ws-state="ws.state"
     />
 
@@ -47,12 +47,18 @@ import { selectKpiSummary } from '@/components/nexus/overview/selectors/kpiSelec
 import { selectProtocolSummaries } from '@/components/nexus/overview/selectors/protocolSummarySelectors'
 import { selectSystemStatus } from '@/components/nexus/overview/selectors/systemStatusSelectors'
 import { selectTopClients } from '@/components/nexus/overview/selectors/topClientsSelectors'
-import type { TrafficSeries } from '@/components/nexus/overview/selectors/trafficSelectors'
+import {
+  selectTrafficSeries,
+  trafficRangeHours,
+  type TrafficRange,
+} from '@/components/nexus/overview/selectors/trafficSelectors'
 import {
   auditEventsFromPayload,
   networkRateFromSamples,
+  overviewInboundTags,
   overviewStatusMetrics,
   overviewStatusNetworkSample,
+  payloadItems,
   type NetworkTrafficRate,
 } from '@/components/nexus/overview/overviewPayloads'
 import HttpUtils from '@/plugins/httputil'
@@ -75,25 +81,26 @@ const liveTraffic = ref<NetworkTrafficRate>({
   downloadBps: 0,
   uploadBps: 0,
 })
-// default: 24h window (360 samples of 10s is 1 hour, so we will customize the sparkSamples window)
-// Actually, S-UI updates status payload every 10s.
-// sparkSamples holds up to sparkWindowSize samples to show the sparkline.
-const sparkWindowSize = ref(8640) // Default to 24 hours (8640 samples of 10s)
-const sparkSamples = ref<{ download: number; upload: number; ts: number }[]>([])
+const trafficRange = ref<TrafficRange>('24h')
+const trafficStats = ref<unknown[]>([])
+const trafficLoading = ref(false)
+const trafficUnavailable = ref(false)
 
 let statusInterval: ReturnType<typeof setInterval> | undefined
+let trafficInterval: ReturnType<typeof setInterval> | undefined
 let statusRequestPending = false
+let trafficRequestId = 0
 let previousNetworkSample = overviewStatusNetworkSample()
 
 const storeLoading = computed(() => data.lastLoad === 0)
-const dashboardLoading = computed(() => storeLoading.value || statusLoading.value)
+const dashboardLoading = computed(() => storeLoading.value || statusLoading.value || trafficLoading.value)
 const systemStatus = computed(() => selectSystemStatus(statusPayload.value, nowSec.value))
 const systemMetrics = computed(() => overviewStatusMetrics(statusPayload.value))
-const trafficSparkSeries = computed<TrafficSeries>(() => ({
-  range: 'realtime',
-  labels: sparkSamples.value.map((sample) => String(sample.ts)),
-  download: sparkSamples.value.map((sample) => sample.download),
-  upload: sparkSamples.value.map((sample) => sample.upload),
+const inboundTags = computed(() => overviewInboundTags(data.inbounds))
+const trafficSeries = computed(() => selectTrafficSeries({
+  range: trafficRange.value,
+  stats: trafficStats.value,
+  bucketCount: 48,
 }))
 const topClients = computed(() => selectTopClients({
   clients: data.clients,
@@ -130,10 +137,37 @@ const kpiSummary = computed(() => selectKpiSummary({
   health: kpiHealth.value,
 }))
 
-const pushSparkSample = (rate: NetworkTrafficRate) => {
-  const next = sparkSamples.value.slice(-sparkWindowSize.value + 1)
-  next.push({ download: rate.downloadBps, upload: rate.uploadBps, ts: Date.now() })
-  sparkSamples.value = next
+const loadTrafficStats = async () => {
+  const requestId = ++trafficRequestId
+
+  if (!browserOnline.value) {
+    trafficStats.value = []
+    trafficLoading.value = false
+    trafficUnavailable.value = true
+    return
+  }
+
+  const tags = inboundTags.value
+  if (tags.length === 0) {
+    trafficStats.value = []
+    trafficLoading.value = false
+    trafficUnavailable.value = false
+    return
+  }
+
+  trafficLoading.value = trafficStats.value.length === 0
+
+  const responses = await Promise.all(tags.map(tag => HttpUtils.get('api/stats', {
+    resource: 'inbound',
+    tag,
+    limit: trafficRangeHours[trafficRange.value],
+  })))
+
+  if (requestId === trafficRequestId) {
+    trafficStats.value = responses.flatMap(response => response.success ? payloadItems(response.obj) : [])
+    trafficUnavailable.value = responses.some(response => !response.success)
+    trafficLoading.value = false
+  }
 }
 
 const loadStatus = async () => {
@@ -144,7 +178,6 @@ const loadStatus = async () => {
     statusUnavailable.value = true
     previousNetworkSample = undefined
     liveTraffic.value = { downloadBps: 0, uploadBps: 0 }
-    sparkSamples.value = []
     return
   }
 
@@ -164,7 +197,6 @@ const loadStatus = async () => {
     const rate = networkRateFromSamples(previousNetworkSample, networkSample)
     if (rate) {
       liveTraffic.value = rate
-      pushSparkSample(rate)
     }
     previousNetworkSample = networkSample
   } else {
@@ -202,28 +234,33 @@ const setOnline = () => {
   browserOnline.value = true
   void loadStatus()
   void loadAuditEvents()
+  void loadTrafficStats()
 }
 
 const setOffline = () => {
   browserOnline.value = false
   statusUnavailable.value = true
   auditUnavailable.value = true
+  trafficUnavailable.value = true
   previousNetworkSample = undefined
   liveTraffic.value = { downloadBps: 0, uploadBps: 0 }
-  sparkSamples.value = []
+  trafficStats.value = []
 }
 
-// Watch sparkWindowSize to trim sparkSamples when window shrinks.
-watch(sparkWindowSize, (newSize) => {
-  if (sparkSamples.value.length > newSize) {
-    sparkSamples.value = sparkSamples.value.slice(-newSize)
-  }
+watch(trafficRange, () => {
+  void loadTrafficStats()
 })
 
-// Pause the status poll while the browser tab is hidden; refresh immediately
-// when it becomes visible again so the operator never sees stale data.
+watch(inboundTags, () => {
+  void loadTrafficStats()
+})
+
+// Pause polling while the browser tab is hidden; refresh immediately when visible.
 const onVisible = () => {
-  if (!document.hidden) void loadStatus()
+  if (!document.hidden) {
+    void loadStatus()
+    void loadTrafficStats()
+  }
 }
 
 onMounted(() => {
@@ -236,14 +273,20 @@ onMounted(() => {
   document.addEventListener('visibilitychange', onVisible)
   void loadStatus()
   void loadAuditEvents()
+  void loadTrafficStats()
   statusInterval = setInterval(() => {
     if (document.hidden) return
     void loadStatus()
   }, 10000)
+  trafficInterval = setInterval(() => {
+    if (document.hidden) return
+    void loadTrafficStats()
+  }, 60000)
 })
 
 onBeforeUnmount(() => {
   if (statusInterval) clearInterval(statusInterval)
+  if (trafficInterval) clearInterval(trafficInterval)
   document.removeEventListener('visibilitychange', onVisible)
   window.removeEventListener('online', setOnline)
   window.removeEventListener('offline', setOffline)
@@ -258,6 +301,8 @@ onBeforeUnmount(() => {
 }
 
 .nexus-overview__primary {
+  --nexus-overview-primary-panel-height: 320px;
+
   display: grid;
   gap: var(--nexus-gap-4);
   min-width: 0;

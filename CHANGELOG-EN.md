@@ -9,6 +9,18 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10-beta6] - 2026-06-24 - dashboard card heights and traffic history
+
+Sixth beta of the 1.5.10 line. This is a Nexus dashboard update. No database, API, or sing-box configuration migration is required.
+
+- Top clients now shows up to 10 clients and scrolls inside a fixed-height card aligned with System status.
+- Recent events now uses the same fixed card height and scrolls inside the card when the event list is longer.
+- System status is shorter and sized around its 8 current values.
+- The first dashboard KPI now shows Traffic statistics instead of Live traffic. It reads existing `/api/stats` data for enabled inbound tags and plots download and upload separately.
+- The traffic timeline selector now supports 1 hour, 6 hours, 12 hours, 24 hours, 7 days, and 30 days.
+- Traffic history still depends on Traffic Maximum Age. Set it above `0` to save stats; `0` disables historical stats.
+Full release notes: [`docs/releases/v1.5.10-beta6.md`](docs/releases/v1.5.10-beta6.md).
+
 ## [1.5.10-beta5] - 2026-06-24 - Nexus dashboard and Settings layout refresh
 
 Fifth beta of the 1.5.10 line. This is a frontend release. No database, API, or sing-box configuration migration is required.

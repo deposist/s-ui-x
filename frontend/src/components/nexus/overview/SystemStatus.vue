@@ -1,5 +1,5 @@
 <template>
-  <overview-panel :title="$t('nexus.overview.system.title')">
+  <overview-panel class="nexus-system-status" :title="$t('nexus.overview.system.title')">
       <template #action>
         <status-badge :label="statusLabel" :tone="statusTone" />
       </template>
@@ -111,9 +111,22 @@ const capacityLabel = (metric: OverviewCapacityMetric): string => {
 </script>
 
 <style scoped>
+.nexus-system-status.nexus-overview-panel {
+  height: var(--nexus-overview-primary-panel-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nexus-system-status__list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .nexus-system-status__list :deep(li) {
   display: grid;
   grid-template-columns: minmax(96px, 0.72fr) minmax(0, 1fr);
+  min-height: 31px;
+  padding-block: 5px;
   transition: background var(--nexus-transition-fast);
 }
 

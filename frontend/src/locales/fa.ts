@@ -314,6 +314,8 @@ export default {
       kpi: {
         liveTraffic: "ترافیک زنده",
         liveTrafficDelta: "دریافت + ارسال",
+        trafficStats: "آمار ترافیک",
+        trafficStatsDelta: "دریافت {download} · ارسال {upload}",
         trafficTrend: "روند تاریخچه ترافیک",
         onlineClients: "کلاینت‌های آنلاین",
         clientSignal: "سیگنال حضور فعلی کلاینت‌ها.",
