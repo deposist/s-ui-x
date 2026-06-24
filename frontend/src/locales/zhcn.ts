@@ -277,6 +277,8 @@ export default {
       options: {
         technical: "技术",
         navy: "藏青",
+        emerald: "Emerald Minimal",
+        dracula: "Dracula Cyberpunk",
       },
     },
     mode: {
@@ -350,6 +352,7 @@ export default {
         empty: "暂时没有客户端流量。",
         state: "状态",
         total: "总计",
+        viewAll: "查看所有客户端",
       },
       events: {
         title: "最近事件",

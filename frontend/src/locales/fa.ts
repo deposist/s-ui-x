@@ -277,6 +277,8 @@ export default {
       options: {
         technical: "فنی",
         navy: "سرمه‌ای",
+        emerald: "Emerald Minimal",
+        dracula: "Dracula Cyberpunk",
       },
     },
     mode: {
@@ -350,6 +352,7 @@ export default {
         empty: "هنوز ترافیک کلاینتی موجود نیست.",
         state: "وضعیت",
         total: "مجموع",
+        viewAll: "مشاهده همه کلاینت‌ها",
       },
       events: {
         title: "رویدادهای اخیر",

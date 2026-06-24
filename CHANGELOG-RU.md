@@ -9,6 +9,20 @@
 
 Пока нет unreleased-изменений.
 
+## [1.5.10-beta5] - 2026-06-24 - обновление Nexus Dashboard и Settings
+
+Пятая бета линейки 1.5.10. Это frontend-релиз. Миграция базы данных, API или конфигурации sing-box не требуется.
+
+- Обновлены отступы и выравнивание Nexus Dashboard: KPI cards, overview panels, protocol summaries, recent events, system status и dense tables стали плотнее и ровнее.
+- Top clients получил реальные сводные значения, число online-клиентов, общее число клиентов, компактные traffic-колонки и ссылку на страницу Clients.
+- В KPI live traffic добавлен локальный выбор окна от 1 минуты до 24 часов на основе существующих realtime samples.
+- В Nexus sidebar имя обновлено до S-UI-X, а нижний server status теперь показывает CPU/RAM в процентах, когда status API возвращает эти метрики.
+- Добавлены палитры Emerald и Dracula для Nexus в тёмном и светлом вариантах, улучшена читаемость светлых тем.
+- Nexus Settings переведены на карточную раскладку, а sing-box Basics перенесён внутрь Settings как вкладка Basics (Singbox). `/basics` открывает эту вкладку, старый пункт Basics удалён из Nexus и Classic navigation.
+- Исправлено состояние кнопки Save в перенесённой вкладке Basics, loading state теперь сбрасывается и после неудачного сохранения config.
+
+Полные заметки о релизе: [`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md).
+
 ## [1.5.10-beta4] - 2026-06-24 - обработка истёкшей сессии и усиление релизного контура
 
 Четвёртая бета линейки 1.5.10. Миграция базы данных или конфигурации не требуется.

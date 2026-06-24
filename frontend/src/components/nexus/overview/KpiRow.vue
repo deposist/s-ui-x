@@ -7,26 +7,32 @@
       :value="loading ? '-' : formatOverviewRate(summary.liveTrafficBps)"
     >
       <template #meta>
-        <div class="nexus-overview-kpis__addresses">
-          <section>
-            <h3>IPv4</h3>
-            <span v-if="status.ipv4.length === 0" class="nexus-overview-kpis__missing">
-              {{ $t('nexus.overview.system.noAddress') }}
-            </span>
-            <span v-for="address in status.ipv4" :key="address" dir="ltr">
-              {{ address }}
-            </span>
-          </section>
-
-          <section>
-            <h3>IPv6</h3>
-            <span v-if="status.ipv6.length === 0" class="nexus-overview-kpis__missing">
-              {{ $t('nexus.overview.system.noAddress') }}
-            </span>
-            <span v-for="address in status.ipv6" :key="address" dir="ltr">
-              {{ address }}
-            </span>
-          </section>
+        <!-- Time window selector for sparkline -->
+        <div class="nexus-overview-kpis__window-selector">
+          <v-menu>
+            <template #activator="{ props }">
+              <v-btn
+                variant="text"
+                density="compact"
+                size="small"
+                class="nexus-overview-kpis__window-btn"
+                v-bind="props"
+              >
+                {{ timeWindowLabel }}
+                <v-icon icon="lucide:chevron-down" size="14" class="ms-1" />
+              </v-btn>
+            </template>
+            <v-list density="compact" min-width="120">
+              <v-list-item
+                v-for="opt in timeWindowOptions"
+                :key="opt.value"
+                :active="opt.value === sparkWindowSize"
+                @click="sparkWindowSize = opt.value"
+              >
+                <v-list-item-title class="text-caption">{{ opt.label }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
       </template>
 
@@ -43,6 +49,7 @@
       :delta="wsStateLabel"
       :label="$t('nexus.overview.kpi.onlineClients')"
       :value="formatOverviewCount(summary.onlineClients)"
+      class="nexus-overview-kpis__online-clients"
     >
       <template #trend>
         <div class="nexus-overview-kpis__signal">
@@ -55,6 +62,7 @@
       :delta="$t('nexus.overview.kpi.activeInbounds', { count: formatOverviewCount(summary.activeInbounds) })"
       :label="$t('nexus.overview.kpi.enabledInbounds')"
       :value="formatOverviewCount(summary.totalInbounds)"
+      class="nexus-overview-kpis__enabled-inbounds"
     >
       <template #trend>
         <div class="nexus-overview-kpis__signal">
@@ -86,9 +94,34 @@ const props = defineProps<{
   status: SystemStatus
   traffic: TrafficSeries
   wsState: WsConnectionState
+  sparkWindowSize: number
 }>()
 
+const emit = defineEmits<{
+  'update:sparkWindowSize': [value: number]
+}>()
+
+const sparkWindowSize = computed({
+  get: () => props.sparkWindowSize,
+  set: (val) => emit('update:sparkWindowSize', val),
+})
+
 const { t } = useI18n()
+
+const timeWindowOptions = [
+  { value: 6, label: '1 min' },
+  { value: 30, label: '5 min' },
+  { value: 180, label: '30 min' },
+  { value: 360, label: '60 min' },
+  { value: 1800, label: '5 hours' },
+  { value: 4320, label: '12 hours' },
+  { value: 8640, label: '24 hours' },
+]
+
+const timeWindowLabel = computed(() => {
+  const activeOpt = timeWindowOptions.find(opt => opt.value === sparkWindowSize.value)
+  return activeOpt ? activeOpt.label : '24 hours'
+})
 
 const trafficTrend = computed(() => {
   return props.traffic.download.map((download, index) => {
@@ -115,43 +148,29 @@ const wsStateLabel = computed(() => {
   grid-column: span 2;
 }
 
-.nexus-overview-kpis__addresses {
-  display: grid;
-  gap: var(--nexus-gap-2);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  inline-size: min(100%, 304px);
-  min-width: 0;
+.nexus-overview-kpis__online-clients :deep(.nexus-kpi-card__value),
+.nexus-overview-kpis__enabled-inbounds :deep(.nexus-kpi-card__value),
+.nexus-overview-kpis__traffic :deep(.nexus-kpi-card__value) {
+  font-family: var(--nexus-font-mono);
 }
 
-.nexus-overview-kpis__addresses section {
-  background: var(--nexus-surface-2);
+.nexus-overview-kpis__window-selector {
+  flex: 0 0 auto;
+}
+
+.nexus-overview-kpis__window-btn {
+  text-transform: none;
+  font-size: 0.72rem !important;
+  color: var(--nexus-text-secondary);
+  height: 24px !important;
   border: 1px solid var(--nexus-border);
-  border-radius: var(--nexus-radius-md);
-  display: grid;
-  gap: var(--nexus-gap-1);
-  min-width: 0;
-  padding: var(--nexus-gap-2);
+  border-radius: var(--nexus-radius-sm);
+  background: var(--nexus-surface-2);
 }
 
-.nexus-overview-kpis__addresses h3 {
-  color: rgb(var(--v-theme-on-surface) / 78%);
-  font-size: 0.74rem;
-  font-weight: 650;
-  letter-spacing: 0;
-  line-height: 1.3;
-  margin: 0;
-}
-
-.nexus-overview-kpis__addresses span {
-  font-size: 0.76rem;
-  letter-spacing: 0;
-  line-height: 1.3;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.nexus-overview-kpis__missing {
-  color: rgb(var(--v-theme-on-surface) / 56%);
+.nexus-overview-kpis__window-btn:hover {
+  color: var(--nexus-text-primary);
+  border-color: var(--nexus-border-strong);
 }
 
 .nexus-overview-kpis__signal {

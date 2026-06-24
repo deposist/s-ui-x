@@ -9,6 +9,20 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10-beta5] - 2026-06-24 - Nexus dashboard and Settings layout refresh
+
+Fifth beta of the 1.5.10 line. This is a frontend release. No database, API, or sing-box configuration migration is required.
+
+- Reworked the Nexus dashboard spacing and card alignment across KPI cards, overview panels, protocol summaries, recent events, system status, and dense tables.
+- Updated Top clients with real summary totals, online count, total client count, compact traffic columns, and a link to the Clients page.
+- Added a local time-window selector to the live traffic KPI for 1 minute through 24 hours, using existing realtime samples.
+- Updated the Nexus sidebar branding to S-UI-X and added CPU/RAM percentages to the lower-left server status block when the status API returns those metrics.
+- Added Emerald and Dracula Nexus palettes in dark and light variants, with better light-theme contrast.
+- Redesigned Nexus Settings into card-based sections and moved sing-box Basics into Settings as the Basics (Singbox) tab. `/basics` now opens that tab, and the old Basics menu item was removed from Nexus and Classic navigation.
+- Fixed the migrated Basics Save button state and ensured the loading state clears after failed config saves.
+
+Full release notes: [`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md).
+
 ## [1.5.10-beta4] - 2026-06-24 - session expiry handling and release hardening
 
 Fourth beta of the 1.5.10 line. No database or configuration migration is required.

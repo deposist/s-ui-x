@@ -1,6 +1,7 @@
 <template>
   <section class="nexus-overview">
     <kpi-row
+      v-model:spark-window-size="sparkWindowSize"
       :loading="dashboardLoading"
       :summary="kpiSummary"
       :status="systemStatus"
@@ -34,7 +35,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import KpiRow from '@/components/nexus/overview/KpiRow.vue'
 import ProtocolSummaries from '@/components/nexus/overview/ProtocolSummaries.vue'
@@ -74,7 +75,10 @@ const liveTraffic = ref<NetworkTrafficRate>({
   downloadBps: 0,
   uploadBps: 0,
 })
-const SPARK_WINDOW = 24
+// default: 24h window (360 samples of 10s is 1 hour, so we will customize the sparkSamples window)
+// Actually, S-UI updates status payload every 10s.
+// sparkSamples holds up to sparkWindowSize samples to show the sparkline.
+const sparkWindowSize = ref(8640) // Default to 24 hours (8640 samples of 10s)
 const sparkSamples = ref<{ download: number; upload: number; ts: number }[]>([])
 
 let statusInterval: ReturnType<typeof setInterval> | undefined
@@ -127,7 +131,7 @@ const kpiSummary = computed(() => selectKpiSummary({
 }))
 
 const pushSparkSample = (rate: NetworkTrafficRate) => {
-  const next = sparkSamples.value.slice(-SPARK_WINDOW + 1)
+  const next = sparkSamples.value.slice(-sparkWindowSize.value + 1)
   next.push({ download: rate.downloadBps, upload: rate.uploadBps, ts: Date.now() })
   sparkSamples.value = next
 }
@@ -209,6 +213,13 @@ const setOffline = () => {
   sparkSamples.value = []
 }
 
+// Watch sparkWindowSize to trim sparkSamples when window shrinks.
+watch(sparkWindowSize, (newSize) => {
+  if (sparkSamples.value.length > newSize) {
+    sparkSamples.value = sparkSamples.value.slice(-newSize)
+  }
+})
+
 // Pause the status poll while the browser tab is hidden; refresh immediately
 // when it becomes visible again so the operator never sees stale data.
 const onVisible = () => {
@@ -251,9 +262,10 @@ onBeforeUnmount(() => {
   gap: var(--nexus-gap-4);
   min-width: 0;
   grid-template-columns:
-    minmax(0, 1.15fr)
-    minmax(0, 1.25fr)
-    minmax(300px, 1fr);
+    minmax(0, 1.2fr)
+    minmax(0, 1.2fr)
+    minmax(320px, 1fr);
+  align-items: stretch;
 }
 
 @media (max-width: 1264px) {

@@ -5,44 +5,48 @@
       </template>
 
     <dense-list class="nexus-system-status__list">
-      <li>
-        <span class="nexus-system-status__key">S-UI</span>
-        <strong dir="ltr">{{ status.appVersion || '-' }}</strong>
+      <li class="nexus-system-status__item">
+        <span class="nexus-system-status__key">S-UI-X</span>
+        <strong dir="ltr" class="nexus-mono">{{ status.appVersion || '-' }}</strong>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">sing-box</span>
         <span class="nexus-system-status__value">
-          {{ status.singboxRunning ? $t('nexus.status.running') : $t('nexus.status.notRunning') }}
-          <span v-if="status.singboxVersion" dir="ltr">
+          <status-badge
+            :label="status.singboxRunning ? $t('nexus.status.running') : $t('nexus.status.notRunning')"
+            :tone="status.singboxRunning ? 'success' : 'error'"
+            class="me-1"
+          />
+          <span v-if="status.singboxVersion" dir="ltr" class="nexus-mono">
             {{ status.singboxVersion }}
           </span>
         </span>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.hostUptime') }}</span>
-        <strong>{{ formatOverviewDuration(status.uptimeSec) }}</strong>
+        <strong class="nexus-mono">{{ formatOverviewDuration(status.uptimeSec) }}</strong>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.singboxUptime') }}</span>
-        <strong>{{ formatOverviewDuration(status.singboxUptimeSec) }}</strong>
+        <strong class="nexus-mono">{{ formatOverviewDuration(status.singboxUptimeSec) }}</strong>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.cpu') }}</span>
-        <strong>{{ formatOverviewPercent(metrics.cpuPercent) }}</strong>
+        <strong class="nexus-mono">{{ formatOverviewPercent(metrics.cpuPercent) }}</strong>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.memory') }}</span>
-        <span class="nexus-system-status__value">
+        <span class="nexus-system-status__value nexus-mono">
           {{ capacityLabel(metrics.memory) }}
         </span>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.disk') }}</span>
-        <span class="nexus-system-status__value">
+        <span class="nexus-system-status__value nexus-mono">
           {{ capacityLabel(metrics.disk) }}
         </span>
       </li>
-      <li>
+      <li class="nexus-system-status__item">
         <span class="nexus-system-status__key">{{ $t('nexus.overview.system.realtime') }}</span>
         <strong>{{ wsLabel }}</strong>
       </li>
@@ -110,10 +114,17 @@ const capacityLabel = (metric: OverviewCapacityMetric): string => {
 .nexus-system-status__list :deep(li) {
   display: grid;
   grid-template-columns: minmax(96px, 0.72fr) minmax(0, 1fr);
+  transition: background var(--nexus-transition-fast);
+}
+
+.nexus-system-status__list :deep(li.nexus-system-status__item:hover) {
+  background: var(--nexus-surface-hover);
+  cursor: pointer;
 }
 
 .nexus-system-status__key {
-  color: rgb(var(--v-theme-on-surface) / 68%);
+  color: var(--nexus-text-secondary);
+  font-size: 0.8rem;
   min-width: 0;
 }
 
@@ -124,6 +135,7 @@ const capacityLabel = (metric: OverviewCapacityMetric): string => {
   letter-spacing: 0;
   min-width: 0;
   overflow-wrap: anywhere;
+  color: var(--nexus-text-primary);
 }
 
 </style>

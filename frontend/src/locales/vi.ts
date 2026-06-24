@@ -277,6 +277,8 @@ export default {
       options: {
         technical: "Kỹ thuật",
         navy: "Xanh navy",
+        emerald: "Emerald Minimal",
+        dracula: "Dracula Cyberpunk",
       },
     },
     mode: {
@@ -350,6 +352,7 @@ export default {
         empty: "Chưa có lưu lượng client.",
         state: "Trạng thái",
         total: "Tổng",
+        viewAll: "Xem tất cả client",
       },
       events: {
         title: "Sự kiện gần đây",

@@ -16,15 +16,16 @@
       <li
         v-for="(event, index) in events"
         :key="`${event.id}-${event.timestamp}-${index}`"
+        class="nexus-recent-events__item"
       >
         <v-icon :icon="event.icon" :class="`nexus-recent-events__icon--${event.tone}`" />
 
         <div class="nexus-recent-events__copy">
           <strong>{{ event.text }}</strong>
-          <span v-if="event.detail">{{ event.detail }}</span>
+          <span v-if="event.detail" class="nexus-recent-events__detail">{{ event.detail }}</span>
         </div>
 
-        <time :datetime="dateTimeValue(event.timestamp)">
+        <time :datetime="dateTimeValue(event.timestamp)" class="nexus-mono">
           {{ timestampLabel(event.timestamp) }}
         </time>
       </li>
@@ -88,6 +89,12 @@ const dateTimeValue = (timestamp: number): string | undefined => {
 .nexus-recent-events__list :deep(li) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  transition: background var(--nexus-transition-fast);
+}
+
+.nexus-recent-events__list :deep(li.nexus-recent-events__item:hover) {
+  background: var(--nexus-surface-hover);
+  cursor: pointer;
 }
 
 .nexus-recent-events__copy {
@@ -108,7 +115,7 @@ const dateTimeValue = (timestamp: number): string | undefined => {
 
 .nexus-recent-events__copy span,
 .nexus-recent-events__list time {
-  color: rgb(var(--v-theme-on-surface) / 62%);
+  color: var(--nexus-text-secondary);
 }
 
 .nexus-recent-events__list time {

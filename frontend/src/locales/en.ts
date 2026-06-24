@@ -552,6 +552,8 @@ export default {
       options: {
         technical: "Technical",
         navy: "Navy",
+        emerald: "Emerald Minimal",
+        dracula: "Dracula Cyberpunk",
       },
     },
     mode: {
@@ -625,6 +627,7 @@ export default {
         empty: "No client traffic is available yet.",
         state: "State",
         total: "Total",
+        viewAll: "View all clients",
       },
       events: {
         title: "Recent events",

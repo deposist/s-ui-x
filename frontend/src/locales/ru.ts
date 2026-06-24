@@ -552,6 +552,8 @@ export default {
       options: {
         technical: "Технический",
         navy: "Тёмно-синий",
+        emerald: "Emerald Minimal",
+        dracula: "Dracula Cyberpunk",
       },
     },
     mode: {
@@ -625,6 +627,7 @@ export default {
         empty: "Данных о трафике клиентов пока нет.",
         state: "Состояние",
         total: "Всего",
+        viewAll: "Все клиенты",
       },
       events: {
         title: "Последние события",

@@ -8,6 +8,20 @@
 
 暂无未发布变更。
 
+## [1.5.10-beta5] - 2026-06-24 - Nexus 仪表盘与设置页面布局调整
+
+1.5.10 线的第五个 beta。此版本仅涉及前端。无需数据库、API 或 sing-box 配置迁移。
+
+- 调整 Nexus 仪表盘的间距和卡片对齐方式，覆盖 KPI 卡片、概览面板、协议摘要、最近事件、系统状态和紧凑表格。
+- Top clients 现在显示真实汇总流量、在线数量、客户端总数、紧凑流量列，并提供到 Clients 页面的入口。
+- Live traffic KPI 新增本地时间窗口选择，范围从 1 分钟到 24 小时，使用现有 realtime samples。
+- Nexus 侧边栏名称更新为 S-UI-X。左下角 server status 在 status API 返回数据时显示 CPU/RAM 百分比。
+- 新增 Emerald 和 Dracula 两组 Nexus 调色板，均包含深色和浅色版本，并改善浅色主题对比度。
+- Nexus Settings 改为卡片式布局，sing-box Basics 移入 Settings，作为 Basics (Singbox) 标签页。`/basics` 会打开该标签页，旧 Basics 菜单项已从 Nexus 和 Classic navigation 中移除。
+- 修复迁移后的 Basics 保存按钮状态，并确保配置保存失败后也会清除 loading 状态。
+
+完整发布说明：[`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md)。
+
 ## [1.5.10-beta4] - 2026-06-24 - 会话过期处理与发布安全加固
 
 1.5.10 线的第四个 beta。无需数据库或配置迁移。
