@@ -5,15 +5,23 @@
 Это русскоязычный changelog. Английская версия - в `CHANGELOG-EN.md`,
 китайская - в `CHANGELOG-ZH.md`.
 
-## [Unreleased] - обработка истёкшей сессии
+## [Unreleased]
 
-Миграция базы данных, API или конфигурации не требуется.
+Пока нет unreleased-изменений.
 
-- Исправлен frontend-loop, из-за которого после истечения или потери сессии могли одновременно появляться `Invalid login` и `Error: CSRF token was not returned`. Теперь панель очищает локальное состояние авторизации и возвращает пользователя на страницу входа без предварительного вызова CSRF-защищённого logout endpoint.
-- Загрузка CSRF-токена теперь сохраняет backend-ошибки вроде `Invalid login`, а не заменяет их сообщением об отсутствующем токене. Повторные invalid-session ответы от polling сворачиваются в одно уведомление до следующего успешного входа.
-- Упрощён код: убран лишний `else` в `main.go`, удалён закомментированный метод `setBool` в `service/setting.go`, исправлены тавтологические `make(map[string]interface{}, 0)` в `api/apiService.go`.
-- Убран устаревший паттерн захвата переменной цикла `action := action` в `api/apiHandler.go` (не нужен в Go 1.22+).
-- Убраны дубликаты scope в вызовах `requireTokenScopeAny` (`"telegram"` и `"observability"`) в `api/apiFoundation.go`.
+## [1.5.10-beta4] - 2026-06-24 - обработка истёкшей сессии и усиление релизного контура
+
+Четвёртая бета линейки 1.5.10. Миграция базы данных или конфигурации не требуется.
+
+- Исправлена обработка истёкшей сессии во фронтенде. `Invalid login` теперь очищает локальное auth/CSRF-состояние и возвращает пользователя на страницу входа без вызова CSRF-защищённого logout endpoint. Повторные invalid-session ответы показываются один раз до следующего успешного входа.
+- Загрузка CSRF-токена теперь сохраняет backend-ошибки вроде `Invalid login`, а не заменяет их сообщением `CSRF token was not returned`.
+- Исправлен доступ scoped API tokens к observability history и ручным Telegram backups. Токены `observability` могут читать observability/core history, а токены `telegram` могут запускать ручной Telegram backup базы данных. Telegram test остаётся admin-only.
+- Усилен путь self-update: pending markers и staging-файлы используют owner-only права, некорректные markers обрабатываются явно, ошибки cleanup логируются, а контролируемый доступ к путям задокументирован для security scanners.
+- Добавлены self-update regression tests для traversal-похожих tar entries, symlink entries, прав pending marker и восстановления после некорректного pending marker.
+- Managed IP certificate files теперь используют owner-only права и для certificate chain, и для private key.
+- Упрощён код: убран лишний `else` в `main.go`, убран устаревший захват переменной цикла в `api/apiHandler.go`, удалён закомментированный settings helper, упрощены тавтологические map allocation в `api/apiService.go`.
+
+Полные заметки о релизе: [`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md).
 
 ## [1.5.10-beta3] - 2026-06-23 - исправление рендеринга панели пресетов и состояния кнопок
 

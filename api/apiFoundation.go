@@ -238,7 +238,7 @@ func (a *ApiService) RunTelegramBackup(c *gin.Context) {
 }
 
 func (a *ApiService) runTelegramBackupManual(c *gin.Context) {
-	if !a.requireTokenScopeAny(c, "telegram", "admin") {
+	if !a.requireTokenScopeAny(c, "telegram", "telegram", "admin") {
 		return
 	}
 	if !a.enforceTelegramBackupManualRateLimit(c) {
@@ -329,7 +329,7 @@ func telegramBackupHTTPStatus(errorClass string) int {
 }
 
 func (a *ApiService) GetObservabilityHistory(c *gin.Context) {
-	if !a.requireTokenScopeAny(c, "observability", "admin") {
+	if !a.requireTokenScopeAny(c, "observability", "observability", "admin") {
 		return
 	}
 	bucket, since, ok := parseObservabilityQuery(c)
@@ -358,7 +358,7 @@ func (a *ApiService) GetObservabilityHistory(c *gin.Context) {
 }
 
 func (a *ApiService) GetCoreHistory(c *gin.Context) {
-	if !a.requireTokenScopeAny(c, "observability", "admin") {
+	if !a.requireTokenScopeAny(c, "observability", "observability", "admin") {
 		return
 	}
 	if c.Query("metric") != "" {

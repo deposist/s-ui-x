@@ -4,15 +4,23 @@
 
 这是中文版更新日志。英文版请见 `CHANGELOG-EN.md`，俄文版请见 `CHANGELOG-RU.md`。
 
-## [Unreleased] - 会话过期处理
+## [Unreleased]
 
-无需数据库、API 或配置迁移。
+暂无未发布变更。
 
-- 修复了会话过期或丢失后前端可能同时显示 `Invalid login` 和 `Error: CSRF token was not returned` 的循环。面板现在会清除本地登录状态并返回登录页，不会先调用受 CSRF 保护的 logout endpoint。
-- CSRF token 加载现在保留后端返回的错误，例如 `Invalid login`，不会把它替换成缺少 token 的提示。polling 产生的重复 invalid-session 响应会合并成一次提示，直到下一次成功登录。
-- 简化代码：移除 `main.go` 中多余的 `else`，移除 `service/setting.go` 中注释掉的 `setBool` 方法，修正 `api/apiService.go` 中的 `make(map[string]interface{}, 0)`。
-- 移除 `api/apiHandler.go` 中过时的循环变量捕获 `action := action`（Go 1.22+ 不再需要）。
-- 移除 `api/apiFoundation.go` 中 `requireTokenScopeAny` 调用的重复 scope 参数。
+## [1.5.10-beta4] - 2026-06-24 - 会话过期处理与发布安全加固
+
+1.5.10 线的第四个 beta。无需数据库或配置迁移。
+
+- 修复前端的会话过期处理。`Invalid login` 现在会清除本地 auth/CSRF 状态并返回登录页，不再调用受 CSRF 保护的 logout endpoint。重复的 invalid-session 响应在下次成功登录前只提示一次。
+- CSRF token 加载现在保留后端错误，例如 `Invalid login`，不会替换成 `CSRF token was not returned`。
+- 修复 scoped API token 对 observability history 和手动 Telegram 备份的访问。`observability` token 可以读取 observability/core history，`telegram` token 可以运行手动 Telegram 数据库备份。Telegram test 仍仅限 admin。
+- 加固面板 self-update 路径：pending marker 和 staging 文件使用仅所有者可读写的权限；无效 marker 会被显式处理；cleanup 错误会记录日志；受控路径访问已为 security scanner 添加说明。
+- 新增 self-update regression tests，覆盖类似 traversal 的 tar entry、symlink entry、pending marker 权限，以及无效 pending marker 恢复。
+- Managed IP certificate 文件现在对 certificate chain 和 private key 都使用仅所有者可读写的权限。
+- 简化代码：移除 `main.go` 中多余的 `else`，移除 `api/apiHandler.go` 中过时的循环变量捕获，删除注释掉的 settings helper，并简化 `api/apiService.go` 中多余的 map allocation。
+
+完整发布说明：[`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md)。
 
 ## [1.5.10-beta3] - 2026-06-23 - 修复区域预设抽屉渲染与按钮状态
 

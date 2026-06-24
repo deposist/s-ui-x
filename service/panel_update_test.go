@@ -11,9 +11,12 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
+
+const testPrivateFileMode = 0o600
 
 func makeTarGz(t *testing.T, suiContent []byte) []byte {
 	t.Helper()
@@ -36,6 +39,59 @@ func makeTarGz(t *testing.T, suiContent []byte) []byte {
 	return buf.Bytes()
 }
 
+type testTarEntry struct {
+	name     string
+	typeflag byte
+	content  []byte
+	linkname string
+}
+
+func makeTarGzWithEntries(t *testing.T, entries ...testTarEntry) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gz)
+	for _, entry := range entries {
+		if entry.typeflag == 0 {
+			entry.typeflag = tar.TypeReg
+		}
+		hdr := &tar.Header{
+			Name:     entry.name,
+			Mode:     0o755,
+			Size:     int64(len(entry.content)),
+			Typeflag: entry.typeflag,
+			Linkname: entry.linkname,
+		}
+		if entry.typeflag != tar.TypeReg {
+			hdr.Size = 0
+		}
+		if err := tw.WriteHeader(hdr); err != nil {
+			t.Fatal(err)
+		}
+		if entry.typeflag == tar.TypeReg {
+			if _, err := tw.Write(entry.content); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+func writeTestArchive(t *testing.T, dir string, content []byte) string {
+	t.Helper()
+	path := filepath.Join(dir, "artifact.tar.gz")
+	if err := os.WriteFile(path, content, testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
 func artifactServer(t *testing.T, tarball []byte, checksumHex string) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
@@ -54,7 +110,7 @@ func TestApplyPipelineRejectsChecksumMismatch(t *testing.T) {
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
 	oldContent := []byte("OLD-WORKING-BINARY")
-	if err := os.WriteFile(execPath, oldContent, 0o755); err != nil {
+	if err := os.WriteFile(execPath, oldContent, testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
 	tarball := makeTarGz(t, []byte("NEW-BINARY"))
@@ -80,7 +136,7 @@ func TestApplyPipelineReplacesBinaryAndKeepsBackup(t *testing.T) {
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
 	oldContent := []byte("OLD-WORKING-BINARY")
-	if err := os.WriteFile(execPath, oldContent, 0o755); err != nil {
+	if err := os.WriteFile(execPath, oldContent, testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
 	newContent := []byte("NEW-FRESH-BINARY")
@@ -102,6 +158,41 @@ func TestApplyPipelineReplacesBinaryAndKeepsBackup(t *testing.T) {
 }
 
 // T026 / FR-012: a second apply is rejected while one is active.
+func TestExtractBinaryPinsTraversalHeaderToDestination(t *testing.T) {
+	dir := t.TempDir()
+	archive := writeTestArchive(t, dir, makeTarGzWithEntries(t, testTarEntry{
+		name:    "../outside/sui",
+		content: []byte("PINNED-BINARY"),
+	}))
+	dest := filepath.Join(dir, "sui.new")
+	if err := extractBinary(archive, dest); err != nil {
+		t.Fatalf("extract failed: %v", err)
+	}
+	if got, err := os.ReadFile(dest); err != nil || string(got) != "PINNED-BINARY" {
+		t.Fatalf("dest content = %q, err=%v", got, err)
+	}
+	outside := filepath.Clean(filepath.Join(dir, "..", "outside", "sui"))
+	if _, err := os.Stat(outside); !os.IsNotExist(err) {
+		t.Fatalf("archive header path should not be honored, stat err=%v", err)
+	}
+}
+
+func TestExtractBinaryIgnoresSymlinkEntry(t *testing.T) {
+	dir := t.TempDir()
+	archive := writeTestArchive(t, dir, makeTarGzWithEntries(t, testTarEntry{
+		name:     "s-ui/sui",
+		typeflag: tar.TypeSymlink,
+		linkname: "../../evil",
+	}))
+	dest := filepath.Join(dir, "sui.new")
+	if err := extractBinary(archive, dest); err == nil {
+		t.Fatal("expected missing regular binary error")
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatalf("symlink entry should not create destination, stat err=%v", err)
+	}
+}
+
 func TestApplyRejectsConcurrentUpdate(t *testing.T) {
 	resetPanelUpdateStateForTest()
 	t.Cleanup(resetPanelUpdateStateForTest)
@@ -118,10 +209,10 @@ func TestApplyRejectsConcurrentUpdate(t *testing.T) {
 func TestRestoreBackupRollsBack(t *testing.T) {
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
-	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), 0o755); err != nil {
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), 0o755); err != nil {
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
 	if err := RestoreBackup(execPath); err != nil {
@@ -134,11 +225,51 @@ func TestRestoreBackupRollsBack(t *testing.T) {
 
 // SR-012: a freshly-applied binary that keeps failing to boot is rolled back
 // once the attempt threshold is reached.
+func TestWritePendingMarkerUsesOwnerOnlyMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not expose POSIX permission bits consistently")
+	}
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := writePendingMarker(execPath); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(execPath + pendingSuffix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != testPrivateFileMode {
+		t.Fatalf("pending marker mode = %#o, want %#o", got, testPrivateFileMode)
+	}
+}
+
+func TestCheckPendingUpdateResetsInvalidMarker(t *testing.T) {
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("not-a-number"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if CheckPendingUpdate(execPath) {
+		t.Fatal("invalid marker should reset attempts without rollback")
+	}
+	got, err := os.ReadFile(execPath + pendingSuffix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "1" {
+		t.Fatalf("pending marker = %q, want 1", got)
+	}
+}
+
 func TestCheckPendingUpdateRollsBackAfterThreshold(t *testing.T) {
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
-	_ = os.WriteFile(execPath, []byte("BROKEN-NEW"), 0o755)
-	_ = os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), 0o755)
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
 	if err := writePendingMarker(execPath); err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +329,7 @@ func TestApplySuccessRecordsAppliedAuditBeforeExit(t *testing.T) {
 	t.Cleanup(resetPanelUpdateStateForTest)
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
-	if err := os.WriteFile(execPath, []byte("OLD"), 0o755); err != nil {
+	if err := os.WriteFile(execPath, []byte("OLD"), testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
 	tarball := makeTarGz(t, []byte("NEW"))

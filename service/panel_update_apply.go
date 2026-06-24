@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -81,19 +82,20 @@ func applyPipeline(target ReleaseTarget, deps panelUpdateDeps, setStage func(Upd
 func swapBinary(archive string, execPath string) error {
 	newBin := execPath + ".new"
 	if err := extractBinary(archive, newBin); err != nil {
-		os.Remove(newBin)
+		removeUpdateFileBestEffort(newBin)
 		return err
 	}
+	// #nosec G302 -- the replacement panel binary must remain executable after the self-update swap.
 	if err := os.Chmod(newBin, 0o755); err != nil {
-		os.Remove(newBin)
+		removeUpdateFileBestEffort(newBin)
 		return err
 	}
 	if err := copyFile(execPath, execPath+backupSuffix); err != nil {
-		os.Remove(newBin)
+		removeUpdateFileBestEffort(newBin)
 		return err
 	}
 	if err := os.Rename(newBin, execPath); err != nil {
-		os.Remove(newBin) // live binary is untouched; .bak remains for safety
+		removeUpdateFileBestEffort(newBin) // live binary is untouched; .bak remains for safety
 		return err
 	}
 	return nil
@@ -118,7 +120,8 @@ func downloadToFile(client httpDoer, url string, dest string) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("artifact download failed: status %d", resp.StatusCode)
 	}
-	f, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	// #nosec G304 -- dest is the fixed self-update staging path derived from the current executable directory.
+	f, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
@@ -161,6 +164,7 @@ func downloadChecksum(client httpDoer, url string) (string, error) {
 }
 
 func verifySHA256(path string, expectedHex string) error {
+	// #nosec G304 -- path is the previously downloaded self-update artifact staged by applyPipeline.
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -181,6 +185,7 @@ func verifySHA256(path string, expectedHex string) error {
 // paths are never honored for the output location (extraction is pinned to dest),
 // preventing path traversal.
 func extractBinary(archive string, dest string) error {
+	// #nosec G304 -- archive is the checksum-verified self-update tarball staged by applyPipeline.
 	f, err := os.Open(archive)
 	if err != nil {
 		return err
@@ -207,6 +212,7 @@ func extractBinary(archive string, dest string) error {
 		if name != "s-ui/sui" && filepath.Base(name) != "sui" {
 			continue
 		}
+		// #nosec G302,G304 -- dest is the fixed replacement binary path; it must be executable after extraction.
 		out, err := os.OpenFile(dest, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
 		if err != nil {
 			return err
@@ -220,11 +226,13 @@ func extractBinary(archive string, dest string) error {
 }
 
 func copyFile(src string, dst string) error {
+	// #nosec G304 -- callers pass controlled panel binary/backup paths under the executable directory.
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
+	// #nosec G302,G304 -- dst is a controlled panel binary/backup path and must remain executable for rollback.
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
 	if err != nil {
 		return err
@@ -246,7 +254,7 @@ func RestoreBackup(execPath string) error {
 }
 
 func writePendingMarker(execPath string) error {
-	return os.WriteFile(execPath+pendingSuffix, []byte("0"), 0o644)
+	return os.WriteFile(execPath+pendingSuffix, []byte("0"), 0o600)
 }
 
 // ClearPendingUpdate removes the pending-update marker. The freshly-booted new
@@ -262,12 +270,16 @@ func ClearPendingUpdate(execPath string) {
 // brick the panel (SR-012). Returns true if a rollback was performed.
 func CheckPendingUpdate(execPath string) bool {
 	marker := execPath + pendingSuffix
+	// #nosec G304 -- marker path is derived from the current executable path and the fixed pending suffix.
 	raw, err := os.ReadFile(marker)
 	if err != nil {
 		return false
 	}
-	attempts := 0
-	fmt.Sscanf(strings.TrimSpace(string(raw)), "%d", &attempts)
+	attempts, err := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if err != nil {
+		logger.Warning("panel update: invalid pending marker, resetting attempts:", err)
+		attempts = 0
+	}
 	attempts++
 	if attempts >= rollbackAfterAttempts {
 		restoreErr := RestoreBackup(execPath)
@@ -280,6 +292,14 @@ func CheckPendingUpdate(execPath string) bool {
 		logger.Error("panel update: new binary failed to boot ", attempts,
 			" times and the rollback backup is unavailable: ", restoreErr)
 	}
-	_ = os.WriteFile(marker, fmt.Appendf(nil, "%d", attempts), 0o644)
+	if err := os.WriteFile(marker, []byte(strconv.Itoa(attempts)), 0o600); err != nil {
+		logger.Warning("panel update: pending marker update failed:", err)
+	}
 	return false
+}
+
+func removeUpdateFileBestEffort(path string) {
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.Warning("panel update: cleanup failed:", err)
+	}
 }

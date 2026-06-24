@@ -5,15 +5,23 @@ All notable changes to this project are documented in this file.
 This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 `CHANGELOG-ZH.md` for Simplified Chinese.
 
-## [Unreleased] - session timeout handling
+## [Unreleased]
 
-No database, API, or configuration migration is required.
+No unreleased changes yet.
 
-- Fixed a frontend loop that could show `Invalid login` together with `Error: CSRF token was not returned` after a session expired or was lost. The panel now clears local auth state and returns to the login page without first calling the CSRF-protected logout endpoint.
-- CSRF token loading now keeps backend errors such as `Invalid login` instead of replacing them with a missing-token message. Repeated invalid-session responses from polling are collapsed into one notification until the next successful login.
-- Simplified code: removed unnecessary `else` in `main.go`, removed commented-out `setBool` method in `service/setting.go`, fixed tautological `make(map[string]interface{}, 0)` in `api/apiService.go`.
-- Removed obsolete loop variable capture `action := action` in `api/apiHandler.go` (no longer needed in Go 1.22+).
-- Removed duplicate scope arguments in `requireTokenScopeAny` calls (`"telegram"` and `"observability"`) in `api/apiFoundation.go`.
+## [1.5.10-beta4] - 2026-06-24 - session expiry handling and release hardening
+
+Fourth beta of the 1.5.10 line. No database or configuration migration is required.
+
+- Fixed session-expiry handling in the frontend. `Invalid login` now clears local auth/CSRF state and returns to the login page without calling the CSRF-protected logout endpoint. Repeated invalid-session responses are shown once until the next successful login.
+- CSRF token loading now preserves backend errors such as `Invalid login` instead of replacing them with `CSRF token was not returned`.
+- Fixed scoped API-token access for observability history and manual Telegram backups. `observability` tokens can read observability/core history, and `telegram` tokens can run manual Telegram database backups. Telegram test remains admin-only.
+- Hardened the panel self-update path: pending markers and staging files use owner-only permissions, invalid markers are handled explicitly, cleanup errors are logged, and controlled path access is documented for security scanners.
+- Added self-update regression tests for traversal-looking tar entries, symlink entries, pending marker permissions, and invalid pending marker recovery.
+- Managed IP certificate files now use owner-only permissions for both the certificate chain and private key.
+- Simplified code: removed an unnecessary `else` in `main.go`, removed obsolete loop variable capture in `api/apiHandler.go`, removed a commented-out settings helper, and simplified tautological map allocations in `api/apiService.go`.
+
+Full release notes: [`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md).
 
 ## [1.5.10-beta3] - 2026-06-23 - fix regional preset drawer rendering and button state
 
