@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <img width="1024" alt="s-ui-x panel screenshots" src="https://github.com/deposist/s-ui-x/blob/main/docs/screen1.png" />
+  <img width="1024" alt="s-ui-x panel screenshots" src="https://github.com/deposist/s-ui-x/blob/main/docs/screen1.jpg" />
 </p>
 
 <p align="center">
