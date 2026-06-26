@@ -307,7 +307,7 @@ func (j *JsonService) addOthers(jsonConfig *map[string]interface{}) error {
 	}
 	route := map[string]interface{}{
 		"auto_detect_interface": true,
-		"final":                 "proxy",
+		"final":                 "direct",
 		"rules":                 rules_start,
 	}
 
