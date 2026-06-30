@@ -25,6 +25,7 @@
 <p align="center">
   <img width="1024" alt="Support S-UI-X development" src="docs/support-s-ui-x.png" />
 </p>
+## More protocols supporting in https://github.com/deposist/s-ui-x-extended
 
 ## Support S-UI-X
 
