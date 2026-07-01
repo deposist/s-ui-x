@@ -8,6 +8,17 @@
 
 暂无未发布变更。
 
+## [1.5.10-beta8] - 2026-07-01 - 修复 Settings 中旧键导致的保存失败
+
+1.5.10 分支的第八个 beta。此版本修复部分数据库中仍保留旧的或第三方 `settings` 行时 Settings 保存失败的问题，例如 `globalReset`。无需手动迁移。
+
+- `GET /api/settings` 现在只返回允许用户编辑的设置键，旧的 `settings` 表行不会再发送到浏览器。
+- `POST /api/save` 仍会拒绝未知设置键，保存端 allowlist 仍然保持严格。
+- 修复 Settings 报错 `save: invalid setting key: globalReset`，该问题由浏览器回传后端返回的旧键触发。
+- 新增回归测试，覆盖旧 `globalReset` 行和 settings payload 再次保存成功的场景。
+
+完整 release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md)。
+
 ## [1.5.10-beta7] - 2026-06-25 - Dashboard 流量 totals 改为精确统计
 
 1.5.10 分支的第七个 beta。此版本修复 Nexus Dashboard 的 Traffic statistics KPI。无需手动迁移。

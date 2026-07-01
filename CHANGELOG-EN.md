@@ -9,6 +9,17 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10-beta8] - 2026-07-01 - Settings save fix for stale keys
+
+Eighth beta of the 1.5.10 line. This update fixes Settings saves on databases that still contain old or third-party setting rows such as `globalReset`. No manual migration is required.
+
+- `GET /api/settings` now returns only user-editable setting keys, so stale rows from the `settings` table are not sent to the browser.
+- `POST /api/save` still rejects unknown setting keys. The save-side allowlist remains strict.
+- Fixed the Settings error `save: invalid setting key: globalReset` caused by round-tripping a stale backend-returned key.
+- Added a regression test that covers stale `globalReset` rows and a successful settings round-trip save.
+
+Full release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md).
+
 ## [1.5.10-beta7] - 2026-06-25 - exact dashboard traffic totals
 
 Seventh beta of the 1.5.10 line. This update fixes the Nexus Dashboard Traffic statistics KPI. No manual migration is required.

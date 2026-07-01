@@ -203,23 +203,14 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 	allSetting := map[string]string{}
 
 	for _, setting := range settings {
+		if !isEditableSettingKey(setting.Key) {
+			continue
+		}
 		if isEncryptedSettingKey(setting.Key) {
 			writeSecretSettingMarker(allSetting, setting.Key, setting.Value)
 			continue
 		}
 		allSetting[setting.Key] = setting.Value
-	}
-
-	// Due to security principles
-	delete(allSetting, "secret")
-	delete(allSetting, "installSalt")
-	delete(allSetting, "sessionGeneration")
-	delete(allSetting, "config")
-	delete(allSetting, "version")
-	delete(allSetting, "paidSubUpdateOffset") // internal bot cursor, not user-facing
-	for _, key := range ipCertInternalSettingKeys {
-		delete(allSetting, key)             // machine-managed IP cert state, not user-facing
-		delete(allSetting, key+"HasSecret") // and its encrypted-marker, if any
 	}
 
 	return &allSetting, nil

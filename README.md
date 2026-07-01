@@ -61,7 +61,7 @@ The full per-release notes live in the language-specific changelog files:
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
 - Latest stable release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md)
-- Latest pre-release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md)
+- Latest pre-release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
@@ -129,7 +129,7 @@ Use the stable build for normal installations. Use the beta only if you want to 
 | Channel | Version | Notes |
 |---|---|---|
 | Stable | `v1.5.9` | Recommended for production. Release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md). |
-| Beta | `v1.5.10-beta7` | Newer than stable. Pre-release build for testing. Release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md). |
+| Beta | `v1.5.10-beta8` | Newer than stable. Pre-release build for testing. Release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md). |
 
 ### Linux/macOS, stable
 
@@ -146,7 +146,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ### Linux/macOS, beta
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta7
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta8
 ```
 
 ### Local clone
@@ -157,12 +157,12 @@ cd s-ui-x
 sudo bash install.sh v1.5.9
 ```
 
-For the beta build, replace `v1.5.9` with `v1.5.10-beta7`.
+For the beta build, replace `v1.5.9` with `v1.5.10-beta8`.
 
 ### Windows
 
 - Stable: download from [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest), extract the ZIP, and run `install-windows.bat` as Administrator.
-- Beta: download `v1.5.10-beta7` from [its release page](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta7), extract the ZIP, and run `install-windows.bat` as Administrator.
+- Beta: download `v1.5.10-beta8` from [its release page](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta8), extract the ZIP, and run `install-windows.bat` as Administrator.
 
 Existing installations keep their settings, users, inbounds, outbounds, clients, TLS, services, and tokens. Database migrations run automatically on first start. Upgrade and rollback notes are in the changelog files: [EN](CHANGELOG-EN.md), [RU](CHANGELOG-RU.md), [中文](CHANGELOG-ZH.md).
 
@@ -399,7 +399,7 @@ Web-панель на базе `SagerNet/Sing-Box`.
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
 - Последние stable release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md)
-- Последние pre-release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md)
+- Последние pre-release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md)
 
 README оставляет только установку и общий обзор проекта. Полная история
 релизов, breaking-заметки, гайд по обновлению и инструкции по откату находятся
@@ -467,7 +467,7 @@ README оставляет только установку и общий обзо
 | Канал | Версия | Заметки |
 |---|---|---|
 | Stable | `v1.5.9` | Рекомендуется для production. Release notes: [`docs/releases/v1.5.9.md`](docs/releases/v1.5.9.md). |
-| Beta | `v1.5.10-beta7` | Новее stable. Pre-release для тестирования. Release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md). |
+| Beta | `v1.5.10-beta8` | Новее stable. Pre-release для тестирования. Release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md). |
 
 ### Linux/macOS, stable
 
@@ -484,7 +484,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ### Linux/macOS, beta
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta7
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10-beta8
 ```
 
 ### Локальный clone
@@ -495,12 +495,12 @@ cd s-ui-x
 sudo bash install.sh v1.5.9
 ```
 
-Для beta-сборки замените `v1.5.9` на `v1.5.10-beta7`.
+Для beta-сборки замените `v1.5.9` на `v1.5.10-beta8`.
 
 ### Windows
 
 - Stable: скачайте архив из [GitHub Releases](https://github.com/deposist/s-ui-x/releases/latest), распакуйте ZIP и запустите `install-windows.bat` от имени администратора.
-- Beta: скачайте `v1.5.10-beta7` на [странице релиза](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta7), распакуйте ZIP и запустите `install-windows.bat` от имени администратора.
+- Beta: скачайте `v1.5.10-beta8` на [странице релиза](https://github.com/deposist/s-ui-x/releases/tag/v1.5.10-beta8), распакуйте ZIP и запустите `install-windows.bat` от имени администратора.
 
 Существующие установки сохраняют settings, users, inbounds, outbounds, clients, TLS, services и tokens. Миграции базы запускаются автоматически при первом старте. Заметки по обновлению и откату находятся в changelog: [EN](CHANGELOG-EN.md), [RU](CHANGELOG-RU.md), [中文](CHANGELOG-ZH.md).
 

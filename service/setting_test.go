@@ -785,6 +785,35 @@ func TestGetForceCookieSecureRejectsInvalidEnv(t *testing.T) {
 	}
 }
 
+func TestGetAllSettingFiltersStaleUnknownKeysBeforeRoundTripSave(t *testing.T) {
+	settingService := initSettingTestDB(t)
+	if _, err := settingService.GetAllSetting(); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Create(&model.Setting{Key: "globalReset", Value: "true"}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := settingService.GetAllSetting()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := (*settings)["globalReset"]; ok {
+		t.Fatalf("stale unknown setting leaked to settings payload: %#v", *settings)
+	}
+
+	payload, err := json.Marshal(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = database.GetDB().Transaction(func(tx *gorm.DB) error {
+		return settingService.Save(tx, payload)
+	})
+	if err != nil {
+		t.Fatalf("round-trip save of GetAllSetting payload failed: %v", err)
+	}
+}
+
 func TestSaveRejectsUnknownSettingKey(t *testing.T) {
 	settingService := initSettingTestDB(t)
 	if _, err := settingService.GetAllSetting(); err != nil {
