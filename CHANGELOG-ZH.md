@@ -8,6 +8,19 @@
 
 暂无未发布变更。
 
+## [1.5.10-beta9] - 2026-07-01 - RU/ZH 国家流量直连预设
+
+1.5.10 分支的第九个 beta。此版本调整区域预设：匹配到的 RU 和 ZH 国家流量会走所选 direct outbound，其他流量继续使用现有 final 路由。无需手动迁移。
+
+- RU 域名规则现在使用 `wastrel-g/geosite-ru-smart` 的 `direct-ru` 分类。
+- 面板会下载 `geosite.dat`，将 `direct-ru` 转换为本地 sing-box `.srs` rule set，并保存到面板数据目录下的 `rulesets/geosite-ru-smart/direct-ru.srs`。
+- 保存的配置保留相对 managed path。运行时配置会在启动 sing-box 前替换为绝对路径。
+- Managed RU smart rules 会在 24 小时后刷新；如果 GitHub 暂时不可用且本地 `.srs` 仍有效，面板会继续使用缓存文件。
+- RU/ZH DNS 规则只会把匹配到的国家域名发往 `preset-dns-direct`，不会修改全局 `dns.final`。
+- Regional presets 抽屉现在只保留 direct outbound 选择。旧的 proxy 方向选择和按域名设置例外已移除。
+
+完整 release notes: [`docs/releases/v1.5.10-beta9.md`](docs/releases/v1.5.10-beta9.md)。
+
 ## [1.5.10-beta8] - 2026-07-01 - 修复 Settings 中旧键导致的保存失败
 
 1.5.10 分支的第八个 beta。此版本修复部分数据库中仍保留旧的或第三方 `settings` 行时 Settings 保存失败的问题，例如 `globalReset`。无需手动迁移。

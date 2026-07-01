@@ -764,7 +764,7 @@ export default {
   },
   regionalPresets: {
     title: "Regional presets",
-    subtitle: "Configure routing and DNS for Russian and Chinese domains in one place.",
+    subtitle: "Route Russian and Chinese country traffic directly without changing the final route for everything else.",
     open: "Regional presets",
     cancel: "Cancel",
     preview: "Preview changes",
@@ -776,16 +776,16 @@ export default {
     editRulesManually: "Edit rules manually.",
     proxyOutbound: "Proxy outbound",
     directOutbound: "Direct outbound",
-    selectOutbounds: "Choose proxy and direct outbound tags before previewing changes.",
-    sameOutboundWarning: "Proxy and direct outbound are the same. Split routing will not change traffic until you pick distinct outbounds.",
+    selectOutbounds: "Choose the direct outbound tag before previewing changes.",
+    sameOutboundWarning: "Regional presets now use direct country routing only.",
     region: {
       ru: {
         title: "RU routing and DNS",
-        description: "Use a ready-made setup for Russian domains and DNS behavior.",
+        description: "Use geosite-ru-smart direct-ru domains plus RU GeoIP, routed through the selected direct outbound.",
       },
       zh: {
         title: "ZH routing and DNS",
-        description: "Use a ready-made setup for Chinese domains and DNS behavior.",
+        description: "Use CN geosite and GeoIP rule sets, routed through the selected direct outbound.",
       },
       status: {
         notConfigured: "Not configured",
@@ -798,15 +798,15 @@ export default {
     direction: {
       direct: {
         title: "Direct",
-        description: "Regional domains bypass proxy. Good for local services that work better from your server's location.",
+        description: "Matched country domains and IP ranges use the selected direct outbound.",
       },
       proxy: {
         title: "Through proxy",
-        description: "Regional domains use proxy. Good when you want this region to follow your proxy route.",
+        description: "Legacy proxy mode is not used by the current regional presets.",
       },
     },
     dns: {
-      behavior: "DNS will match {mode} mode for {region} domains.",
+      behavior: "For {region}, matched country domains use direct DNS; global DNS final is not changed.",
     },
     previewGroups: {
       willAdd: "Will add",
@@ -814,12 +814,12 @@ export default {
       willKeep: "Will keep",
       willRemove: "Will remove",
       noChanges: "No changes",
-      securityNote: "Custom rules and DNS entries will be kept. Preset changes apply only after you confirm.",
+      securityNote: "Custom rules and DNS entries will be kept. Presets only add or replace managed regional rules after you confirm.",
       securityWarnings: "Security warnings",
       noWarnings: "No warnings detected",
     },
     security: {
-      note: "Review changes before applying. Presets can affect DNS privacy and traffic paths.",
+      note: "Review changes before applying. Presets route only matched RU/ZH country traffic directly and leave other traffic unchanged.",
       dnsLeakRisk: "This choice may resolve regional domains through a DNS path that differs from the selected route. Review before applying.",
       routeExposureRisk: "This choice may send regional traffic outside the path you expected. Review before applying.",
       partialApplyBlocked: "Routing and DNS changes must be saved together. Nothing was changed.",
@@ -828,7 +828,7 @@ export default {
     advanced: {
       title: "Advanced options",
       exceptions: "Exceptions",
-      exceptionsHelp: "Domains listed here will not follow this regional preset.",
+      exceptionsHelp: "Per-domain exceptions are not used by the current regional presets.",
       addDomain: "Add domain",
       removeDomain: "Remove domain",
       noExceptions: "No exceptions added.",
@@ -837,7 +837,7 @@ export default {
     result: {
       customItemsKept: "Preset-managed rules and DNS entries were updated. Custom items were kept.",
       failed: "Preset was not applied",
-      regionalDataUnavailable: "Required regional domain data is not available. Update regional data and try again.",
+      regionalDataUnavailable: "Required regional domain data is not available. Save again when the server can download and compile the managed rule set.",
     },
   },
   delivery: {

@@ -9,6 +9,19 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10-beta9] - 2026-07-01 - RU/ZH country-direct presets
+
+Ninth beta of the 1.5.10 line. This update changes the regional presets so matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. No manual migration is required.
+
+- RU domain routing now uses `wastrel-g/geosite-ru-smart` category `direct-ru`.
+- The panel downloads `geosite.dat`, converts `direct-ru` into a local sing-box `.srs` rule set, and stores it under `rulesets/geosite-ru-smart/direct-ru.srs` in the panel data directory.
+- The saved config keeps a relative managed rule-set path. Runtime config gets the absolute path before sing-box starts.
+- Managed RU smart rules refresh after 24 hours and keep using a valid cached `.srs` if GitHub is temporarily unavailable.
+- RU/ZH DNS rules now route only matched country domains through `preset-dns-direct`; global `dns.final` is not changed.
+- The Regional presets drawer now shows only the direct outbound selector. The old proxy direction choice and per-domain exceptions were removed.
+
+Full release notes: [`docs/releases/v1.5.10-beta9.md`](docs/releases/v1.5.10-beta9.md).
+
 ## [1.5.10-beta8] - 2026-07-01 - Settings save fix for stale keys
 
 Eighth beta of the 1.5.10 line. This update fixes Settings saves on databases that still contain old or third-party setting rows such as `globalReset`. No manual migration is required.

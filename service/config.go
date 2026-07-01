@@ -151,7 +151,15 @@ func (s *ConfigService) GetConfig(data string) (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &rawConfig, nil
+	if err := ensureManagedRuleSetsForConfig(rawConfig); err != nil {
+		return nil, err
+	}
+	runtimeConfig, err := rewriteManagedRuleSetsForRuntime(rawConfig)
+	if err != nil {
+		return nil, err
+	}
+	runtimeBytes := []byte(runtimeConfig)
+	return &runtimeBytes, nil
 }
 
 // startCore starts sing-box. When force is true, the cool-down between failed
@@ -395,11 +403,18 @@ func (s *ConfigService) dispatchSave(tx *gorm.DB, obj string, act string, data j
 		if err := validateConfigLogOutput(data); err != nil {
 			return nil, plan, false, err
 		}
-		changed, err := s.SettingService.ConfigBlobChanged(tx, data)
+		storageData, _, err := normalizeManagedRuleSetsForStorage(data)
 		if err != nil {
 			return nil, plan, false, err
 		}
-		if err := s.SettingService.SaveConfig(tx, data); err != nil {
+		if err := ensureManagedRuleSetsForConfig(storageData); err != nil {
+			return nil, plan, false, err
+		}
+		changed, err := s.SettingService.ConfigBlobChanged(tx, storageData)
+		if err != nil {
+			return nil, plan, false, err
+		}
+		if err := s.SettingService.SaveConfig(tx, storageData); err != nil {
 			return nil, plan, false, err
 		}
 		// A byte-identical re-save keeps the audit trail but must not drop

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
@@ -18,6 +19,7 @@ func initDoctorTestDB(t *testing.T) {
 		if db := database.GetDB(); db != nil {
 			if sqlDB, err := db.DB(); err == nil {
 				_ = sqlDB.Close()
+				time.Sleep(25 * time.Millisecond)
 			}
 		}
 	})
