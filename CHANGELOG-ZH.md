@@ -8,6 +8,20 @@
 
 暂无未发布变更。
 
+## [1.5.10] - 2026-07-03 - 稳定版 1.5.10
+
+稳定版 1.5.10 汇总了 v1.5.10-beta1 到 v1.5.10-beta9 的全部变更。无需手动迁移数据库或配置。beta 阶段加入的统计索引会自动应用。
+
+- 改善大型安装的性能：统计图表处理更快，stats 写入使用 SQLite-safe batches，`/api/load` 减少重复 settings 读取并并行加载独立数据，未加密数据库导出改为 streaming，订阅输出加入短缓存，frontend entry chunks 更小。
+- 将旧的 RU/ZH preset gallery 替换为 Regional presets drawer，并把稳定版行为固定为 country-direct routing。匹配到的 RU 和 ZH 国家流量使用所选 direct outbound，其他流量保留现有 final route。
+- 加入 managed RU smart 域名路由，来源为 `wastrel-g/geosite-ru-smart` 的 `direct-ru` 分类，并在本地转换为 `rulesets/geosite-ru-smart/direct-ru.srs`。本地缓存可作为 fallback，缺失或损坏的 rule set 会返回明确错误。
+- 调整 RU/ZH DNS 行为：匹配到的国家域名使用 `preset-dns-direct`，不会修改全局 `dns.final`，并避免为空的内置 direct outbound 写出无效的 `detour: "direct"`。
+- 更新 Nexus Dashboard 和 Settings：dashboard cards 更紧凑，Top clients 显示汇总信息，固定高度区域可滚动，Traffic statistics 使用 `GET /api/stats/traffic`，流量 totals 改为精确统计，加入新的 Nexus palettes，并将 Basics 移入 Settings。
+- 加固 session expiry 处理、scoped API-token access、self-update staging 与 pending markers、managed IP certificate files 权限，并补充相关 regression tests。
+- 修复数据库中存在旧的或第三方 settings 行时的 Settings 保存问题，例如 `globalReset`。保存端 setting keys allowlist 仍保持严格。
+
+完整 release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md)。
+
 ## [1.5.10-beta9] - 2026-07-01 - RU/ZH 国家流量直连预设
 
 1.5.10 分支的第九个 beta。此版本调整区域预设：匹配到的 RU 和 ZH 国家流量会走所选 direct outbound，其他流量继续使用现有 final 路由。无需手动迁移。

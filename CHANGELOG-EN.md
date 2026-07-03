@@ -9,6 +9,20 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.10] - 2026-07-03 - stable 1.5.10 release
+
+Stable 1.5.10 consolidates all changes from v1.5.10-beta1 through v1.5.10-beta9. No manual database or configuration migration is required. The stats index added during the beta line is applied automatically.
+
+- Improved performance on large installations: faster stats chart preparation, SQLite-safe stats batches, fewer repeated settings reads in `/api/load`, parallel independent load queries, streamed unencrypted DB export, short subscription output caching, and smaller frontend entry chunks.
+- Replaced the old RU/ZH preset gallery with the Regional presets drawer and settled the stable behavior on country-direct routing. Matched RU and ZH country traffic uses the selected direct outbound, while other traffic keeps the existing final route.
+- Added managed RU smart domain routing from `wastrel-g/geosite-ru-smart` category `direct-ru`, converted locally to `rulesets/geosite-ru-smart/direct-ru.srs`, with cached fallback and explicit errors for missing or invalid rule sets.
+- Refined RU/ZH DNS behavior so matched country domains use `preset-dns-direct` without changing global `dns.final`, and avoided invalid `detour: "direct"` output for the empty built-in direct outbound.
+- Updated Nexus Dashboard and Settings: tighter dashboard cards, Top clients summaries, fixed-height scroll areas, Traffic statistics backed by `GET /api/stats/traffic`, exact traffic totals, new Nexus palettes, and Basics moved into Settings.
+- Hardened session expiry handling, scoped API-token access, self-update staging and pending markers, managed IP certificate file permissions, and related regression coverage.
+- Fixed Settings saves on databases with stale or third-party rows such as `globalReset` while keeping the save-side setting allowlist strict.
+
+Full release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
+
 ## [1.5.10-beta9] - 2026-07-01 - RU/ZH country-direct presets
 
 Ninth beta of the 1.5.10 line. This update changes the regional presets so matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. No manual migration is required.

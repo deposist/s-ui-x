@@ -9,6 +9,20 @@
 
 Пока нет unreleased-изменений.
 
+## [1.5.10] - 2026-07-03 - стабильный релиз 1.5.10
+
+Стабильная 1.5.10 объединяет все изменения из v1.5.10-beta1..v1.5.10-beta9. Ручная миграция базы данных или конфигурации не требуется. Индекс статистики, добавленный в beta-линейке, применяется автоматически.
+
+- Улучшена работа на больших установках: быстрее подготовка графиков статистики, SQLite-safe batches для stats, меньше повторных settings reads в `/api/load`, параллельная загрузка независимых данных, streaming для незашифрованного DB export, короткий cache output подписок и меньшие frontend entry chunks.
+- Старый RU/ZH preset gallery заменён Regional presets drawer, а стабильное поведение зафиксировано как country-direct routing. Найденный RU и ZH страновой трафик идёт через выбранный direct outbound, остальной трафик сохраняет текущий final route.
+- Добавлена managed RU smart доменная маршрутизация из категории `direct-ru` репозитория `wastrel-g/geosite-ru-smart`, с локальной конвертацией в `rulesets/geosite-ru-smart/direct-ru.srs`, cached fallback и явными ошибками для отсутствующих или повреждённых rule sets.
+- Уточнено DNS-поведение RU/ZH: найденные страновые домены используют `preset-dns-direct`, глобальный `dns.final` не меняется, а для пустого built-in direct outbound не пишется невалидный `detour: "direct"`.
+- Обновлены Nexus Dashboard и Settings: более плотные карточки dashboard, summaries в Top clients, fixed-height scroll areas, Traffic statistics через `GET /api/stats/traffic`, точные traffic totals, новые палитры Nexus и перенос Basics внутрь Settings.
+- Усилены обработка истёкших сессий, scoped API-token access, self-update staging и pending markers, права managed IP certificate files и связанные regression tests.
+- Исправлено сохранение Settings на базах со старыми или сторонними строками вроде `globalReset`; строгий save-side allowlist для setting keys сохранён.
+
+Полные release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
+
 ## [1.5.10-beta9] - 2026-07-01 - RU/ZH пресеты для прямого странового трафика
 
 Девятая beta в ветке 1.5.10. Это обновление меняет региональные пресеты: найденный RU и ZH страновой трафик идёт через выбранный direct outbound, а остальной трафик сохраняет текущий final-маршрут. Ручная миграция не требуется.
