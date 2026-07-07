@@ -8,6 +8,18 @@
 
 暂无未发布变更。
 
+## [1.5.11] - 2026-07-07 - Telegram Chat ID 自动检测
+
+稳定补丁版本，改进 Telegram 通知设置。无需手动迁移数据库或配置。
+
+- Telegram 设置新增 Detect Chat ID 操作。机器人收到 `/start` 或任意消息后，面板可以读取 Telegram updates 并填写 Chat ID 字段。
+- 检测可使用刚输入的 bot token，也可使用面板中已保存的 encrypted token。已保存的 token 不会返回给浏览器。
+- Telegram Test 现在会先保存已修改的 Telegram 设置，再发送测试消息，因此刚输入或检测到的 Chat ID 会立即生效。
+- 新增 admin-only `POST /api/telegram/detect-chat` route，并记录 audit；bot token 不会写入 audit。
+- UI 对缺少 token、没有 Telegram updates、token 无效、proxy/network errors、rate limits 和异常 Telegram 响应给出明确提示。
+
+完整 release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md)。
+
 ## [1.5.10] - 2026-07-03 - 稳定版 1.5.10
 
 稳定版 1.5.10 汇总了 v1.5.10-beta1 到 v1.5.10-beta9 的全部变更。无需手动迁移数据库或配置。beta 阶段加入的统计索引会自动应用。

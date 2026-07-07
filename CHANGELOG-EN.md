@@ -9,6 +9,18 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.11] - 2026-07-07 - Telegram Chat ID detection
+
+Stable patch release for Telegram notification setup. No manual database or configuration migration is required.
+
+- Added a Detect Chat ID action to Telegram settings. After the bot receives `/start` or any message, the panel can read Telegram updates and fill the Chat ID field.
+- Detection works with a newly typed bot token or with the encrypted token already saved in the panel. Saved tokens are not returned to the browser.
+- Telegram Test now saves changed Telegram settings before sending the test message, so a freshly entered or detected Chat ID is used immediately.
+- Added an admin-only `POST /api/telegram/detect-chat` route with audit logging that does not record the bot token.
+- Added clear UI messages for missing token, no Telegram updates, invalid token, proxy/network errors, rate limits, and unexpected Telegram responses.
+
+Full release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md).
+
 ## [1.5.10] - 2026-07-03 - stable 1.5.10 release
 
 Stable 1.5.10 consolidates all changes from v1.5.10-beta1 through v1.5.10-beta9. No manual database or configuration migration is required. The stats index added during the beta line is applied automatically.

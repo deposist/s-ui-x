@@ -47,7 +47,7 @@ development, security hardening, testing, and release work.
 
 Web panel built on `SagerNet/Sing-Box`.
 
-**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.10`).
+**Note:** this repository is based on `alireza0/s-ui` starting from `v1.4.1`, with security and reliability hardening applied on top (current stable: `v1.5.11`).
 
 **This fork keeps the original project structure and maintains the documentation and install links for this repository. You can use these scripts directly, or fork the repository and build it yourself.**
 
@@ -60,7 +60,7 @@ The full per-release notes live in the language-specific changelog files:
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Latest stable release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md)
+- Latest stable release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md)
 
 The README keeps installation and project overview short. For full release
 history, breaking notes, upgrade guidance, and rollback notes, open the
@@ -127,7 +127,7 @@ Use the stable build for normal installations.
 
 | Channel | Version | Notes |
 |---|---|---|
-| Stable | `v1.5.10` | Recommended for production. Release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md). |
+| Stable | `v1.5.11` | Recommended for production. Release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md). |
 
 ### Linux/macOS, stable
 
@@ -138,7 +138,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 The command above installs the latest stable release. To pin the current stable version explicitly:
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.11
 ```
 
 
@@ -147,7 +147,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.10
+sudo bash install.sh v1.5.11
 ```
 
 ### Windows
@@ -375,7 +375,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 Web-панель на базе `SagerNet/Sing-Box`.
 
-**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.10`).
+**Примечание:** этот репозиторий основан на `alireza0/s-ui`, начиная с `v1.4.1`, с применённым набором исправлений по безопасности и надёжности (текущая стабильная версия: `v1.5.11`).
 
 **Этот fork сохраняет структуру оригинального проекта и поддерживает документацию и ссылки установки для этого репозитория. Можно использовать эти скрипты напрямую или сделать fork и собрать проект самостоятельно.**
 
@@ -388,7 +388,7 @@ Web-панель на базе `SagerNet/Sing-Box`.
 - English: [`CHANGELOG-EN.md`](CHANGELOG-EN.md)
 - Русский: [`CHANGELOG-RU.md`](CHANGELOG-RU.md)
 - 简体中文: [`CHANGELOG-ZH.md`](CHANGELOG-ZH.md)
-- Последние stable release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md)
+- Последние stable release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md)
 
 README оставляет только установку и общий обзор проекта. Полная история
 релизов, breaking-заметки, гайд по обновлению и инструкции по откату находятся
@@ -455,7 +455,7 @@ README оставляет только установку и общий обзо
 
 | Канал | Версия | Заметки |
 |---|---|---|
-| Stable | `v1.5.10` | Рекомендуется для production. Release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md). |
+| Stable | `v1.5.11` | Рекомендуется для production. Release notes: [`docs/releases/v1.5.11.md`](docs/releases/v1.5.11.md). |
 
 ### Linux/macOS, stable
 
@@ -466,7 +466,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 Эта команда ставит последнюю stable-версию. Чтобы явно закрепить текущую stable:
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.10
+bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.sh) v1.5.11
 ```
 
 
@@ -475,7 +475,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/deposist/s-ui-x/main/install.s
 ```sh
 git clone https://github.com/deposist/s-ui-x.git
 cd s-ui-x
-sudo bash install.sh v1.5.10
+sudo bash install.sh v1.5.11
 ```
 
 ### Windows
