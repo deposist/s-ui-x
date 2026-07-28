@@ -93,6 +93,8 @@ var defaultValueMap = map[string]string{
 	"subURI":                      "",
 	"subJsonExt":                  "",
 	"subClashExt":                 "",
+	"subPageEnabled":              "false",
+	"subPagePath":                 "/cabinet",
 	"auditRetentionDays":          "30",
 	"ipShowRaw":                   "false",
 	"ipHistoryRetentionDays":      "30",
@@ -708,6 +710,30 @@ func (s *SettingService) GetSubProfileUrl() (string, error) {
 
 func (s *SettingService) GetSubAnnounce() (string, error) {
 	return s.getString("subAnnounce")
+}
+
+// GetSubPageEnabled toggles the public-facing "cabinet" landing page that
+// turns a subId into a personalised dashboard with deep-links into
+// sing-box / Hiddify / Clash / v2ray clients. Default off.
+func (s *SettingService) GetSubPageEnabled() (bool, error) {
+	return s.getBool("subPageEnabled")
+}
+
+// GetSubPagePath returns the URL path (with leading and trailing slash) under
+// which the cabinet page is mounted. Operators may change it if /cabinet
+// collides with another service.
+func (s *SettingService) GetSubPagePath() (string, error) {
+	p, err := s.getString("subPagePath")
+	if err != nil || p == "" {
+		return "/cabinet/", nil
+	}
+	if p[0] != '/' {
+		p = "/" + p
+	}
+	if p[len(p)-1] != '/' {
+		p += "/"
+	}
+	return p, nil
 }
 
 func (s *SettingService) GetSubNameInRemark() (bool, error) {

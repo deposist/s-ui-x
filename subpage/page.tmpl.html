@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="robots" content="noindex,nofollow">
+<title>{{ .Title }} — {{ .ClientName }}</title>
+<style>
+:root {
+  color-scheme: dark light;
+  --bg: #0b1020;
+  --bg-2: #131a30;
+  --card: #1a2342;
+  --card-2: #232d52;
+  --fg: #e8ecf6;
+  --fg-dim: #98a3c7;
+  --accent: #7c9cff;
+  --accent-2: #5cd0c0;
+  --danger: #ff7a8a;
+  --warn: #ffc266;
+  --ok: #5cd0c0;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f7fb;
+    --bg-2: #e9eef8;
+    --card: #ffffff;
+    --card-2: #f5f7fb;
+    --fg: #0f1530;
+    --fg-dim: #4d5778;
+    --shadow: 0 8px 20px rgba(20,30,80,.08);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+header.hero {
+  background: linear-gradient(135deg, var(--bg-2), var(--card));
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+header.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(800px 200px at 110% -20%, rgba(124,156,255,.25), transparent 60%);
+  pointer-events: none;
+}
+header.hero h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+header.hero .name { font-size: 26px; font-weight: 700; margin: 0; word-break: break-word; }
+header.hero .sub { color: var(--fg-dim); font-size: 13px; margin-top: 6px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.tile {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.tile .label { font-size: 12px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: .06em; }
+.tile .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+.tile .hint { font-size: 12px; color: var(--fg-dim); margin-top: 4px; }
+.section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.section h2 { font-size: 16px; margin: 0 0 14px; font-weight: 600; letter-spacing: -.01em; }
+.apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--card-2);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--fg);
+  transition: transform .12s ease, background .12s ease;
+  border: 1px solid transparent;
+}
+.app:hover, .app:focus { transform: translateY(-1px); background: var(--bg-2); border-color: var(--accent); outline: none; }
+.app .name { font-weight: 600; }
+.app .note { font-size: 12px; color: var(--fg-dim); }
+.app .os { font-size: 11px; color: var(--fg-dim); margin-top: 2px; }
+.raw {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.raw-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--card-2);
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+.raw-row code { flex: 1; color: var(--fg-dim); }
+.copy {
+  background: var(--accent);
+  color: #0b1020;
+  border: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.copy:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+.tab { background: var(--card-2); border: 0; color: var(--fg); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.tab.active { background: var(--accent); color: #0b1020; }
+.banner {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.banner.warn { background: rgba(255,194,102,.15); border: 1px solid rgba(255,194,102,.4); color: var(--warn); }
+.banner.info { background: rgba(124,156,255,.12); border: 1px solid rgba(124,156,255,.35); color: var(--accent); }
+.banner a { color: inherit; }
+footer { color: var(--fg-dim); font-size: 12px; text-align: center; margin-top: 24px; }
+.progress { height: 6px; background: var(--card-2); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s ease; }
+@media (max-width: 480px) {
+  .wrap { padding: 12px 12px 48px; }
+  header.hero { padding: 20px 16px; }
+  .section { padding: 16px 14px; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+{{- if .WarnInsecure }}
+<div class="banner warn">
+  ⚠️ На сервере не включены обязательные секреты подписок. Любой, кто угадает имя вашего профиля, сможет получить ваш конфиг. Попросите администратора включить «Required sub-secrets» в настройках.
+</div>
+{{- end }}
+{{- if .Announcement }}
+<div class="banner info">{{ .Announcement }}</div>
+{{- end }}
+
+<header class="hero">
+  <h1>{{ .Title }}</h1>
+  <p class="name">{{ .ClientName }}</p>
+  <p class="sub">Профиль активен · последняя активность: {{ .OnlineStatus }}</p>
+</header>
+
+<section class="grid">
+  <div class="tile">
+    <div class="label">Трафик</div>
+    <div class="value">{{ .UsedTrafficText }}</div>
+    <div class="hint">из {{ .VolumeText }}</div>
+    <div class="progress" aria-hidden="true"><span id="progress-bar" style="width:0%"></span></div>
+  </div>
+  <div class="tile">
+    <div class="label">Остаток</div>
+    <div class="value">{{ .RemainingTraffic }}</div>
+    <div class="hint">до исчерпания лимита</div>
+  </div>
+  <div class="tile">
+    <div class="label">Срок действия</div>
+    <div class="value">{{ .ExpiryText }}</div>
+    <div class="hint">с даты активации</div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Импорт в приложение</h2>
+  <p style="margin:0 0 12px;color:var(--fg-dim);font-size:14px;">
+    Нажмите кнопку вашего клиента — если приложение установлено, оно откроется и попросит подтвердить импорт подписки.
+  </p>
+  <div class="apps">
+    {{- range .DeepLinks }}
+    <a class="app" href="{{ .URL }}" rel="noopener">
+      <span class="name">{{ .AppName }}</span>
+      <span class="note">{{ .Note }}</span>
+      <span class="os">{{ .OSHint }}</span>
+    </a>
+    {{- end }}
+  </div>
+</section>
+
+<section class="section">
+  <h2>Прямые ссылки</h2>
+  <p style="margin:0 0 12px;color:var(--fg-dim);font-size:14px;">
+    Если приложение не открывается автоматически — скопируйте ссылку и добавьте её вручную в разделе «Подписки».
+  </p>
+  <div class="tabs">
+    <button class="tab active" data-tab="raw" type="button">Универсальная</button>
+    <button class="tab" data-tab="json" type="button">Sing-box JSON</button>
+    <button class="tab" data-tab="clash" type="button">Clash / mihomo</button>
+  </div>
+  <div class="raw" data-pane="raw">
+    <div class="raw-row"><code id="u-raw">{{ .RawSubURL }}</code><button class="copy" data-copy="u-raw" type="button">Копировать</button></div>
+  </div>
+  <div class="raw" data-pane="json" hidden>
+    <div class="raw-row"><code id="u-json">{{ .RawJSONURL }}</code><button class="copy" data-copy="u-json" type="button">Копировать</button></div>
+  </div>
+  <div class="raw" data-pane="clash" hidden>
+    <div class="raw-row"><code id="u-clash">{{ .RawClashURL }}</code><button class="copy" data-copy="u-clash" type="button">Копировать</button></div>
+  </div>
+</section>
+
+{{- if .SupportURL }}
+<section class="section">
+  <h2>Поддержка</h2>
+  <p style="margin:0;">Если что-то не работает — напишите в <a href="{{ .SupportURL }}" rel="noopener" style="color:var(--accent);">службу поддержки</a>.</p>
+</section>
+{{- end }}
+
+<footer>
+  Личный кабинет подписки · {{ .ProfileTitle }}
+</footer>
+</main>
+<script>
+(function () {
+  // Tab switching (zero-deps).
+  var tabs = document.querySelectorAll('.tab');
+  var panes = document.querySelectorAll('[data-pane]');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      var k = t.getAttribute('data-tab');
+      panes.forEach(function (p) {
+        if (p.getAttribute('data-pane') === k) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+    });
+  });
+  // Copy-to-clipboard with graceful fallback.
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-copy');
+      var el = document.getElementById(id);
+      if (!el) return;
+      var txt = el.textContent || '';
+      var done = function () {
+        var prev = btn.textContent;
+        btn.textContent = 'Готово';
+        setTimeout(function () { btn.textContent = prev; }, 1200);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(txt).then(done).catch(fallback);
+      } else {
+        fallback();
+      }
+      function fallback() {
+        try {
+          var r = document.createRange();
+          r.selectNode(el);
+          var s = window.getSelection();
+          s.removeAllRanges();
+          s.addRange(r);
+          document.execCommand('copy');
+          s.removeAllRanges();
+          done();
+        } catch (e) { /* ignore */ }
+      }
+    });
+  });
+  // Progress bar percentage computation from formatted strings.
+  function parseSize(s) {
+    var m = String(s).match(/([\d.,]+)\s*(Б|КБ|МБ|ГБ|ТБ)/i);
+    if (!m) return 0;
+    var n = parseFloat(m[1].replace(',', '.'));
+    var unit = m[2].toUpperCase();
+    var mul = { 'Б': 1, 'КБ': 1024, 'МБ': 1048576, 'ГБ': 1073741824, 'ТБ': 1099511627776 }[unit] || 1;
+    return n * mul;
+  }
+  var bar = document.getElementById('progress-bar');
+  if (bar) {
+    var usedTxt = document.querySelectorAll('.tile .value')[0]?.textContent || '0 Б';
+    var totalTxt = document.querySelectorAll('.tile .hint')[0]?.textContent || '0 Б';
+    var used = parseSize(usedTxt);
+    var total = parseSize(totalTxt);
+    var pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+    bar.style.width = pct + '%';
+  }
+})();
+</script>
+</body>
+</html>

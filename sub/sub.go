@@ -15,6 +15,7 @@ import (
 	"github.com/deposist/s-ui-x/middleware"
 	"github.com/deposist/s-ui-x/network"
 	"github.com/deposist/s-ui-x/service"
+	"github.com/deposist/s-ui-x/subpage"
 	"github.com/deposist/s-ui-x/util/common"
 
 	"github.com/gin-contrib/gzip"
@@ -90,6 +91,13 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 		}
 	}
 	if err := s.registerCustomFormatRoutes(engine, registeredFormats); err != nil {
+		return nil, err
+	}
+
+	// Mount the optional "cabinet" landing page (see subpage/). This is the
+	// only upstream-side touch point; the rest of the feature lives in
+	// subpage/ to keep merge surface area minimal.
+	if err := subpage.Mount(engine, subPath); err != nil {
 		return nil, err
 	}
 
