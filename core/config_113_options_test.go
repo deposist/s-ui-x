@@ -6,11 +6,12 @@ import (
 	"context"
 	"testing"
 
+	sb "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/option"
 )
 
 func TestSingBox113RepresentativeConfigUnmarshals(t *testing.T) {
-	ctx := Context(context.Background(), InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry())
+	ctx := sb.Context(context.Background(), InboundRegistry(), OutboundRegistry(), EndpointRegistry(), DNSTransportRegistry(), ServiceRegistry())
 	config := []byte(`{
   "dns": {
     "servers": [

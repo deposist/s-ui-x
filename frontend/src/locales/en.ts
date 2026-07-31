@@ -914,6 +914,7 @@ export default {
   },
   setting: {
     interface: "Interface",
+    basics: "Basics (sing-box)",
     maintenance: "Maintenance",
     sub: "Subscription",
     addr: "Address",
@@ -1030,6 +1031,7 @@ export default {
   },
   types: {
     un: "Username",
+    ssmApi: "Shadowsocks API",
     pw: "Password",
     direct: {
       overrideAddr: "Override Address",
@@ -1041,6 +1043,17 @@ export default {
       hyOptions: "Hysteria Options",
       hy2Options: "Hysteria2 Options",
       ignoreBw: "Ignore Client Bandwidth",
+      disableMtuDiscovery: "Disable MTU discovery",
+      recvWindowConn: "Connection receive window",
+      recvWindow: "Receive window",
+      recvWindowClient: "Client receive window",
+      maxConnClient: "Maximum client connections",
+      http3AuthFailureServer: "HTTP/3 server on authentication failure",
+      fileServerRoot: "File server root directory",
+      httpCode: "HTTP status code",
+      targetUrl: "Target URL",
+      rewriteHost: "Rewrite host",
+      content: "Content",
     },
     shdwTls: {
       hs: "Handshake Server",
@@ -1092,6 +1105,12 @@ export default {
       allowedIp: "Allowed IPs",
       peer: "Peer",
       peers: "Peers",
+      qrCode: "WireGuard QR code",
+      deviceId: "Device ID",
+      accessToken: "Access token",
+      licenseKey: "License key",
+      reserved: "Reserved",
+      udpTimeout: "UDP timeout",
     },
     lb: {
       defaultOut: "Default Outbound",
@@ -1170,6 +1189,7 @@ export default {
       options: "DERP Options",
     },
     anytls: {
+      paddingScheme: "Padding scheme",
       idleInterval: "Idle Session Check Interval",
       idleTimeout: "Idle Session Timeout",
       minIdle: "Minimum Idle Session",
@@ -1228,6 +1248,8 @@ export default {
     pingTimeout: "Ping Timeout",
     grpcServiceName: "Service Name",
     grpcPws: "Permit Without Stream",
+    maxEarlyData: "Maximum early data",
+    earlyDataHeaderName: "Early data header name",
   },
   mux: {
     enable: "Enable Multiplex",
@@ -1472,6 +1494,9 @@ export default {
     clientKey: "Client Key",
     clientKeyPath: "Client Key Path",
     queryServerName: "ECH Query Server Name",
+    shortIds: "Short IDs",
+    maxTimeDifference: "Maximum time difference",
+    fingerprint: "Fingerprint",
     acme: {
       options: "ACME Options",
       dataDir: "Data Directory",

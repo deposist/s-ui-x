@@ -4,11 +4,11 @@
       <table dir="ltr" width="100%">
         <tbody>
           <tr>
-            <td>Device ID</td>
+            <td>{{ $t('types.wg.deviceId') }}</td>
             <td>{{ data.ext.device_id }}</td>
           </tr>
           <tr>
-            <td>Access Token</td>
+            <td>{{ $t('types.wg.accessToken') }}</td>
             <td>{{ data.ext.access_token }}</td>
           </tr>
           <tr>
@@ -23,7 +23,7 @@
             <td colspan="2">
               <v-text-field
                 v-model="data.ext.license_key"
-                label="License Key"
+                :label="$t('types.wg.licenseKey')"
                 hide-details>
               </v-text-field>
             </td>
@@ -60,7 +60,7 @@
               <td>{{ data.peers[0].allowed_ips.join(',') }}</td>
             </tr>
             <tr>
-              <td>Reserved</td>
+              <td>{{ $t('types.wg.reserved') }}</td>
               <td>[{{ data.peers[0].reserved.join(',') }}]</td>
             </tr>
           </tbody>
@@ -70,7 +70,7 @@
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="data.udp_timeout != undefined">
         <v-text-field
-          label="UDP Timeout"
+          :label="$t('types.wg.udpTimeout')"
           hide-details
           type="number"
           min=0
@@ -118,7 +118,7 @@
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionUdp" color="primary" label="UDP Timeout" hide-details></v-switch>
+              <v-switch v-model="optionUdp" color="primary" :label="$t('types.wg.udpTimeout')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionWorker" color="primary" :label="$t('types.wg.worker')" hide-details></v-switch>

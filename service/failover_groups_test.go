@@ -83,13 +83,13 @@ func TestValidateFailoverGroup(t *testing.T) {
 	}
 
 	rejects := map[string]string{
-		"empty":         `{"outbounds":[]}`,
+		"empty":          `{"outbounds":[]}`,
 		"missing member": `{"outbounds":["m1","ghost"]}`,
-		"group member":  `{"outbounds":["m1","sel"]}`,
-		"self ref":      `{"outbounds":["fo"]}`,
-		"duplicate":     `{"outbounds":["m1","m1"]}`,
-		"bad scheme":    `{"outbounds":["m1"],"failover":{"probe_target":"ftp://x.example/"}}`,
-		"tiny interval": `{"outbounds":["m1"],"failover":{"interval":"1s"}}`,
+		"group member":   `{"outbounds":["m1","sel"]}`,
+		"self ref":       `{"outbounds":["fo"]}`,
+		"duplicate":      `{"outbounds":["m1","m1"]}`,
+		"bad scheme":     `{"outbounds":["m1"],"failover":{"probe_target":"ftp://x.example/"}}`,
+		"tiny interval":  `{"outbounds":["m1"],"failover":{"interval":"1s"}}`,
 	}
 	for name, opts := range rejects {
 		if err := validateFailoverGroup(db, fo(opts)); err == nil {

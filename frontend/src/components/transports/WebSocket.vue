@@ -18,7 +18,7 @@
   <v-row>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Max Early Data"
+      :label="$t('transport.maxEarlyData')"
       hide-details
       type="number"
       min="0"
@@ -27,7 +27,7 @@
     </v-col>
     <v-col cols="12" sm="6" md="4">
       <v-text-field
-      label="Early Data Header Name"
+      :label="$t('transport.earlyDataHeaderName')"
       hide-details
       v-model="transport.early_data_header_name">
       </v-text-field>

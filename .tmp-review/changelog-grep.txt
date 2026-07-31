@@ -1,0 +1,461 @@
+CHANGELOG-EN.md:12:## [1.5.10] - 2026-07-03 - stable 1.5.10 release
+CHANGELOG-EN.md:14:Stable 1.5.10 consolidates all changes from v1.5.10-beta1 through v1.5.10-beta9. No manual database or configuration migration is required. The stats index added during the beta line is applied automatically.
+CHANGELOG-EN.md:24:Full release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
+CHANGELOG-EN.md:26:## [1.5.10-beta9] - 2026-07-01 - RU/ZH country-direct presets
+CHANGELOG-EN.md:28:Ninth beta of the 1.5.10 line. This update changes the regional presets so matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. No manual migration is required.
+CHANGELOG-EN.md:37:Full release notes: [`docs/releases/v1.5.10-beta9.md`](docs/releases/v1.5.10-beta9.md).
+CHANGELOG-EN.md:39:## [1.5.10-beta8] - 2026-07-01 - Settings save fix for stale keys
+CHANGELOG-EN.md:41:Eighth beta of the 1.5.10 line. This update fixes Settings saves on databases that still contain old or third-party setting rows such as `globalReset`. No manual migration is required.
+CHANGELOG-EN.md:48:Full release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md).
+CHANGELOG-EN.md:50:## [1.5.10-beta7] - 2026-06-25 - exact dashboard traffic totals
+CHANGELOG-EN.md:52:Seventh beta of the 1.5.10 line. This update fixes the Nexus Dashboard Traffic statistics KPI. No manual migration is required.
+CHANGELOG-EN.md:60:Full release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md).
+CHANGELOG-EN.md:62:## [1.5.10-beta6] - 2026-06-24 - dashboard card heights and traffic history
+CHANGELOG-EN.md:64:Sixth beta of the 1.5.10 line. This is a Nexus dashboard update. No database, API, or sing-box configuration migration is required.
+CHANGELOG-EN.md:72:Full release notes: [`docs/releases/v1.5.10-beta6.md`](docs/releases/v1.5.10-beta6.md).
+CHANGELOG-EN.md:74:## [1.5.10-beta5] - 2026-06-24 - Nexus dashboard and Settings layout refresh
+CHANGELOG-EN.md:76:Fifth beta of the 1.5.10 line. This is a frontend release. No database, API, or sing-box configuration migration is required.
+CHANGELOG-EN.md:86:Full release notes: [`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md).
+CHANGELOG-EN.md:88:## [1.5.10-beta4] - 2026-06-24 - session expiry handling and release hardening
+CHANGELOG-EN.md:90:Fourth beta of the 1.5.10 line. No database or configuration migration is required.
+CHANGELOG-EN.md:100:Full release notes: [`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md).
+CHANGELOG-EN.md:102:## [1.5.10-beta3] - 2026-06-23 - fix regional preset drawer rendering and button state
+CHANGELOG-EN.md:104:Third beta of the 1.5.10 line. No database or configuration migration is required. Frontend tests, lint, and build pass.
+CHANGELOG-EN.md:110:Full release notes: [`docs/releases/v1.5.10-beta3.md`](docs/releases/v1.5.10-beta3.md).
+CHANGELOG-EN.md:112:## [1.5.10-beta2] - 2026-06-23 - RU/ZH preset drawer with preview and security warnings
+CHANGELOG-EN.md:114:Second beta of the 1.5.10 line. No manual database, API, or configuration migration is required. Frontend tests, lint, and build pass.
+CHANGELOG-EN.md:124:Full release notes: [`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md).
+CHANGELOG-EN.md:126:## [1.5.10-beta1] - 2026-06-23 - performance fixes and safer large-database paths
+CHANGELOG-EN.md:128:First beta of the 1.5.10 line. No manual database, API, or configuration migration is required. The full Go suite, Go vet, frontend lint, frontend build, and frontend unit tests pass.
+CHANGELOG-EN.md:136:Full release notes: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md).
+CHANGELOG-EN.md:138:## [1.5.9-beta6] - 2026-06-18 - WireGuard endpoint editor opens reliably
+CHANGELOG-EN.md:140:Small follow-up to v1.5.9-beta5. No database, API, or configuration changes
+CHANGELOG-EN.md:148:Full release notes: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md).
+CHANGELOG-EN.md:150:## [1.5.9-beta5] - 2026-06-17 - cleaner forms in the default interface
+CHANGELOG-EN.md:152:Small follow-up to v1.5.9-beta4. No database, API, or configuration changes
+CHANGELOG-EN.md:160:Full release notes: [`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md).
+CHANGELOG-EN.md:162:## [1.5.9-beta4] - 2026-06-17 - failover group editor fix in the Nexus UI
+CHANGELOG-EN.md:164:Small follow-up to v1.5.9-beta3. No database, API, or configuration changes
+CHANGELOG-EN.md:169:  The `failover` outbound type added in v1.5.9-beta3 was wired into the classic
+CHANGELOG-EN.md:175:Full release notes: [`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md).
+CHANGELOG-EN.md:177:## [1.5.9-beta3] - 2026-06-17 - in-panel web update + automatic outbound failover
+CHANGELOG-EN.md:179:Two new capabilities since v1.5.9-beta2. No manual database, API, or
+CHANGELOG-EN.md:185:  stable releases, *Beta* tracks the newest release including pre-releases), check
+CHANGELOG-EN.md:206:Full release notes: [`docs/releases/v1.5.9-beta3.md`](docs/releases/v1.5.9-beta3.md).
+CHANGELOG-EN.md:208:## [1.5.9-beta2] - 2026-06-16 - frontend CSS fixes + install/update download timeout
+CHANGELOG-EN.md:210:Small follow-up to v1.5.9-beta1. No API, database, or configuration changes; the
+CHANGELOG-EN.md:214:  tooltips added in v1.5.9-beta1 were too muted to read in the Nexus dark theme
+CHANGELOG-EN.md:226:## [1.5.9-beta1] - 2026-06-16 - security & reliability hardening + settings UX from a full codebase audit
+CHANGELOG-EN.md:294:Full release notes: [`docs/releases/v1.5.9-beta1.md`](docs/releases/v1.5.9-beta1.md).
+CHANGELOG-EN.md:298:First stable release of the 1.5.8 line, consolidating 1.5.8-beta1..beta4 plus
+CHANGELOG-EN.md:352:## [1.5.8-beta4] - 2026-06-14 - Embedded sing-box v1.13.13; IP-certificate badCSR fix (terminal issuance)
+CHANGELOG-EN.md:403:Full release notes: [`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md).
+CHANGELOG-EN.md:405:## [1.5.8-beta3] - 2026-06-14 - IP-address TLS certificates (issue + auto-renew); Config Doctor moves to Settings
+CHANGELOG-EN.md:407:Beta: issue and auto-renew a Let's Encrypt TLS certificate for a bare IP address
+CHANGELOG-EN.md:433:Full release notes: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md).
+CHANGELOG-EN.md:435:## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack: Config Doctor, RU/ZH routing/DNS presets, subscription delivery UX, client diagnosis
+CHANGELOG-EN.md:437:Beta: an operations and diagnostics layer for RU/ZH single-panel admins.
+CHANGELOG-EN.md:466:Full release notes: [`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md).
+CHANGELOG-EN.md:468:## [1.5.8-beta1] - 2026-06-11 - hot reload for all objects: saves without core restarts; referenced-tag delete guard
+CHANGELOG-EN.md:470:Beta: no-restart apply now covers every object the panel manages. Backend-only,
+CHANGELOG-EN.md:501:Full release notes: [`docs/releases/v1.5.8-beta1.md`](docs/releases/v1.5.8-beta1.md).
+CHANGELOG-EN.md:533:First stable release of the 1.5.7 line, consolidating 1.5.7-beta1..beta10 - the
+CHANGELOG-EN.md:537:beta10.
+CHANGELOG-EN.md:557:## [1.5.7-beta10] - 2026-06-10 - Remediation from a full quality, security, and supply-chain review
+CHANGELOG-EN.md:609:Full release notes: [`docs/releases/v1.5.7-beta10.md`](docs/releases/v1.5.7-beta10.md).
+CHANGELOG-EN.md:611:## [1.5.7-beta9-hotfix1] - 2026-06-10 - Fix blank panel from dropped underscore-named chunks
+CHANGELOG-EN.md:613:Hotfix for v1.5.7-beta9. No backend logic, breaking, manual-migration, or
+CHANGELOG-EN.md:624:Full release notes: [`docs/releases/v1.5.7-beta9-hotfix1.md`](docs/releases/v1.5.7-beta9-hotfix1.md).
+CHANGELOG-EN.md:626:## [1.5.7-beta9] - 2026-06-10 - Nexus interface aligned to the reference design
+CHANGELOG-EN.md:670:Full release notes: [`docs/releases/v1.5.7-beta9.md`](docs/releases/v1.5.7-beta9.md).
+CHANGELOG-EN.md:672:## [1.5.7-beta8] - 2026-06-07 - Internal reliability and audit-tooling hardening
+CHANGELOG-EN.md:695:Full release notes: [`docs/releases/v1.5.7-beta8.md`](docs/releases/v1.5.7-beta8.md).
+CHANGELOG-EN.md:697:## v1.5.7 Beta Summary
+CHANGELOG-EN.md:730:## [1.5.7-beta7] - 2026-06-06 - Independent-review hardening; 3x-ui scheduled sync & remote import removed
+CHANGELOG-EN.md:732:This beta ships the **removal of the 3x-ui scheduled sync / remote import** plus a
+CHANGELOG-EN.md:802:## [1.5.7-beta6-hotfix1] - 2026-06-05 - Fix beta6 panel black screen (frontend build)
+CHANGELOG-EN.md:804:Emergency **build** hotfix for v1.5.7-beta6. No code, config, or data changes -
+CHANGELOG-EN.md:805:it only fixes the broken frontend build that shipped in the beta6 artifacts.
+CHANGELOG-EN.md:808:- **Web panel failed to load on v1.5.7-beta6** - black screen with a `404` for a
+CHANGELOG-EN.md:820:## [1.5.7-beta6] - 2026-06-05 - Security & reliability hardening, performance, and accessibility
+CHANGELOG-EN.md:912:[`docs/releases/v1.5.7-beta6.md`](docs/releases/v1.5.7-beta6.md).
+CHANGELOG-EN.md:914:## [1.5.7-beta5] - 2026-06-04 - Paid Subscriptions admin UI: Bindings/Orders columns, unbind confirm, tab order
+CHANGELOG-EN.md:928:- Release notes: [`docs/releases/v1.5.7-beta5.md`](docs/releases/v1.5.7-beta5.md).
+CHANGELOG-EN.md:930:## [1.5.7-beta4] - 2026-06-04 - Paid Subscriptions Payment menu & refunds; duplicate-create fix
+CHANGELOG-EN.md:958:- Release notes: [`docs/releases/v1.5.7-beta4.md`](docs/releases/v1.5.7-beta4.md).
+CHANGELOG-EN.md:960:## [1.5.7-beta3] - 2026-06-04 - fix Paid Subscriptions admin writes + hardening
+CHANGELOG-EN.md:979:- Release notes: [`docs/releases/v1.5.7-beta3.md`](docs/releases/v1.5.7-beta3.md).
+CHANGELOG-EN.md:981:## [1.5.7-beta2] - 2026-06-04 - Telegram transport selector, broadcast & greeting
+CHANGELOG-EN.md:990:- **Fixes (beta1 UI):** *Auto-registration* inbound dropdown now lists inbounds
+CHANGELOG-EN.md:993:- Release notes: [`docs/releases/v1.5.7-beta2.md`](docs/releases/v1.5.7-beta2.md).
+CHANGELOG-EN.md:995:## [1.5.7-beta1] - 2026-06-04 - experimental Paid Subscriptions Telegram bot
+CHANGELOG-EN.md:1019:- Release notes: [`docs/releases/v1.5.7-beta1.md`](docs/releases/v1.5.7-beta1.md).
+CHANGELOG-EN.md:1023:- First stable release of the 1.5.6 line, consolidating 1.5.6-beta1..beta9 - the
+CHANGELOG-EN.md:1025:  are the import-correctness fixes added since beta9.
+CHANGELOG-EN.md:1030:  1.5.6-beta7/beta8.
+CHANGELOG-EN.md:1042:## [1.5.6-beta9] - 2026-06-03 - panel domain/address reset menu & SSL force-reissue
+CHANGELOG-EN.md:1058:- Full release notes: [`docs/releases/v1.5.6-beta9.md`](docs/releases/v1.5.6-beta9.md).
+CHANGELOG-EN.md:1060:## [1.5.6-beta8] - 2026-06-03 - 3x-ui migration: outbounds, routing matchers, TLS certs & DNS
+CHANGELOG-EN.md:1133:- Full release notes: [`docs/releases/v1.5.6-beta8.md`](docs/releases/v1.5.6-beta8.md).
+CHANGELOG-EN.md:1135:## [1.5.6-beta7] - 2026-06-02 - 3x-ui migration: subscription links, WARP & import timeout
+CHANGELOG-EN.md:1162:- Full release notes: [`docs/releases/v1.5.6-beta7.md`](docs/releases/v1.5.6-beta7.md).
+CHANGELOG-EN.md:1164:## [1.5.6-beta6] - 2026-06-02 - 3x-ui migration hardening
+CHANGELOG-EN.md:1181:- Full release notes: [`docs/releases/v1.5.6-beta6.md`](docs/releases/v1.5.6-beta6.md).
+CHANGELOG-EN.md:1183:## [1.5.6-beta5] - 2026-06-02 - 3x-ui migration fixes
+CHANGELOG-EN.md:1209:- Full release notes: [`docs/releases/v1.5.6-beta5.md`](docs/releases/v1.5.6-beta5.md).
+CHANGELOG-EN.md:1211:## [1.5.6-beta4] - 2026-06-02 - security & static-analysis hardening
+CHANGELOG-EN.md:1232:- Full release notes: [`docs/releases/v1.5.6-beta4.md`](docs/releases/v1.5.6-beta4.md).
+CHANGELOG-EN.md:1234:## [1.5.6-beta3] - 2026-05-29 - administrator management beta
+CHANGELOG-EN.md:1244:- Full release notes: [`docs/releases/v1.5.6-beta3.md`](docs/releases/v1.5.6-beta3.md).
+CHANGELOG-EN.md:1246:## [1.5.6-beta2] - 2026-05-28 - sing-box 1.13.12 settings coverage beta
+CHANGELOG-EN.md:1266:## [1.5.6-beta1] - 2026-05-27 - sing-box 1.13 UI parity beta
+CHANGELOG-EN.md:1287:- Promotes `v1.5.5-beta1` through `v1.5.5-beta4-hotfix2` to stable `v1.5.5`.
+CHANGELOG-EN.md:1295:- Carries the beta4 security/reliability work: forced password reset for
+CHANGELOG-EN.md:1308:## [1.5.5-beta4-hotfix2] - 2026-05-26 - backup export TLS sentinel hotfix
+CHANGELOG-EN.md:1321:  tags to `v1.5.5-beta4-hotfix2`.
+CHANGELOG-EN.md:1323:## [1.5.5-beta4] - 2026-05-26 - problem-fix and technical-debt report
+CHANGELOG-EN.md:1440:## [1.5.5-beta3] - 2026-05-22 - backup config restore safety for DNS and routing
+CHANGELOG-EN.md:1448:  `v1.5.5-beta3`.
+CHANGELOG-EN.md:1450:## [1.5.5-beta2] - 2026-05-22 - backup restore safety for no-TLS inbounds
+CHANGELOG-EN.md:1464:  `v1.5.5-beta2`.
+CHANGELOG-EN.md:1466:## [1.5.5-beta1] - 2026-05-22 - subscription correctness for shared VLESS UUID and Clash WS Host
+CHANGELOG-EN.md:1485:  `v1.5.5-beta1`.
+CHANGELOG-EN.md:1489:- Promoted `1.5.4-beta1` through `1.5.4-beta5` to stable `1.5.4`.
+CHANGELOG-EN.md:1492:  boundary fix from the beta line.
+CHANGELOG-EN.md:1500:## [1.5.4-beta5] - 2026-05-22 - reserved path prefix hotfix
+CHANGELOG-EN.md:1510:  `v1.5.4-beta5`.
+CHANGELOG-EN.md:1512:## [1.5.4-beta4] - 2026-05-22 - installer secretbox key bootstrap
+CHANGELOG-EN.md:1526:  `v1.5.4-beta4`.
+CHANGELOG-EN.md:1528:## [1.5.4-beta3] - 2026-05-22 - Nexus Overview density refinement
+CHANGELOG-EN.md:1545:  `v1.5.4-beta3`.
+CHANGELOG-EN.md:1547:## [1.5.4-beta2] - 2026-05-21 - Nexus overview cancel toast hotfix
+CHANGELOG-EN.md:1557:  `v1.5.4-beta2`.
+CHANGELOG-EN.md:1559:## [1.5.4-beta1] - 2026-05-21 - Nexus UI mode opt-in beta
+CHANGELOG-EN.md:1573:- Verified the final beta with `npm run test`, `npm run lint`,
+CHANGELOG-EN.md:1578:  `v1.5.4-beta1`.
+CHANGELOG-EN.md:1582:- Promoted the release line from `1.5.3-beta` to stable `1.5.3`.
+CHANGELOG-EN.md:1590:## [1.5.3-beta] - 2026-05-20 - aggregated remediation + upstream parity (#1114)
+CHANGELOG-EN.md:1752:## [1.5.2-beta-hotfix2] - 2026-05-18 - drop legacy client_ips unique index
+CHANGELOG-EN.md:1778:  `1.5.2-beta` re-run it cleanly when the runner re-enters the `1.5`
+CHANGELOG-EN.md:1801:## [1.5.2-beta-hotfix] - 2026-05-18 - backup chunking and SPA upgrade safety
+CHANGELOG-EN.md:1836:## [1.5.2-beta] - 2026-05-18 - 3x-ui migration suite
+CHANGELOG-EN.md:1871:## [1.5.1-beta] - 2026-05-17 - remediation hardening and UI completion
+CHANGELOG-EN.md:1953:- The manual release workflow now defaults to tag `v1.5.1-beta`.
+CHANGELOG-EN.md:1958:  seen during `1.4.x` to `1.5.1-beta` upgrades.
+CHANGELOG-EN.md:2079:## [1.4.2-beta] - 2026-05-14 - security and reliability hardening
+CHANGELOG-RU.md:12:## [1.5.10] - 2026-07-03 - стабильный релиз 1.5.10
+CHANGELOG-RU.md:14:Стабильная 1.5.10 объединяет все изменения из v1.5.10-beta1..v1.5.10-beta9. Ручная миграция базы данных или конфигурации не требуется. Индекс статистики, добавленный в beta-линейке, применяется автоматически.
+CHANGELOG-RU.md:24:Полные release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
+CHANGELOG-RU.md:26:## [1.5.10-beta9] - 2026-07-01 - RU/ZH пресеты для прямого странового трафика
+CHANGELOG-RU.md:28:Девятая beta в ветке 1.5.10. Это обновление меняет региональные пресеты: найденный RU и ZH страновой трафик идёт через выбранный direct outbound, а остальной трафик сохраняет текущий final-маршрут. Ручная миграция не требуется.
+CHANGELOG-RU.md:37:Полные release notes: [`docs/releases/v1.5.10-beta9.md`](docs/releases/v1.5.10-beta9.md).
+CHANGELOG-RU.md:39:## [1.5.10-beta8] - 2026-07-01 - исправление сохранения Settings со старыми ключами
+CHANGELOG-RU.md:41:Восьмая beta в ветке 1.5.10. Это обновление исправляет сохранение Settings на базах, где в таблице `settings` остались старые или сторонние строки, например `globalReset`. Ручная миграция не требуется.
+CHANGELOG-RU.md:48:Полные release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md).
+CHANGELOG-RU.md:50:## [1.5.10-beta7] - 2026-06-25 - точные totals трафика на Dashboard
+CHANGELOG-RU.md:52:Седьмая beta в ветке 1.5.10. Это обновление исправляет KPI Traffic statistics в Nexus Dashboard. Ручная миграция не требуется.
+CHANGELOG-RU.md:60:Полные release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md).
+CHANGELOG-RU.md:62:## [1.5.10-beta6] - 2026-06-24 - высоты карточек Dashboard и история трафика
+CHANGELOG-RU.md:64:Шестая beta в ветке 1.5.10. Это обновление Nexus Dashboard. Миграция базы данных, API или конфигурации sing-box не требуется.
+CHANGELOG-RU.md:72:Полные release notes: [`docs/releases/v1.5.10-beta6.md`](docs/releases/v1.5.10-beta6.md).
+CHANGELOG-RU.md:74:## [1.5.10-beta5] - 2026-06-24 - обновление Nexus Dashboard и Settings
+CHANGELOG-RU.md:76:Пятая бета линейки 1.5.10. Это frontend-релиз. Миграция базы данных, API или конфигурации sing-box не требуется.
+CHANGELOG-RU.md:86:Полные заметки о релизе: [`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md).
+CHANGELOG-RU.md:88:## [1.5.10-beta4] - 2026-06-24 - обработка истёкшей сессии и усиление релизного контура
+CHANGELOG-RU.md:90:Четвёртая бета линейки 1.5.10. Миграция базы данных или конфигурации не требуется.
+CHANGELOG-RU.md:100:Полные заметки о релизе: [`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md).
+CHANGELOG-RU.md:102:## [1.5.10-beta3] - 2026-06-23 - исправление рендеринга панели пресетов и состояния кнопок
+CHANGELOG-RU.md:104:Третья бета линейки 1.5.10. Миграция базы или конфигурации не требуется. Тесты, lint и build фронтенда проходят.
+CHANGELOG-RU.md:110:Полные заметки о релизе: [`docs/releases/v1.5.10-beta3.md`](docs/releases/v1.5.10-beta3.md).
+CHANGELOG-RU.md:112:## [1.5.10-beta2] - 2026-06-23 - панель RU/ZH-пресетов с предпросмотром и предупреждениями
+CHANGELOG-RU.md:114:Вторая бета линейки 1.5.10. Ручная миграция базы, API или конфигурации не требуется. Тесты, lint и build фронтенда проходят.
+CHANGELOG-RU.md:124:Полные заметки о релизе: [`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md).
+CHANGELOG-RU.md:126:## [1.5.10-beta1] - 2026-06-23 - исправления производительности и безопаснее большие базы
+CHANGELOG-RU.md:128:Первая бета линейки 1.5.10. Ручная миграция базы, API или конфигурации не требуется. Полный Go suite, Go vet, frontend lint, frontend build и frontend unit tests проходят.
+CHANGELOG-RU.md:136:Полные заметки о релизе: [`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md).
+CHANGELOG-RU.md:138:## [1.5.9-beta6] - 2026-06-18 - редактор WireGuard-эндпойнта открывается стабильно
+CHANGELOG-RU.md:140:Небольшое дополнение к v1.5.9-beta5. Изменений базы данных, API или конфигурации
+CHANGELOG-RU.md:148:Полные заметки о релизе: [`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md).
+CHANGELOG-RU.md:150:## [1.5.9-beta5] - 2026-06-17 - аккуратные формы в основном интерфейсе
+CHANGELOG-RU.md:152:Небольшое дополнение к v1.5.9-beta4. Изменений базы данных, API или конфигурации
+CHANGELOG-RU.md:161:Полные заметки о релизе: [`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md).
+CHANGELOG-RU.md:163:## [1.5.9-beta4] - 2026-06-17 - исправление редактора группы отказоустойчивости в Nexus
+CHANGELOG-RU.md:165:Небольшое дополнение к v1.5.9-beta3. Изменений базы данных, API или конфигурации
+CHANGELOG-RU.md:170:  интерфейсе Nexus.** Тип Outbound `failover`, добавленный в v1.5.9-beta3, был
+CHANGELOG-RU.md:177:Полные заметки о релизе: [`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md).
+CHANGELOG-RU.md:179:## [1.5.9-beta3] - 2026-06-17 - обновление панели из веб-интерфейса + автопереключение Outbounds
+CHANGELOG-RU.md:181:Две новые возможности с v1.5.9-beta2. Ручные изменения базы данных, API или
+CHANGELOG-RU.md:186:  канал (*Main* отслеживает стабильные релизы, *Beta* отслеживает новейший релиз,
+CHANGELOG-RU.md:208:Полные заметки о релизе: [`docs/releases/v1.5.9-beta3.md`](docs/releases/v1.5.9-beta3.md).
+CHANGELOG-RU.md:210:## [1.5.9-beta2] - 2026-06-16 - исправления CSS фронтенда + таймаут загрузок установки/обновления
+CHANGELOG-RU.md:212:Небольшое дополнение к v1.5.9-beta1. Изменений API, базы данных и конфигурации
+CHANGELOG-RU.md:216:  SettingInfo, добавленные в v1.5.9-beta1, были слишком блёклыми в тёмной теме
+CHANGELOG-RU.md:230:## [1.5.9-beta1] - 2026-06-16 - усиление безопасности и надёжности + UX настроек по итогам полного аудита кодовой базы
+CHANGELOG-RU.md:302:Полные release notes: [`docs/releases/v1.5.9-beta1.md`](docs/releases/v1.5.9-beta1.md).
+CHANGELOG-RU.md:306:Первый стабильный релиз линейки 1.5.8, объединяющий 1.5.8-beta1..beta4 и
+CHANGELOG-RU.md:360:## [1.5.8-beta4] - 2026-06-14 - встроенный sing-box v1.13.13; исправление badCSR IP-сертификата (выпуск в терминале)
+CHANGELOG-RU.md:413:Полные примечания к релизу: [`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md).
+CHANGELOG-RU.md:415:## [1.5.8-beta3] - 2026-06-14 - TLS-сертификаты для IP-адреса (выпуск + автоперевыпуск); Config Doctor переезжает в Settings
+CHANGELOG-RU.md:445:Полные примечания к релизу: [`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md).
+CHANGELOG-RU.md:447:## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack: Config Doctor, RU/ZH пресеты маршрутизации/DNS, UX доставки подписок, диагностика клиента
+CHANGELOG-RU.md:480:Полные примечания к релизу: [`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md).
+CHANGELOG-RU.md:482:## [1.5.8-beta1] - 2026-06-11 - горячая перезагрузка всех объектов: сохранение без рестартов ядра; защита удаления тегов со ссылками
+CHANGELOG-RU.md:516:Полные примечания к релизу: [`docs/releases/v1.5.8-beta1.md`](docs/releases/v1.5.8-beta1.md).
+CHANGELOG-RU.md:550:Первый стабильный релиз линейки 1.5.7, объединяющий 1.5.7-beta1..beta10 -
+CHANGELOG-RU.md:554:новое после beta10.
+CHANGELOG-RU.md:575:## [1.5.7-beta10] - 2026-06-10 - исправления по итогам полного ревью качества, безопасности и цепочки поставок
+CHANGELOG-RU.md:625:Полные примечания к релизу: [`docs/releases/v1.5.7-beta10.md`](docs/releases/v1.5.7-beta10.md).
+CHANGELOG-RU.md:627:## [1.5.7-beta9-hotfix1] - 2026-06-10 - исправлен пустой экран из-за потери чанков с именем на «_»
+CHANGELOG-RU.md:629:Хотфикс к v1.5.7-beta9. Изменений в логике backend, ломающих изменений, ручных
+CHANGELOG-RU.md:640:Полные примечания: [`docs/releases/v1.5.7-beta9-hotfix1.md`](docs/releases/v1.5.7-beta9-hotfix1.md).
+CHANGELOG-RU.md:642:## [1.5.7-beta9] - 2026-06-10 - интерфейс Nexus приведён к эталонному дизайну
+CHANGELOG-RU.md:688:Полные примечания: [`docs/releases/v1.5.7-beta9.md`](docs/releases/v1.5.7-beta9.md).
+CHANGELOG-RU.md:690:## [1.5.7-beta8] - 2026-06-07 - внутреннее усиление надёжности и инструментов аудита
+CHANGELOG-RU.md:713:Полные примечания: [`docs/releases/v1.5.7-beta8.md`](docs/releases/v1.5.7-beta8.md).
+CHANGELOG-RU.md:715:## Сводка v1.5.7 Beta
+CHANGELOG-RU.md:748:## [1.5.7-beta7] - 2026-06-06 - hardening по итогам независимого ревью; удалены плановый синк и удалённый импорт 3x-ui
+CHANGELOG-RU.md:818:## [1.5.7-beta6-hotfix1] - 2026-06-05 - фикс чёрного экрана панели в beta6 (сборка фронтенда)
+CHANGELOG-RU.md:820:Экстренный **сборочный** хотфикс для v1.5.7-beta6. Изменений кода, конфигурации
+CHANGELOG-RU.md:821:или данных нет - он лишь исправляет сломанную сборку фронтенда в артефактах beta6.
+CHANGELOG-RU.md:824:- **Веб-панель не открывалась на v1.5.7-beta6** - чёрный экран и `404` на
+CHANGELOG-RU.md:836:## [1.5.7-beta6] - 2026-06-05 - усиление безопасности и надёжности, производительность и доступность
+CHANGELOG-RU.md:928:Релиз-ноуты: [`docs/releases/v1.5.7-beta6.md`](docs/releases/v1.5.7-beta6.md).
+CHANGELOG-RU.md:930:## [1.5.7-beta5] - 2026-06-04 - интерфейс админки «Платных подписок»: колонки Bindings/Orders, подтверждение отвязки, порядок вкладок
+CHANGELOG-RU.md:944:- Release notes: [`docs/releases/v1.5.7-beta5.md`](docs/releases/v1.5.7-beta5.md).
+CHANGELOG-RU.md:946:## [1.5.7-beta4] - 2026-06-04 - раздел «Оплата» и возвраты в «Платных подписках»; фикс задвоения создания
+CHANGELOG-RU.md:975:- Release notes: [`docs/releases/v1.5.7-beta4.md`](docs/releases/v1.5.7-beta4.md).
+CHANGELOG-RU.md:977:## [1.5.7-beta3] - 2026-06-04 - фикс записи в админке «Платных подписок» + усиление
+CHANGELOG-RU.md:997:- Release notes: [`docs/releases/v1.5.7-beta3.md`](docs/releases/v1.5.7-beta3.md).
+CHANGELOG-RU.md:999:## [1.5.7-beta2] - 2026-06-04 - выбор транспорта Telegram, рассылка и приветствие
+CHANGELOG-RU.md:1009:- **Исправления (UI beta1):** выпадающий список Inbounds в *Auto-registration*
+CHANGELOG-RU.md:1012:- Release notes: [`docs/releases/v1.5.7-beta2.md`](docs/releases/v1.5.7-beta2.md).
+CHANGELOG-RU.md:1014:## [1.5.7-beta1] - 2026-06-04 - экспериментальный Telegram-бот «Платные подписки»
+CHANGELOG-RU.md:1039:- Release notes: [`docs/releases/v1.5.7-beta1.md`](docs/releases/v1.5.7-beta1.md).
+CHANGELOG-RU.md:1043:- Первый стабильный релиз линейки 1.5.6, объединяющий 1.5.6-beta1..beta9 -
+CHANGELOG-RU.md:1045:  исправления корректности импорта, добавленные после beta9.
+CHANGELOG-RU.md:1050:  из 1.5.6-beta7/beta8.
+CHANGELOG-RU.md:1062:## [1.5.6-beta9] - 2026-06-03 - меню сброса домена/адреса панели и принудительный перевыпуск SSL
+CHANGELOG-RU.md:1080:- Полные примечания к релизу: [`docs/releases/v1.5.6-beta9.md`](docs/releases/v1.5.6-beta9.md).
+CHANGELOG-RU.md:1082:## [1.5.6-beta8] - 2026-06-03 - миграция 3x-ui: Outbounds, матчеры маршрутизации, TLS-сертификаты и DNS
+CHANGELOG-RU.md:1159:- Полные примечания к релизу: [`docs/releases/v1.5.6-beta8.md`](docs/releases/v1.5.6-beta8.md).
+CHANGELOG-RU.md:1161:## [1.5.6-beta7] - 2026-06-02 - миграция 3x-ui: ссылки подписки, WARP и таймаут импорта
+CHANGELOG-RU.md:1188:- Полные примечания: [`docs/releases/v1.5.6-beta7.md`](docs/releases/v1.5.6-beta7.md).
+CHANGELOG-RU.md:1190:## [1.5.6-beta6] - 2026-06-02 - усиление миграции 3x-ui
+CHANGELOG-RU.md:1207:- Полные release notes: [`docs/releases/v1.5.6-beta6.md`](docs/releases/v1.5.6-beta6.md).
+CHANGELOG-RU.md:1209:## [1.5.6-beta5] - 2026-06-02 - исправления миграции 3x-ui
+CHANGELOG-RU.md:1237:- Полные release notes: [`docs/releases/v1.5.6-beta5.md`](docs/releases/v1.5.6-beta5.md).
+CHANGELOG-RU.md:1239:## [1.5.6-beta4] - 2026-06-02 - усиление безопасности и статического анализа
+CHANGELOG-RU.md:1260:- Полные release notes: [`docs/releases/v1.5.6-beta4.md`](docs/releases/v1.5.6-beta4.md).
+CHANGELOG-RU.md:1262:## [1.5.6-beta3] - 2026-05-29 - beta управления администраторами
+CHANGELOG-RU.md:1273:- Полные release notes: [`docs/releases/v1.5.6-beta3.md`](docs/releases/v1.5.6-beta3.md).
+CHANGELOG-RU.md:1275:## [1.5.6-beta2] - 2026-05-28 - beta покрытия настроек sing-box 1.13.12
+CHANGELOG-RU.md:1295:## [1.5.6-beta1] - 2026-05-27 - beta UI-паритета sing-box 1.13
+CHANGELOG-RU.md:1316:- `v1.5.5-beta1` - `v1.5.5-beta4-hotfix2` повышены до стабильной `v1.5.5`.
+CHANGELOG-RU.md:1324:- Включён beta4 security/reliability hardening: forced password reset для
+CHANGELOG-RU.md:1339:## [1.5.5-beta4-hotfix2] - 2026-05-26 - hotfix экспорта backup для TLS sentinel
+CHANGELOG-RU.md:1353:  workflows до `v1.5.5-beta4-hotfix2`.
+CHANGELOG-RU.md:1355:## [1.5.5-beta4] - 2026-05-26 - отчёт об устранении проблем и технического долга
+CHANGELOG-RU.md:1472:## [1.5.5-beta3] - 2026-05-22 - безопасность restore backup config для DNS и routing
+CHANGELOG-RU.md:1481:  `v1.5.5-beta3`.
+CHANGELOG-RU.md:1483:## [1.5.5-beta2] - 2026-05-22 - безопасность restore для no-TLS inbound
+CHANGELOG-RU.md:1498:  `v1.5.5-beta2`.
+CHANGELOG-RU.md:1500:## [1.5.5-beta1] - 2026-05-22 - корректность subscription для общего VLESS UUID и Clash WS Host
+CHANGELOG-RU.md:1519:  `v1.5.5-beta1`.
+CHANGELOG-RU.md:1523:- Линейка `1.5.4-beta1` - `1.5.4-beta5` повышена до стабильной `1.5.4`.
+CHANGELOG-RU.md:1526:  в systemd installer и исправление границы reserved path `/ws` из beta-линейки.
+CHANGELOG-RU.md:1534:## [1.5.4-beta5] - 2026-05-22 - hotfix reserved path prefix
+CHANGELOG-RU.md:1545:  `v1.5.4-beta5`.
+CHANGELOG-RU.md:1547:## [1.5.4-beta4] - 2026-05-22 - bootstrap secretbox key в installer
+CHANGELOG-RU.md:1560:  `v1.5.4-beta4`.
+CHANGELOG-RU.md:1562:## [1.5.4-beta3] - 2026-05-22 - уплотнение Nexus Overview
+CHANGELOG-RU.md:1578:  `v1.5.4-beta3`.
+CHANGELOG-RU.md:1580:## [1.5.4-beta2] - 2026-05-21 - hotfix cancel toast на Nexus Overview
+CHANGELOG-RU.md:1590:  `v1.5.4-beta2`.
+CHANGELOG-RU.md:1592:## [1.5.4-beta1] - 2026-05-21 - opt-in beta Nexus UI mode
+CHANGELOG-RU.md:1606:- Финальная beta проверена через `npm run test`, `npm run lint`,
+CHANGELOG-RU.md:1611:  `v1.5.4-beta1`.
+CHANGELOG-RU.md:1615:- Релизная линия повышена с `1.5.3-beta` до стабильной `1.5.3`.
+CHANGELOG-RU.md:1623:## [1.5.3-beta] - 2026-05-20 - агрегированные исправления + upstream-парити (#1114)
+CHANGELOG-RU.md:1788:## [1.5.2-beta-hotfix2] - 2026-05-18 - снятие legacy unique-индекса client_ips
+CHANGELOG-RU.md:1814:  `1.5.2-beta` инсталлы чисто прогонят её повторно, когда runner
+CHANGELOG-RU.md:1838:## [1.5.2-beta-hotfix] - 2026-05-18 - чанки в бэкапе и безопасность SPA при апгрейде
+CHANGELOG-RU.md:1873:## [1.5.2-beta] - 2026-05-18 - пакет миграции из 3x-ui
+CHANGELOG-RU.md:1909:## [1.5.1-beta] - 2026-05-17 - закрытие технического долга и UI
+CHANGELOG-RU.md:1995:  `v1.5.1-beta`.
+CHANGELOG-RU.md:2001:  обновлении с `1.4.x` до `1.5.1-beta`.
+CHANGELOG-RU.md:2123:## [1.4.2-beta] - 2026-05-14 - security and reliability hardening
+CHANGELOG-ZH.md:11:## [1.5.10] - 2026-07-03 - 稳定版 1.5.10
+CHANGELOG-ZH.md:13:稳定版 1.5.10 汇总了 v1.5.10-beta1 到 v1.5.10-beta9 的全部变更。无需手动迁移数据库或配置。beta 阶段加入的统计索引会自动应用。
+CHANGELOG-ZH.md:23:完整 release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md)。
+CHANGELOG-ZH.md:25:## [1.5.10-beta9] - 2026-07-01 - RU/ZH 国家流量直连预设
+CHANGELOG-ZH.md:27:1.5.10 分支的第九个 beta。此版本调整区域预设：匹配到的 RU 和 ZH 国家流量会走所选 direct outbound，其他流量继续使用现有 final 路由。无需手动迁移。
+CHANGELOG-ZH.md:36:完整 release notes: [`docs/releases/v1.5.10-beta9.md`](docs/releases/v1.5.10-beta9.md)。
+CHANGELOG-ZH.md:38:## [1.5.10-beta8] - 2026-07-01 - 修复 Settings 中旧键导致的保存失败
+CHANGELOG-ZH.md:40:1.5.10 分支的第八个 beta。此版本修复部分数据库中仍保留旧的或第三方 `settings` 行时 Settings 保存失败的问题，例如 `globalReset`。无需手动迁移。
+CHANGELOG-ZH.md:45:- 新增回归测试，覆盖旧 `globalReset` 行和 settings payload 再次保存成功的场景。
+CHANGELOG-ZH.md:47:完整 release notes: [`docs/releases/v1.5.10-beta8.md`](docs/releases/v1.5.10-beta8.md)。
+CHANGELOG-ZH.md:49:## [1.5.10-beta7] - 2026-06-25 - Dashboard 流量 totals 改为精确统计
+CHANGELOG-ZH.md:51:1.5.10 分支的第七个 beta。此版本修复 Nexus Dashboard 的 Traffic statistics KPI。无需手动迁移。
+CHANGELOG-ZH.md:59:完整 release notes: [`docs/releases/v1.5.10-beta7.md`](docs/releases/v1.5.10-beta7.md)。
+CHANGELOG-ZH.md:61:## [1.5.10-beta6] - 2026-06-24 - Dashboard 卡片高度与流量历史
+CHANGELOG-ZH.md:63:1.5.10 分支的第六个 beta。此版本更新 Nexus Dashboard。无需迁移数据库、API 或 sing-box 配置。
+CHANGELOG-ZH.md:71:完整 release notes: [`docs/releases/v1.5.10-beta6.md`](docs/releases/v1.5.10-beta6.md)。
+CHANGELOG-ZH.md:73:## [1.5.10-beta5] - 2026-06-24 - Nexus 仪表盘与设置页面布局调整
+CHANGELOG-ZH.md:75:1.5.10 线的第五个 beta。此版本仅涉及前端。无需数据库、API 或 sing-box 配置迁移。
+CHANGELOG-ZH.md:85:完整发布说明：[`docs/releases/v1.5.10-beta5.md`](docs/releases/v1.5.10-beta5.md)。
+CHANGELOG-ZH.md:87:## [1.5.10-beta4] - 2026-06-24 - 会话过期处理与发布安全加固
+CHANGELOG-ZH.md:89:1.5.10 线的第四个 beta。无需数据库或配置迁移。
+CHANGELOG-ZH.md:99:完整发布说明：[`docs/releases/v1.5.10-beta4.md`](docs/releases/v1.5.10-beta4.md)。
+CHANGELOG-ZH.md:101:## [1.5.10-beta3] - 2026-06-23 - 修复区域预设抽屉渲染与按钮状态
+CHANGELOG-ZH.md:103:1.5.10 线的第三个 beta。无需数据库或配置迁移。前端测试、lint 和构建均通过。
+CHANGELOG-ZH.md:109:完整发布说明：[`docs/releases/v1.5.10-beta3.md`](docs/releases/v1.5.10-beta3.md)。
+CHANGELOG-ZH.md:111:## [1.5.10-beta2] - 2026-06-23 - RU/ZH 预设侧边栏与预览和安全警告
+CHANGELOG-ZH.md:113:1.5.10 线的第二个 beta。无需手动迁移数据库、API 或配置。前端测试、lint 和构建均通过。
+CHANGELOG-ZH.md:123:完整发布说明：[`docs/releases/v1.5.10-beta2.md`](docs/releases/v1.5.10-beta2.md)。
+CHANGELOG-ZH.md:125:## [1.5.10-beta1] - 2026-06-23 - 性能修复与大数据库路径优化
+CHANGELOG-ZH.md:127:1.5.10 线的首个 beta。无需手动迁移数据库、API 或配置。完整 Go 测试、Go vet、前端 lint、前端构建和前端单元测试均通过。
+CHANGELOG-ZH.md:135:完整发布说明：[`docs/releases/v1.5.10-beta1.md`](docs/releases/v1.5.10-beta1.md)。
+CHANGELOG-ZH.md:137:## [1.5.9-beta6] - 2026-06-18 - WireGuard 端点编辑器稳定打开
+CHANGELOG-ZH.md:139:对 v1.5.9-beta5 的小幅跟进。无需变更数据库、API 或配置。
+CHANGELOG-ZH.md:145:完整发布说明：[`docs/releases/v1.5.9-beta6.md`](docs/releases/v1.5.9-beta6.md)。
+CHANGELOG-ZH.md:147:## [1.5.9-beta5] - 2026-06-17 - 优化默认界面的表单
+CHANGELOG-ZH.md:149:对 v1.5.9-beta4 的小幅跟进。无需变更数据库、API 或配置。
+CHANGELOG-ZH.md:155:完整发布说明：[`docs/releases/v1.5.9-beta5.md`](docs/releases/v1.5.9-beta5.md)。
+CHANGELOG-ZH.md:157:## [1.5.9-beta4] - 2026-06-17 - 修复 Nexus 界面中的故障转移组编辑器
+CHANGELOG-ZH.md:159:对 v1.5.9-beta3 的小幅跟进。无需变更数据库、API 或配置。受影响的前端可正常构建，
+CHANGELOG-ZH.md:160:前端测试通过，Nexus 编辑器路径已由 Playwright 覆盖。
+CHANGELOG-ZH.md:162:- **修复（UI）：Nexus（默认）界面中缺失故障转移组编辑器。** v1.5.9-beta3 新增的
+CHANGELOG-ZH.md:168:完整发布说明：[`docs/releases/v1.5.9-beta4.md`](docs/releases/v1.5.9-beta4.md)。
+CHANGELOG-ZH.md:170:## [1.5.9-beta3] - 2026-06-17 - 网页内面板更新 + 出站自动故障转移
+CHANGELOG-ZH.md:172:自 v1.5.9-beta2 起的两项新能力。无需手动变更数据库、API 或配置；受影响的 Go 包
+CHANGELOG-ZH.md:173:与前端测试均通过。
+CHANGELOG-ZH.md:176:  选择通道（*Main* 跟踪稳定版，*Beta* 跟踪最新版含预发布）、检查更新并一键
+CHANGELOG-ZH.md:190:完整发布说明：[`docs/releases/v1.5.9-beta3.md`](docs/releases/v1.5.9-beta3.md)。
+CHANGELOG-ZH.md:192:## [1.5.9-beta2] - 2026-06-16 - 前端 CSS 修复 + 安装/更新下载超时
+CHANGELOG-ZH.md:194:对 v1.5.9-beta1 的小幅跟进。无 API、数据库或配置变更；前端测试套件通过。
+CHANGELOG-ZH.md:196:- **修复（UI）：深色主题下提示气泡不可读。** v1.5.9-beta1 新增的 (i) SettingInfo
+CHANGELOG-ZH.md:208:## [1.5.9-beta1] - 2026-06-16 - 全量代码库审计后的安全与可靠性加固 + 设置 UX
+CHANGELOG-ZH.md:212:受影响的 Go 包和前端测试均通过。两项最严重的问题属于完整性类。新增的
+CHANGELOG-ZH.md:220:  将任何 panic 恢复为事务回滚。回归测试覆盖所有 panic 向量。
+CHANGELOG-ZH.md:255:完整 release notes：[`docs/releases/v1.5.9-beta1.md`](docs/releases/v1.5.9-beta1.md)。
+CHANGELOG-ZH.md:259:1.5.8 线的首个稳定版，整合 1.5.8-beta1..beta4，并包含最终的 Nexus 界面打磨。
+CHANGELOG-ZH.md:283:  安全辅助函数以契约测试固定；生成路径增加确定性、往返、golden 与 benchmark 覆盖。
+CHANGELOG-ZH.md:297:## [1.5.8-beta4] - 2026-06-14 - 内置 sing-box v1.13.13；IP 证书 badCSR 修复（终端签发）
+CHANGELOG-ZH.md:324:- **测试。** 新增 `ip_certificate_acme_test.go`，验证 CN 为空、IP SAN 正确、
+CHANGELOG-ZH.md:335:  `ValidateIssuableIP`、`ssrf.IsInfrastructureAddr`）予以保留，并以新的契约测试固定。
+CHANGELOG-ZH.md:336:- **生成测试覆盖。** 新增确定性与 link↔json 往返测试、面向数据库驱动 `GetSubs`
+CHANGELOG-ZH.md:337:  路径的字节精确订阅 golden 测试，以及链接与 Clash 生成的基准锚点。行为无变化。
+CHANGELOG-ZH.md:339:完整发布说明：[`docs/releases/v1.5.8-beta4.md`](docs/releases/v1.5.8-beta4.md)。
+CHANGELOG-ZH.md:341:## [1.5.8-beta3] - 2026-06-14 - IP 地址 TLS 证书（签发 + 自动续期）；Config Doctor 移至设置
+CHANGELOG-ZH.md:343:测试版：为无域名的裸 IP 地址签发并自动续期 Let's Encrypt TLS 证书，全程在进程内完成。
+CHANGELOG-ZH.md:363:完整发布说明：[`docs/releases/v1.5.8-beta3.md`](docs/releases/v1.5.8-beta3.md)。
+CHANGELOG-ZH.md:365:## [1.5.8-beta2] - 2026-06-12 - Personal Ops Pack：Config Doctor、RU/ZH 路由/DNS 预设、订阅交付 UX、客户端诊断
+CHANGELOG-ZH.md:367:测试版：面向 RU/ZH 单面板管理员的运维与诊断层。增量更新--新增只读诊断端点与前端界面，
+CHANGELOG-ZH.md:380:  Hiddify、原始链接），复制/QR/测试 URL。设置中现已显示此前隐藏的订阅控件（标题/支持/
+CHANGELOG-ZH.md:385:  「未测试」，而不计为失败。
+CHANGELOG-ZH.md:387:完整发布说明：[`docs/releases/v1.5.8-beta2.md`](docs/releases/v1.5.8-beta2.md)。
+CHANGELOG-ZH.md:389:## [1.5.8-beta1] - 2026-06-11 - 全对象热重载：保存不再重启内核；被引用标签的删除保护
+CHANGELOG-ZH.md:391:测试版：免重启应用现已覆盖面板管理的所有对象。仅涉及后端，无需手动迁移。一项行为
+CHANGELOG-ZH.md:413:完整发布说明：[`docs/releases/v1.5.8-beta1.md`](docs/releases/v1.5.8-beta1.md)。
+CHANGELOG-ZH.md:425:  端点、服务与 TLS 的删除路径经验证本已幂等，并新增了回归测试加以固化。
+CHANGELOG-ZH.md:439:1.5.7 线的首个稳定版本，整合了 1.5.7-beta1..beta10--实验性的**「付费订阅」** Telegram
+CHANGELOG-ZH.md:441:安全加固。以下条目为 beta10 之后的新内容。
+CHANGELOG-ZH.md:454:## [1.5.7-beta10] - 2026-06-10 - 来自完整质量、安全与供应链审查的修复
+CHANGELOG-ZH.md:496:完整发布说明：[`docs/releases/v1.5.7-beta10.md`](docs/releases/v1.5.7-beta10.md)。
+CHANGELOG-ZH.md:498:## [1.5.7-beta9-hotfix1] - 2026-06-10 - 修复因丢弃下划线开头分块导致的空白面板
+CHANGELOG-ZH.md:500:v1.5.7-beta9 的热修复。没有后端逻辑、破坏性变更、手动迁移或配置变更。
+CHANGELOG-ZH.md:509:完整发布说明：[`docs/releases/v1.5.7-beta9-hotfix1.md`](docs/releases/v1.5.7-beta9-hotfix1.md)。
+CHANGELOG-ZH.md:511:## [1.5.7-beta9] - 2026-06-10 - Nexus 界面对齐参考设计
+CHANGELOG-ZH.md:543:仅前端发布；已通过 lint、128 个单元测试（含新增的 Lucide 图标集与英文/俄文语言键
+CHANGELOG-ZH.md:544:对等测试）、production 构建、Nexus 端到端测试，以及对差异进行的多智能体回归审查
+CHANGELOG-ZH.md:547:完整发布说明：[`docs/releases/v1.5.7-beta9.md`](docs/releases/v1.5.7-beta9.md)。
+CHANGELOG-ZH.md:549:## [1.5.7-beta8] - 2026-06-07 - 内部可靠性与审计工具加固
+CHANGELOG-ZH.md:556:- 提升 Windows 上数据库、import-xui、cron 任务和 IP monitor 的 SQLite 测试清理
+CHANGELOG-ZH.md:558:  并在重置测试数据库时隔离异步审计写入器。
+CHANGELOG-ZH.md:564:- 重新通过全部后端与前端质量门禁：Go 测试（包括 race detector）、构建、vet、
+CHANGELOG-ZH.md:565:  静态分析、linters、`gosec`、`govulncheck`、前端 lint、88 个前端测试、
+CHANGELOG-ZH.md:568:完整发布说明：[`docs/releases/v1.5.7-beta8.md`](docs/releases/v1.5.7-beta8.md)。
+CHANGELOG-ZH.md:570:## v1.5.7 Beta 摘要
+CHANGELOG-ZH.md:601:## [1.5.7-beta7] - 2026-06-06 - 独立复审加固；移除 3x-ui 定时同步与远程导入
+CHANGELOG-ZH.md:603:本测试版包含**移除 3x-ui 定时同步 / 远程导入**，以及一轮独立代码质量、性能与
+CHANGELOG-ZH.md:663:## [1.5.7-beta6-hotfix1] - 2026-06-05 - 修复 beta6 面板黑屏（前端构建）
+CHANGELOG-ZH.md:665:针对 v1.5.7-beta6 的紧急**构建**热修复。无代码、配置或数据变更--仅修复 beta6
+CHANGELOG-ZH.md:669:- **v1.5.7-beta6 上 Web 面板无法加载**--黑屏，控制台对某个 JS 分块报 `404`
+CHANGELOG-ZH.md:677:  单元测试门禁--因此失同步的 lock 或任何被 CI 拒绝的前端都无法再发布。
+CHANGELOG-ZH.md:679:## [1.5.7-beta6] - 2026-06-05 - 安全与可靠性加固、性能与无障碍
+CHANGELOG-ZH.md:740:**破坏性变更**。发布说明：[`docs/releases/v1.5.7-beta6.md`](docs/releases/v1.5.7-beta6.md)。
+CHANGELOG-ZH.md:742:## [1.5.7-beta5] - 2026-06-04 - 「付费订阅」后台界面：Bindings/Orders 列、解绑确认、标签顺序
+CHANGELOG-ZH.md:753:- 发布说明：[`docs/releases/v1.5.7-beta5.md`](docs/releases/v1.5.7-beta5.md)。
+CHANGELOG-ZH.md:755:## [1.5.7-beta4] - 2026-06-04 - 「付费订阅」支付菜单与退款；修复重复创建
+CHANGELOG-ZH.md:775:- 发布说明：[`docs/releases/v1.5.7-beta4.md`](docs/releases/v1.5.7-beta4.md)。
+CHANGELOG-ZH.md:777:## [1.5.7-beta3] - 2026-06-04 - 修复「付费订阅」后台写入 + 加固
+CHANGELOG-ZH.md:793:- 发布说明：[`docs/releases/v1.5.7-beta3.md`](docs/releases/v1.5.7-beta3.md)。
+CHANGELOG-ZH.md:795:## [1.5.7-beta2] - 2026-06-04 - Telegram 传输选择、群发与问候语
+CHANGELOG-ZH.md:803:- **修复（beta1 界面）：** *Auto-registration* 的入站下拉框现在能列出入站（此前错误读取了
+CHANGELOG-ZH.md:805:- 发布说明：[`docs/releases/v1.5.7-beta2.md`](docs/releases/v1.5.7-beta2.md)。
+CHANGELOG-ZH.md:807:## [1.5.7-beta1] - 2026-06-04 - 实验性「付费订阅」Telegram 机器人
+CHANGELOG-ZH.md:824:- 发布说明：[`docs/releases/v1.5.7-beta1.md`](docs/releases/v1.5.7-beta1.md)。
+CHANGELOG-ZH.md:828:- 1.5.6 系列的首个稳定版，整合了 1.5.6-beta1..beta9--3x-ui → s-ui-x 迁移与面板恢复
+CHANGELOG-ZH.md:829:  终端菜单。以下条目是 beta9 之后新增的导入正确性修复。
+CHANGELOG-ZH.md:832:  路由时以 "outbound not found: block" 失败；这取代了 1.5.6-beta7/beta8 中的
+CHANGELOG-ZH.md:843:## [1.5.6-beta9] - 2026-06-03 - 面板域名/地址重置菜单与 SSL 强制重签
+CHANGELOG-ZH.md:856:- 完整发布说明：[`docs/releases/v1.5.6-beta9.md`](docs/releases/v1.5.6-beta9.md)。
+CHANGELOG-ZH.md:858:## [1.5.6-beta8] - 2026-06-03 - 3x-ui 迁移：出站、路由匹配器、TLS 证书与 DNS
+CHANGELOG-ZH.md:914:- 完整发布说明：[`docs/releases/v1.5.6-beta8.md`](docs/releases/v1.5.6-beta8.md)。
+CHANGELOG-ZH.md:916:## [1.5.6-beta7] - 2026-06-02 - 3x-ui 迁移：订阅链接、WARP 与导入超时
+CHANGELOG-ZH.md:935:- 完整发布说明：[`docs/releases/v1.5.6-beta7.md`](docs/releases/v1.5.6-beta7.md)。
+CHANGELOG-ZH.md:937:## [1.5.6-beta6] - 2026-06-02 - 3x-ui 迁移加固
+CHANGELOG-ZH.md:950:- 完整发布说明：[`docs/releases/v1.5.6-beta6.md`](docs/releases/v1.5.6-beta6.md)。
+CHANGELOG-ZH.md:952:## [1.5.6-beta5] - 2026-06-02 - 3x-ui 迁移修复
+CHANGELOG-ZH.md:971:- 完整发布说明：[`docs/releases/v1.5.6-beta5.md`](docs/releases/v1.5.6-beta5.md)。
+CHANGELOG-ZH.md:973:## [1.5.6-beta4] - 2026-06-02 - security & static-analysis hardening
+CHANGELOG-ZH.md:991:- 完整 release notes：[`docs/releases/v1.5.6-beta4.md`](docs/releases/v1.5.6-beta4.md)。
+CHANGELOG-ZH.md:993:## [1.5.6-beta3] - 2026-05-29 - admin management beta
+CHANGELOG-ZH.md:1002:- 完整 release notes：[`docs/releases/v1.5.6-beta3.md`](docs/releases/v1.5.6-beta3.md)。
+CHANGELOG-ZH.md:1004:## [1.5.6-beta2] - 2026-05-28 - sing-box 1.13.12 settings coverage beta
+CHANGELOG-ZH.md:1024:## [1.5.6-beta1] - 2026-05-27 - sing-box 1.13 UI parity beta
+CHANGELOG-ZH.md:1036:- 新增 representative sing-box 1.13 option-unmarshal 测试和 OOM service
+CHANGELOG-ZH.md:1037:  registry 回归测试。
+CHANGELOG-ZH.md:1045:- 将 `v1.5.5-beta1` 到 `v1.5.5-beta4-hotfix2` 提升为稳定版 `v1.5.5`。
+CHANGELOG-ZH.md:1053:- 纳入 beta4 的 security/reliability hardening：导入管理员强制改密、更安全的
+CHANGELOG-ZH.md:1066:## [1.5.5-beta4-hotfix2] - 2026-05-26 - TLS sentinel 备份导出 hotfix
+CHANGELOG-ZH.md:1077:  `v1.5.5-beta4-hotfix2`。
+CHANGELOG-ZH.md:1079:## [1.5.5-beta4] - 2026-05-26 - 问题修复与技术债清理报告
+CHANGELOG-ZH.md:1173:## [1.5.5-beta3] - 2026-05-22 - DNS 与路由 backup config 的恢复安全性
+CHANGELOG-ZH.md:1181:  `v1.5.5-beta3`。
+CHANGELOG-ZH.md:1183:## [1.5.5-beta2] - 2026-05-22 - no-TLS inbound 的备份恢复安全性
+CHANGELOG-ZH.md:1196:  `v1.5.5-beta2`。
+CHANGELOG-ZH.md:1198:## [1.5.5-beta1] - 2026-05-22 - 共享 VLESS UUID 与 Clash WS Host 的订阅正确性
+CHANGELOG-ZH.md:1216:  `v1.5.5-beta1`。
+CHANGELOG-ZH.md:1220:- 将 `1.5.4-beta1` 到 `1.5.4-beta5` 提升为稳定版 `1.5.4`。
+CHANGELOG-ZH.md:1221:- 稳定版包含 beta 线中的 opt-in Nexus UI mode、取消重复 read toast 的 hotfix、
+CHANGELOG-ZH.md:1230:## [1.5.4-beta5] - 2026-05-22 - reserved path prefix hotfix
+CHANGELOG-ZH.md:1239:  `v1.5.4-beta5`。
+CHANGELOG-ZH.md:1241:## [1.5.4-beta4] - 2026-05-22 - installer secretbox key bootstrap
+CHANGELOG-ZH.md:1251:  `v1.5.4-beta4`。
+CHANGELOG-ZH.md:1253:## [1.5.4-beta3] - 2026-05-22 - Nexus Overview density refinement
+CHANGELOG-ZH.md:1268:- Release、Windows 与 Docker workflow 的默认 tag 更新为 `v1.5.4-beta3`。
+CHANGELOG-ZH.md:1270:## [1.5.4-beta2] - 2026-05-21 - Nexus Overview cancel toast hotfix
+CHANGELOG-ZH.md:1277:- Release、Windows 与 Docker workflow 的默认 tag 更新为 `v1.5.4-beta2`。
+CHANGELOG-ZH.md:1279:## [1.5.4-beta1] - 2026-05-21 - Nexus UI mode opt-in beta
+CHANGELOG-ZH.md:1291:- 该 beta 已通过 `npm run test`、`npm run lint`、`npm run build`、
+CHANGELOG-ZH.md:1294:- Release、Windows 与 Docker workflow 的默认 tag 更新为 `v1.5.4-beta1`。
+CHANGELOG-ZH.md:1298:- 将发布线从 `1.5.3-beta` 提升为稳定版 `1.5.3`。
+CHANGELOG-ZH.md:1304:## [1.5.3-beta] - 2026-05-20 - 聚合修复 + 上游对齐 (#1114)
+CHANGELOG-ZH.md:1320:- [P1] 稳定 realtime fallback 行为与前端单元测试 harness。
+CHANGELOG-ZH.md:1349:#### 测试与验证
+CHANGELOG-ZH.md:1452:## [1.5.2-beta-hotfix2] - 2026-05-18 - 移除 client_ips 旧版唯一索引
+CHANGELOG-ZH.md:1476:  已经升级到 `1.5.2-beta` 的部署在下次启动、迁移 runner 重新进入
+CHANGELOG-ZH.md:1487:- 回归测试：
+CHANGELOG-ZH.md:1497:## [1.5.2-beta-hotfix] - 2026-05-18 - 备份分块与 SPA 升级安全
+CHANGELOG-ZH.md:1531:## [1.5.2-beta] - 2026-05-18 - 3x-ui 迁移套件
+CHANGELOG-ZH.md:1562:  （见 `.gitignore`）。依赖该目录的测试会在 CI 上自动跳过；本地运行时
+CHANGELOG-ZH.md:1565:## [1.5.1-beta] - 2026-05-17 - 修复加固与 UI 完善
+CHANGELOG-ZH.md:1641:- 手动 release workflow 现在默认使用 tag `v1.5.1-beta`。
+CHANGELOG-ZH.md:1645:  从 `1.4.x` 升级到 `1.5.1-beta` 时可能出现的 `database table is locked`。
+CHANGELOG-ZH.md:1650:### 测试
+CHANGELOG-ZH.md:1657:  `npm run test:unit`、`npm run build`、`npm run lint`。Race 测试需要
+CHANGELOG-ZH.md:1754:## [1.4.2-beta] - 2026-05-14 - 安全与可靠性加固
+CHANGELOG-ZH.md:1760:完整的后端测试套件 (`go test`、`go test -race`、
+CHANGELOG-ZH.md:1908:### 测试
+CHANGELOG-ZH.md:1910:新增回归测试：

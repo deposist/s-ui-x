@@ -3,7 +3,7 @@
     <v-card class="rounded-lg" id="qrcode-modal" :loading="loading">
       <v-card-title>
         <v-row>
-          <v-col>Wireguard QrCode</v-col>
+          <v-col>{{ $t('types.wg.qrCode') }}</v-col>
           <v-spacer></v-spacer>
           <v-col cols="auto"><v-icon icon="mdi-close-box" @click="$emit('close')" /></v-col>
         </v-row>

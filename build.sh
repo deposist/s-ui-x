@@ -1,15 +1,19 @@
 #!/bin/sh
 
-cd frontend
-npm i
+set -eu
+
+repo_dir=$(unset CDPATH; cd -- "$(dirname -- "$0")" && pwd)
+
+cd "$repo_dir/frontend"
+npm ci
 npm run build
 
-cd ..
+cd "$repo_dir"
 echo "Backend"
 
 mkdir -p web/html
-rm -fr web/html/*
-cp -R frontend/dist/* web/html/
+rm -rf web/html/*
+cp -R frontend/dist/. web/html/
 
 BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_musl,badlinkname,tfogo_checklinkname0,with_tailscale"
 

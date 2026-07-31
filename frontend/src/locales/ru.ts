@@ -914,6 +914,7 @@ export default {
   },
   setting: {
     interface: "Интерфейс",
+    basics: "Основы (sing-box)",
     maintenance: "Обслуживание",
     sub: "Подписка",
     addr: "Адрес",
@@ -1030,6 +1031,7 @@ export default {
   },
   types: {
     un: "Имя пользователя",
+    ssmApi: "API Shadowsocks",
     pw: "Пароль",
     direct: {
       overrideAddr: "Переопределить адрес",
@@ -1041,6 +1043,17 @@ export default {
       hyOptions: "Параметры Hysteria",
       hy2Options: "Параметры Hysteria2",
       ignoreBw: "Игнорировать пропускную способность клиента",
+      disableMtuDiscovery: "Отключить определение MTU",
+      recvWindowConn: "Окно приёма соединения",
+      recvWindow: "Окно приёма",
+      recvWindowClient: "Окно приёма клиента",
+      maxConnClient: "Максимум клиентских соединений",
+      http3AuthFailureServer: "HTTP/3-сервер при ошибке аутентификации",
+      fileServerRoot: "Корневой каталог файлового сервера",
+      httpCode: "Код состояния HTTP",
+      targetUrl: "Целевой URL",
+      rewriteHost: "Перезаписать host",
+      content: "Содержимое",
     },
     shdwTls: {
       hs: "Сервер рукопожатий",
@@ -1092,6 +1105,12 @@ export default {
       allowedIp: "Разрешенные IP",
       peer: "Пир",
       peers: "Пиры",
+      qrCode: "QR-код WireGuard",
+      deviceId: "ID устройства",
+      accessToken: "Токен доступа",
+      licenseKey: "Лицензионный ключ",
+      reserved: "Зарезервировано",
+      udpTimeout: "Таймаут UDP",
     },
     lb: {
       defaultOut: "Default Outbound",
@@ -1178,6 +1197,7 @@ export default {
       quicSessionReceiveWindow: "Окно приема сессии QUIC",
     },
     anytls: {
+      paddingScheme: "Схема заполнения",
       idleInterval: "Интервал проверки неактивных сессий",
       idleTimeout: "Тайм-аут неактивной сессии",
       minIdle: "Минимум неактивных сессий"
@@ -1228,6 +1248,8 @@ export default {
     pingTimeout: "Таймаут пинга",
     grpcServiceName: "Имя службы",
     grpcPws: "Разрешить без потока",
+    maxEarlyData: "Максимум ранних данных",
+    earlyDataHeaderName: "Имя заголовка ранних данных",
   },
   mux: {
     enable: "Включить мультиплекс",
@@ -1470,6 +1492,9 @@ export default {
     clientKey: "Клиентский ключ",
     clientKeyPath: "Путь к клиентскому ключу",
     queryServerName: "ECH имя сервера для запроса",
+    shortIds: "Короткие ID",
+    maxTimeDifference: "Максимальная разница времени",
+    fingerprint: "Отпечаток",
     acme: {
       options: "Параметры ACME",
       dataDir: "Каталог данных",

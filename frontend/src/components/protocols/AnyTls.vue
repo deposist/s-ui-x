@@ -4,7 +4,7 @@
     <v-row v-if="direction == 'in'">
       <v-col cols="12" sm="8">
         <v-textarea
-        label="Padding scheme"
+        :label="$t('types.anytls.paddingScheme')"
         auto-grow
         hide-details
         v-model="padding_scheme">

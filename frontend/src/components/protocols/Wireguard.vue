@@ -36,7 +36,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.udp_timeout != undefined">
         <v-text-field
-          label="UDP Timeout"
+          :label="$t('types.wg.udpTimeout')"
           hide-details
           type="number"
           min=0
@@ -91,7 +91,7 @@
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionUdp" color="primary" label="UDP Timeout" hide-details></v-switch>
+              <v-switch v-model="optionUdp" color="primary" :label="$t('types.wg.udpTimeout')" hide-details></v-switch>
             </v-list-item>
             <v-list-item>
               <v-switch v-model="optionWorker" color="primary" :label="$t('types.wg.worker')" hide-details></v-switch>

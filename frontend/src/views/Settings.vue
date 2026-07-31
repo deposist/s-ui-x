@@ -11,7 +11,7 @@
     <v-tab value="t2">{{ $t('setting.sub') }}</v-tab>
     <v-tab value="t3">{{ $t('setting.jsonSub') }}</v-tab>
     <v-tab value="t4">{{ $t('setting.clashSub') }}</v-tab>
-    <v-tab value="t6">Basics (Singbox)</v-tab>
+    <v-tab value="t6">{{ $t('setting.basics') }}</v-tab>
     <v-tab value="t5">{{ $t('setting.maintenance') }}</v-tab>
   </v-tabs>
   <v-card-text>

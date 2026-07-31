@@ -42,7 +42,7 @@
             </v-col>
           </v-row>
           <v-card>
-            <v-card-subtitle>Predefined
+            <v-card-subtitle>{{ $t('dns.rule.action.predefined') }}
               <v-chip color="primary" density="compact" variant="elevated" @click="addHostsPredefined"><v-icon icon="mdi-plus" /></v-chip>
             </v-card-subtitle>
             <v-row v-for="(pd, index) in hostsPredefined">

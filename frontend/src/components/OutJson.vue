@@ -48,7 +48,7 @@
       </template>
       <v-col cols="12" sm="6" md="4" v-if="type == inTypes.Hysteria">
         <v-text-field
-        label="Recv window"
+        :label="$t('types.hy.recvWindow')"
         hide-details
         type="number"
         min="0"

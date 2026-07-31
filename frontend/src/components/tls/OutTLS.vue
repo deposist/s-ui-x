@@ -161,7 +161,7 @@
         <v-col cols="12" md="6">
           <v-select
             hide-details
-            label="Fingerprint"
+            :label="$t('tls.fingerprint')"
             :items="fingerprints"
             v-model="tls.utls.fingerprint">
           </v-select>

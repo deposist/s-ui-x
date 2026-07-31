@@ -103,4 +103,3 @@ func (j *FailoverJob) alertAllDown(group service.FailoverGroupConfig) {
 		"group":   group.Tag,
 	})
 }
-

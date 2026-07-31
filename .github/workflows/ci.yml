@@ -25,6 +25,19 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Check Go formatting
+        shell: bash
+        run: |
+          unformatted="$(git ls-files -z '*.go' | xargs -0 gofmt -l)"
+          if [[ -n "$unformatted" ]]; then
+            printf 'The following Go files are not gofmt-clean:\n%s\n' "$unformatted" >&2
+            exit 1
+          fi
+
+      - name: ShellCheck
+        shell: bash
+        run: git ls-files -z '*.sh' | xargs -0 shellcheck --severity=warning
+
       - name: Go vet
         run: go vet ./...
 

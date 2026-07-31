@@ -193,6 +193,7 @@ func geositeRuSmartRuleSetStale(path string) bool {
 }
 
 func geositeRuSmartRuleSetReady(path string) bool {
+	// #nosec G304 -- callers pass managedRuSmartRuleSetPath(), built from the configured DB directory and a fixed relative path.
 	file, err := os.Open(path)
 	if err != nil {
 		return false

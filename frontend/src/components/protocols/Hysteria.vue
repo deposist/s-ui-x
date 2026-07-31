@@ -59,13 +59,13 @@
         </v-text-field>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <v-switch v-model="data.disable_mtu_discovery" color="primary" label="Disable MTU discovery" hide-details></v-switch>
+        <v-switch v-model="data.disable_mtu_discovery" color="primary" :label="$t('types.hy.disableMtuDiscovery')" hide-details></v-switch>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12" sm="6" md="4" v-if="data.recv_window_conn != undefined">
         <v-text-field
-        label="Recv window conn"
+        :label="$t('types.hy.recvWindowConn')"
         hide-details
         type="number"
         min="0"
@@ -74,7 +74,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.recv_window != undefined">
         <v-text-field
-        label="Recv window"
+        :label="$t('types.hy.recvWindow')"
         hide-details
         type="number"
         min="0"
@@ -83,7 +83,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.recv_window_client != undefined">
         <v-text-field
-        label="Recv window client"
+        :label="$t('types.hy.recvWindowClient')"
         hide-details
         type="number"
         min="0"
@@ -92,7 +92,7 @@
       </v-col>
       <v-col cols="12" sm="6" md="4" v-if="data.max_conn_client != undefined">
         <v-text-field
-        label="Max conn client"
+        :label="$t('types.hy.maxConnClient')"
         hide-details
         type="number"
         min="0"
@@ -109,16 +109,16 @@
         <v-card>
           <v-list>
             <v-list-item>
-              <v-switch v-model="optionRsvConn" color="primary" label="Recv window conn" hide-details></v-switch>
+              <v-switch v-model="optionRsvConn" color="primary" :label="$t('types.hy.recvWindowConn')" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="direction=='out'">
-              <v-switch v-model="optionRsvWin" color="primary" label="Recv window" hide-details></v-switch>
+              <v-switch v-model="optionRsvWin" color="primary" :label="$t('types.hy.recvWindow')" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="direction=='in'">
-              <v-switch v-model="optionRsvClnt" color="primary" label="Recv window client" hide-details></v-switch>
+              <v-switch v-model="optionRsvClnt" color="primary" :label="$t('types.hy.recvWindowClient')" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="direction=='in'">
-              <v-switch v-model="optionMaxConn" color="primary" label="Max conn client" hide-details></v-switch>
+              <v-switch v-model="optionMaxConn" color="primary" :label="$t('types.hy.maxConnClient')" hide-details></v-switch>
             </v-list-item>
             <v-list-item v-if="direction=='out'">
               <v-switch v-model="optionMPort" color="primary" :label="$t('rule.portRange')" hide-details></v-switch>

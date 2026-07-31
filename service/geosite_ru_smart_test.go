@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -15,6 +14,7 @@ import (
 	"github.com/deposist/s-ui-x/database/model"
 
 	"github.com/sagernet/sing-box/common/srs"
+	"google.golang.org/protobuf/encoding/protowire"
 )
 
 func makeTestV2RayGeositeDat(t *testing.T) []byte {
@@ -35,37 +35,56 @@ type testGeoDomain struct {
 	value string
 }
 
+func testGeoDomainWireType(typ int32) uint64 {
+	switch typ {
+	case v2rayDomainTypePlain:
+		return 0
+	case v2rayDomainTypeRegex:
+		return 1
+	case v2rayDomainTypeDomain:
+		return 2
+	case v2rayDomainTypeFull:
+		return 3
+	default:
+		panic("unsupported test geosite domain type")
+	}
+}
+
 func encodeTestGeoSite(code string, domains []testGeoDomain) []byte {
 	var site []byte
 	site = append(site, encodeTestStringField(1, code)...)
 	for _, domain := range domains {
 		var domainMsg []byte
-		domainMsg = append(domainMsg, encodeTestVarintField(1, uint64(domain.typ))...)
+		domainMsg = append(domainMsg, encodeTestVarintField(1, testGeoDomainWireType(domain.typ))...)
 		domainMsg = append(domainMsg, encodeTestStringField(2, domain.value)...)
 		site = append(site, encodeTestBytesField(2, domainMsg)...)
 	}
 	return encodeTestBytesField(1, site)
 }
 
-func encodeTestStringField(number int, value string) []byte {
+func encodeTestStringField(number protowire.Number, value string) []byte {
 	return encodeTestBytesField(number, []byte(value))
 }
 
-func encodeTestBytesField(number int, value []byte) []byte {
-	field := append([]byte{}, encodeTestVarint(uint64(number<<3|2))...)
-	field = append(field, encodeTestVarint(uint64(len(value)))...)
+func encodeTestBytesField(number protowire.Number, value []byte) []byte {
+	field := protowire.AppendTag(nil, number, protowire.BytesType)
+	field = protowire.AppendVarint(field, uint64(len(value)))
 	field = append(field, value...)
 	return field
 }
 
-func encodeTestVarintField(number int, value uint64) []byte {
-	field := append([]byte{}, encodeTestVarint(uint64(number<<3))...)
-	field = append(field, encodeTestVarint(value)...)
-	return field
+func encodeTestVarintField(number protowire.Number, value uint64) []byte {
+	field := protowire.AppendTag(nil, number, protowire.VarintType)
+	return protowire.AppendVarint(field, value)
 }
 
-func encodeTestVarint(value uint64) []byte {
-	return binary.AppendUvarint(nil, value)
+func TestParseV2RayDomainRejectsOutOfRangeType(t *testing.T) {
+	data := encodeTestVarintField(1, ^uint64(0))
+	data = append(data, encodeTestStringField(2, "example.com")...)
+
+	if _, err := parseV2RayDomain(data); err == nil || !strings.Contains(err.Error(), "unsupported geosite domain type") {
+		t.Fatalf("parseV2RayDomain() error = %v, want unsupported domain type", err)
+	}
 }
 
 func TestCompileGeositeRuSmartDirectReadsV2RayGeositeDat(t *testing.T) {

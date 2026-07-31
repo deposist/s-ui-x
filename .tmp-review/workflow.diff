@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 0f51302..381fc5c 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -6,7 +6,7 @@ on:
+       tag:
+         description: "Release tag"
+         required: true
+-        default: "v1.5.10-beta4"
++        default: "v1.5.10"
+         type: string
+   push:
+     tags:

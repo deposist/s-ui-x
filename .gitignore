@@ -71,6 +71,7 @@ specs/
 .specify/
 .codegraph/
 .continue/
+docs/plans/s-ui-x-ext-to-upstream-core.md
 .agents/
 
 # Local 3x-ui import fixtures with real production data

@@ -42,7 +42,7 @@
           </v-col>
           <v-col cols="12" sm="8" v-if="masqueradeType == ''">
             <v-text-field
-            label="HTTP3 server on auth fails"
+            :label="$t('types.hy.http3AuthFailureServer')"
             placeholder="file:///var/www | http://127.0.0.1:8080"
             v-model="data.masquerade"
             hide-details>
@@ -50,7 +50,7 @@
           </v-col>
           <v-col cols="12" sm="8" v-if="masqueradeType == 'file'">
             <v-text-field
-            label="File server root directory"
+            :label="$t('types.hy.fileServerRoot')"
             placeholder="/var/www"
             v-model="data.masquerade.directory"
             hide-details>
@@ -58,7 +58,7 @@
           </v-col>
           <v-col cols="12" sm="6" md="4" v-if="masqueradeType == 'string'">
             <v-text-field
-            label="HTTP Code"
+            :label="$t('types.hy.httpCode')"
             type="number"
             min="100"
             max="599"
@@ -70,7 +70,7 @@
         <v-row v-if="masqueradeType == 'proxy'">
           <v-col cols="12" sm="6">
             <v-text-field
-            label="Target URL"
+            :label="$t('types.hy.targetUrl')"
             placeholder="http://example.com:8080"
             v-model="data.masquerade.url"
             hide-details>
@@ -78,7 +78,7 @@
           </v-col>
           <v-col cols="12" sm="6" md="4">
             <v-switch
-            label="Rewrite Host"
+            :label="$t('types.hy.rewriteHost')"
             v-model="data.masquerade.rewrite_host"
             color="primary"
             hide-details>
@@ -89,7 +89,7 @@
           <v-row>
             <v-col cols="12" sm="8">
               <v-text-field
-              label="Content"
+              :label="$t('types.hy.content')"
               v-model="data.masquerade.content"
               hide-details>
               </v-text-field>

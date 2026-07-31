@@ -1,0 +1,357 @@
+diff --git a/.github/RELEASE_NOTES_v1.5.10.md b/.github/RELEASE_NOTES_v1.5.10.md
+new file mode 100644
+index 0000000..ae3bcaf
+--- /dev/null
++++ b/.github/RELEASE_NOTES_v1.5.10.md
+@@ -0,0 +1,135 @@
++# Release Notes: v1.5.10
++Release date: 2026-07-03
++
++Stable v1.5.10 consolidates v1.5.10-beta1..beta9. The release focuses on faster large installations, safer update paths, Nexus dashboard and Settings polish, exact traffic totals, Settings compatibility with stale database rows, and the final RU/ZH country-direct preset behavior.
++
++No manual database or configuration migration is required. The stats index added in this line is applied automatically.
++
++## Performance and large installations
++
++Stats charts now prepare large result sets with one sort and one bucket assignment pass instead of scanning the full result for every bucket and traffic direction. Stats writes use SQLite-safe batches, which avoids oversized insert statements on installations with many clients, inbounds, outbounds, or endpoints.
++
++`/api/load` now reads Settings through one request-local snapshot and loads independent entities in parallel. Full panel reloads do less repeated database work.
++
++Unencrypted local database export streams the prepared SQLite backup file to the browser instead of reading the whole file into memory. Encrypted backup downloads keep the existing sealed whole-payload format.
++
++Base, JSON, and Clash subscription responses use a short cache for successful output and clear it after a successful config save. Subscription headers are cached with the response for up to 45 seconds, so repeated requests in that window can show slightly older traffic counters.
++
++The frontend build now splits stable vendor chunks for Vue, Vuetify, and HTTP dependencies. The DateTime picker is lazy-loaded from client modals, and unused Moment locale imports were removed.
++
++## RU/ZH regional presets
++
++The old flat preset gallery was replaced with a side drawer. The drawer has a preview step, marks preset-managed items in both Classic and Nexus, uses deterministic preset tags, and avoids writing unknown metadata fields into sing-box config.
++
++The final stable behavior is country-direct only. Matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. The earlier beta proxy-direction choices and per-domain exceptions were removed from the drawer.
++
++RU domain routing uses `wastrel-g/geosite-ru-smart` category `direct-ru`. The panel downloads `geosite.dat`, converts that category into a local sing-box `.srs` rule set, and stores it under the panel data directory as:
++
++```text
++rulesets/geosite-ru-smart/direct-ru.srs
++```
++
++Saved config keeps a relative managed rule-set path. Runtime config receives the absolute path before sing-box starts. The managed RU smart rule set refreshes after 24 hours and can keep using a valid cached `.srs` file if GitHub is temporarily unavailable. If the file is missing or invalid, the panel reports an error instead of starting with a broken rule set.
++
++RU/ZH DNS rules use `preset-dns-direct` only for matched country domains. They do not replace global `dns.final`. The direct DNS server is still written without `detour: "direct"` when the selected direct outbound is the empty built-in `direct` outbound.
++
++## Nexus dashboard and Settings
++
++The Nexus dashboard layout was tightened across KPI cards, overview panels, protocol summaries, Recent events, System status, and dense tables. Top clients now shows real summary totals, online and total client counts, compact traffic columns, and a link to the Clients page.
++
++Traffic widgets were reworked. Live traffic gained a local time-window selector, and the first dashboard KPI now shows Traffic statistics. The new `GET /api/stats/traffic` endpoint returns exact download and upload totals using `SUM(traffic)` for the selected period. Long ranges no longer depend on average-downsampled `/api/stats` rows. The dashboard includes historical inbound traffic even when the inbound was later disabled or removed.
++
++Recent events and Top clients now scroll inside fixed-height cards, and System status is sized around its current values. The Nexus sidebar shows S-UI-X branding and CPU/RAM percentages when the status API returns them. Emerald and Dracula palettes were added for dark and light Nexus themes with improved light-theme contrast.
++
++Nexus Settings now uses card-based sections. sing-box Basics moved into Settings as the Basics (Singbox) tab, and `/basics` opens that tab. The old Basics menu item was removed from both Classic and Nexus navigation. The moved Basics save button now clears its loading state after failed config saves.
++
++## Security, updates, and API access
++
++Expired sessions are handled more cleanly in the frontend. `Invalid login` clears local auth and CSRF state, returns the browser to the login page, and avoids calling the CSRF-protected logout endpoint. Repeated invalid-session responses are shown once until the next successful login. CSRF token loading now preserves backend errors instead of replacing them with a generic missing-token message.
++
++Scoped API tokens can now access the routes they are meant to use: `observability` tokens can read observability and core history, and `telegram` tokens can run manual Telegram database backups. Telegram test remains admin-only.
++
++The panel self-update path now uses owner-only permissions for pending markers and staging files, handles invalid markers explicitly, logs cleanup errors, and has regression coverage for traversal-looking tar entries, symlink entries, marker permissions, and invalid marker recovery. Managed IP certificate files also use owner-only permissions for both certificate chains and private keys.
++
++The release line also includes small code cleanup and release-pipeline maintenance, including GitHub Actions updates for current Node-backed actions and e2e coverage aligned with the Regional presets drawer.
++
++## Settings compatibility
++
++Settings saves now tolerate old or third-party rows that may still exist in the `settings` table. `GET /api/settings` returns only user-editable keys, so stale rows such as `globalReset` are not sent back to the browser. `POST /api/save` still rejects unknown setting keys, so the save-side allowlist remains strict.
++
++## Upgrade
++
++Upgrade normally. There is no manual database or configuration migration.
++
++If you used an earlier 1.5.10 beta only to test RU/ZH proxy-direction presets, review the Regional presets drawer after upgrading. The stable UI keeps the country-direct preset behavior only.
++
++Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and `CHANGELOG-ZH.md`.
++
++---
++
++# Примечания к релизу: v1.5.10
++Дата релиза: 2026-07-03
++
++Стабильная v1.5.10 объединяет v1.5.10-beta1..beta9. В релиз вошли ускорения для больших установок, более безопасный путь обновления, доработки Nexus Dashboard и Settings, точные totals трафика, совместимость Settings со старыми строками в базе и финальное поведение RU/ZH country-direct пресетов.
++
++Ручная миграция базы данных или конфигурации не требуется. Индекс статистики, добавленный в этой линейке, применяется автоматически.
++
++## Производительность и большие установки
++
++Графики статистики теперь готовят большие наборы данных через одну сортировку и один проход по bucket'ам вместо повторного сканирования всего результата для каждого bucket и направления трафика. Запись статистики использует SQLite-safe batches, чтобы не создавать слишком большие insert statements на установках с большим числом клиентов, inbounds, outbounds или endpoints.
++
++`/api/load` читает Settings через один request-local snapshot и загружает независимые сущности параллельно. Полная перезагрузка данных панели делает меньше повторных запросов к базе.
++
++Незашифрованный локальный экспорт базы стримит подготовленный SQLite backup-файл в браузер, а не читает весь файл в память. Зашифрованные backup downloads сохраняют прежний формат с шифрованием всего payload целиком.
++
++Base, JSON и Clash подписки используют короткий cache для успешных ответов и очищают его после успешного сохранения конфигурации. Headers подписки кешируются вместе с ответом до 45 секунд, поэтому повторные запросы в этом окне могут показывать слегка устаревшие traffic counters.
++
++Frontend build теперь отделяет стабильные vendor chunks для Vue, Vuetify и HTTP-зависимостей. DateTime picker загружается lazy из client modals, лишние Moment locale imports удалены.
++
++## RU/ZH региональные пресеты
++
++Старый flat preset gallery заменён side drawer. В drawer есть preview перед применением, preset-managed элементы помечаются в Classic и Nexus, используются детерминированные preset tags, а в sing-box config не записываются неизвестные metadata-поля.
++
++Финальное стабильное поведение теперь только country-direct. Найденный RU и ZH страновой трафик идёт через выбранный direct outbound. Остальной трафик сохраняет текущий final-маршрут. Более ранние beta-настройки proxy direction и исключения по доменам удалены из drawer.
++
++RU-домены берутся из категории `direct-ru` репозитория `wastrel-g/geosite-ru-smart`. Панель скачивает `geosite.dat`, конвертирует эту категорию в локальный sing-box `.srs` rule set и сохраняет его в каталоге данных панели:
++
++```text
++rulesets/geosite-ru-smart/direct-ru.srs
++```
++
++В сохранённой конфигурации остаётся относительный managed rule-set path. Перед запуском sing-box runtime config получает абсолютный путь. Managed RU smart rule set обновляется после 24 часов и может продолжать использовать валидный кешированный `.srs`, если GitHub временно недоступен. Если файла нет или он повреждён, панель возвращает ошибку вместо запуска с нерабочим rule set.
++
++DNS-правила RU/ZH используют `preset-dns-direct` только для найденных страновых доменов. Они не заменяют глобальный `dns.final`. Direct DNS server по-прежнему записывается без `detour: "direct"`, если выбран пустой встроенный outbound `direct`.
++
++## Nexus Dashboard и Settings
++
++Разметка Nexus Dashboard стала плотнее в KPI cards, overview panels, protocol summaries, Recent events, System status и dense tables. Top clients показывает реальные totals, число online и всего клиентов, компактные traffic-колонки и ссылку на страницу Clients.
++
++Traffic widgets переработаны. Live traffic получил локальный выбор временного окна, а первый KPI Dashboard теперь показывает Traffic statistics. Новый endpoint `GET /api/stats/traffic` возвращает точные download и upload totals через `SUM(traffic)` за выбранный период. Длинные диапазоны больше не зависят от average-downsampled строк `/api/stats`. Dashboard учитывает исторический inbound-трафик даже для inbound'ов, которые позже отключили или удалили.
++
++Recent events и Top clients прокручиваются внутри карточек фиксированной высоты, а System status рассчитан под текущий набор значений. Nexus sidebar показывает бренд S-UI-X и проценты CPU/RAM, когда status API возвращает эти метрики. Добавлены палитры Emerald и Dracula для тёмной и светлой темы Nexus, с улучшенным контрастом в светлом варианте.
++
++Nexus Settings переведён на карточные секции. sing-box Basics перенесён в Settings как вкладка Basics (Singbox), а `/basics` открывает эту вкладку. Старый пункт Basics удалён из Classic и Nexus navigation. Перенесённая кнопка Save теперь сбрасывает loading state после неудачного сохранения config.
++
++## Безопасность, обновления и доступ API
++
++Истёкшие сессии обрабатываются аккуратнее во frontend. `Invalid login` очищает локальное auth и CSRF state, возвращает браузер на страницу входа и не вызывает CSRF-защищённый logout endpoint. Повторные invalid-session ответы показываются один раз до следующего успешного входа. Загрузка CSRF token теперь сохраняет backend-ошибки, а не заменяет их общим сообщением про отсутствующий token.
++
++Scoped API tokens получили доступ к нужным маршрутам: `observability` tokens могут читать observability и core history, а `telegram` tokens могут запускать ручной Telegram backup базы данных. Telegram test остаётся admin-only.
++
++Путь self-update в панели теперь использует owner-only permissions для pending markers и staging files, явно обрабатывает invalid markers, логирует cleanup errors и покрыт regression tests для traversal-looking tar entries, symlink entries, marker permissions и invalid marker recovery. Managed IP certificate files также используют owner-only permissions для certificate chains и private keys.
++
++В релиз также вошли небольшая чистка кода и обслуживание release pipeline, включая обновление GitHub Actions до актуальных Node-backed actions и e2e coverage под Regional presets drawer.
++
++## Совместимость Settings
++
++Сохранение Settings теперь нормально работает на базах, где в таблице `settings` остались старые или сторонние строки. `GET /api/settings` возвращает только user-editable keys, поэтому stale rows вроде `globalReset` не уходят в браузер. `POST /api/save` по-прежнему отклоняет неизвестные setting keys, так что save-side allowlist остаётся строгим.
++
++## Обновление
++
++Обновляйтесь обычным способом. Ручная миграция базы данных или конфигурации не требуется.
++
++Если вы использовали ранние beta 1.5.10 только для проверки RU/ZH proxy-direction пресетов, после обновления проверьте Regional presets drawer. Стабильный UI оставляет только country-direct поведение.
++
++Полная история beta-релизов находится в `CHANGELOG-EN.md`, `CHANGELOG-RU.md` и `CHANGELOG-ZH.md`.
+diff --git a/CHANGELOG-EN.md b/CHANGELOG-EN.md
+index 406f0b1..3f2c9bb 100644
+--- a/CHANGELOG-EN.md
++++ b/CHANGELOG-EN.md
+@@ -9,6 +9,20 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
+ 
+ No unreleased changes yet.
+ 
++## [1.5.10] - 2026-07-03 - stable 1.5.10 release
++
++Stable 1.5.10 consolidates all changes from v1.5.10-beta1 through v1.5.10-beta9. No manual database or configuration migration is required. The stats index added during the beta line is applied automatically.
++
++- Improved performance on large installations: faster stats chart preparation, SQLite-safe stats batches, fewer repeated settings reads in `/api/load`, parallel independent load queries, streamed unencrypted DB export, short subscription output caching, and smaller frontend entry chunks.
++- Replaced the old RU/ZH preset gallery with the Regional presets drawer and settled the stable behavior on country-direct routing. Matched RU and ZH country traffic uses the selected direct outbound, while other traffic keeps the existing final route.
++- Added managed RU smart domain routing from `wastrel-g/geosite-ru-smart` category `direct-ru`, converted locally to `rulesets/geosite-ru-smart/direct-ru.srs`, with cached fallback and explicit errors for missing or invalid rule sets.
++- Refined RU/ZH DNS behavior so matched country domains use `preset-dns-direct` without changing global `dns.final`, and avoided invalid `detour: "direct"` output for the empty built-in direct outbound.
++- Updated Nexus Dashboard and Settings: tighter dashboard cards, Top clients summaries, fixed-height scroll areas, Traffic statistics backed by `GET /api/stats/traffic`, exact traffic totals, new Nexus palettes, and Basics moved into Settings.
++- Hardened session expiry handling, scoped API-token access, self-update staging and pending markers, managed IP certificate file permissions, and related regression coverage.
++- Fixed Settings saves on databases with stale or third-party rows such as `globalReset` while keeping the save-side setting allowlist strict.
++
++Full release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
++
+ ## [1.5.10-beta9] - 2026-07-01 - RU/ZH country-direct presets
+ 
+ Ninth beta of the 1.5.10 line. This update changes the regional presets so matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. No manual migration is required.
+diff --git a/CHANGELOG-RU.md b/CHANGELOG-RU.md
+index af35e98..e38aa49 100644
+--- a/CHANGELOG-RU.md
++++ b/CHANGELOG-RU.md
+@@ -9,6 +9,20 @@
+ 
+ Пока нет unreleased-изменений.
+ 
++## [1.5.10] - 2026-07-03 - стабильный релиз 1.5.10
++
++Стабильная 1.5.10 объединяет все изменения из v1.5.10-beta1..v1.5.10-beta9. Ручная миграция базы данных или конфигурации не требуется. Индекс статистики, добавленный в beta-линейке, применяется автоматически.
++
++- Улучшена работа на больших установках: быстрее подготовка графиков статистики, SQLite-safe batches для stats, меньше повторных settings reads в `/api/load`, параллельная загрузка независимых данных, streaming для незашифрованного DB export, короткий cache output подписок и меньшие frontend entry chunks.
++- Старый RU/ZH preset gallery заменён Regional presets drawer, а стабильное поведение зафиксировано как country-direct routing. Найденный RU и ZH страновой трафик идёт через выбранный direct outbound, остальной трафик сохраняет текущий final route.
++- Добавлена managed RU smart доменная маршрутизация из категории `direct-ru` репозитория `wastrel-g/geosite-ru-smart`, с локальной конвертацией в `rulesets/geosite-ru-smart/direct-ru.srs`, cached fallback и явными ошибками для отсутствующих или повреждённых rule sets.
++- Уточнено DNS-поведение RU/ZH: найденные страновые домены используют `preset-dns-direct`, глобальный `dns.final` не меняется, а для пустого built-in direct outbound не пишется невалидный `detour: "direct"`.
++- Обновлены Nexus Dashboard и Settings: более плотные карточки dashboard, summaries в Top clients, fixed-height scroll areas, Traffic statistics через `GET /api/stats/traffic`, точные traffic totals, новые палитры Nexus и перенос Basics внутрь Settings.
++- Усилены обработка истёкших сессий, scoped API-token access, self-update staging и pending markers, права managed IP certificate files и связанные regression tests.
++- Исправлено сохранение Settings на базах со старыми или сторонними строками вроде `globalReset`; строгий save-side allowlist для setting keys сохранён.
++
++Полные release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md).
++
+ ## [1.5.10-beta9] - 2026-07-01 - RU/ZH пресеты для прямого странового трафика
+ 
+ Девятая beta в ветке 1.5.10. Это обновление меняет региональные пресеты: найденный RU и ZH страновой трафик идёт через выбранный direct outbound, а остальной трафик сохраняет текущий final-маршрут. Ручная миграция не требуется.
+diff --git a/CHANGELOG-ZH.md b/CHANGELOG-ZH.md
+index a55438a..9a699df 100644
+--- a/CHANGELOG-ZH.md
++++ b/CHANGELOG-ZH.md
+@@ -8,6 +8,20 @@
+ 
+ 暂无未发布变更。
+ 
++## [1.5.10] - 2026-07-03 - 稳定版 1.5.10
++
++稳定版 1.5.10 汇总了 v1.5.10-beta1 到 v1.5.10-beta9 的全部变更。无需手动迁移数据库或配置。beta 阶段加入的统计索引会自动应用。
++
++- 改善大型安装的性能：统计图表处理更快，stats 写入使用 SQLite-safe batches，`/api/load` 减少重复 settings 读取并并行加载独立数据，未加密数据库导出改为 streaming，订阅输出加入短缓存，frontend entry chunks 更小。
++- 将旧的 RU/ZH preset gallery 替换为 Regional presets drawer，并把稳定版行为固定为 country-direct routing。匹配到的 RU 和 ZH 国家流量使用所选 direct outbound，其他流量保留现有 final route。
++- 加入 managed RU smart 域名路由，来源为 `wastrel-g/geosite-ru-smart` 的 `direct-ru` 分类，并在本地转换为 `rulesets/geosite-ru-smart/direct-ru.srs`。本地缓存可作为 fallback，缺失或损坏的 rule set 会返回明确错误。
++- 调整 RU/ZH DNS 行为：匹配到的国家域名使用 `preset-dns-direct`，不会修改全局 `dns.final`，并避免为空的内置 direct outbound 写出无效的 `detour: "direct"`。
++- 更新 Nexus Dashboard 和 Settings：dashboard cards 更紧凑，Top clients 显示汇总信息，固定高度区域可滚动，Traffic statistics 使用 `GET /api/stats/traffic`，流量 totals 改为精确统计，加入新的 Nexus palettes，并将 Basics 移入 Settings。
++- 加固 session expiry 处理、scoped API-token access、self-update staging 与 pending markers、managed IP certificate files 权限，并补充相关 regression tests。
++- 修复数据库中存在旧的或第三方 settings 行时的 Settings 保存问题，例如 `globalReset`。保存端 setting keys allowlist 仍保持严格。
++
++完整 release notes: [`docs/releases/v1.5.10.md`](docs/releases/v1.5.10.md)。
++
+ ## [1.5.10-beta9] - 2026-07-01 - RU/ZH 国家流量直连预设
+ 
+ 1.5.10 分支的第九个 beta。此版本调整区域预设：匹配到的 RU 和 ZH 国家流量会走所选 direct outbound，其他流量继续使用现有 final 路由。无需手动迁移。
+diff --git a/docs/releases/v1.5.10.md b/docs/releases/v1.5.10.md
+new file mode 100644
+index 0000000..ae3bcaf
+--- /dev/null
++++ b/docs/releases/v1.5.10.md
+@@ -0,0 +1,135 @@
++# Release Notes: v1.5.10
++Release date: 2026-07-03
++
++Stable v1.5.10 consolidates v1.5.10-beta1..beta9. The release focuses on faster large installations, safer update paths, Nexus dashboard and Settings polish, exact traffic totals, Settings compatibility with stale database rows, and the final RU/ZH country-direct preset behavior.
++
++No manual database or configuration migration is required. The stats index added in this line is applied automatically.
++
++## Performance and large installations
++
++Stats charts now prepare large result sets with one sort and one bucket assignment pass instead of scanning the full result for every bucket and traffic direction. Stats writes use SQLite-safe batches, which avoids oversized insert statements on installations with many clients, inbounds, outbounds, or endpoints.
++
++`/api/load` now reads Settings through one request-local snapshot and loads independent entities in parallel. Full panel reloads do less repeated database work.
++
++Unencrypted local database export streams the prepared SQLite backup file to the browser instead of reading the whole file into memory. Encrypted backup downloads keep the existing sealed whole-payload format.
++
++Base, JSON, and Clash subscription responses use a short cache for successful output and clear it after a successful config save. Subscription headers are cached with the response for up to 45 seconds, so repeated requests in that window can show slightly older traffic counters.
++
++The frontend build now splits stable vendor chunks for Vue, Vuetify, and HTTP dependencies. The DateTime picker is lazy-loaded from client modals, and unused Moment locale imports were removed.
++
++## RU/ZH regional presets
++
++The old flat preset gallery was replaced with a side drawer. The drawer has a preview step, marks preset-managed items in both Classic and Nexus, uses deterministic preset tags, and avoids writing unknown metadata fields into sing-box config.
++
++The final stable behavior is country-direct only. Matched RU and ZH country traffic goes through the selected direct outbound. Other traffic keeps the existing final route. The earlier beta proxy-direction choices and per-domain exceptions were removed from the drawer.
++
++RU domain routing uses `wastrel-g/geosite-ru-smart` category `direct-ru`. The panel downloads `geosite.dat`, converts that category into a local sing-box `.srs` rule set, and stores it under the panel data directory as:
++
++```text
++rulesets/geosite-ru-smart/direct-ru.srs
++```
++
++Saved config keeps a relative managed rule-set path. Runtime config receives the absolute path before sing-box starts. The managed RU smart rule set refreshes after 24 hours and can keep using a valid cached `.srs` file if GitHub is temporarily unavailable. If the file is missing or invalid, the panel reports an error instead of starting with a broken rule set.
++
++RU/ZH DNS rules use `preset-dns-direct` only for matched country domains. They do not replace global `dns.final`. The direct DNS server is still written without `detour: "direct"` when the selected direct outbound is the empty built-in `direct` outbound.
++
++## Nexus dashboard and Settings
++
++The Nexus dashboard layout was tightened across KPI cards, overview panels, protocol summaries, Recent events, System status, and dense tables. Top clients now shows real summary totals, online and total client counts, compact traffic columns, and a link to the Clients page.
++
++Traffic widgets were reworked. Live traffic gained a local time-window selector, and the first dashboard KPI now shows Traffic statistics. The new `GET /api/stats/traffic` endpoint returns exact download and upload totals using `SUM(traffic)` for the selected period. Long ranges no longer depend on average-downsampled `/api/stats` rows. The dashboard includes historical inbound traffic even when the inbound was later disabled or removed.
++
++Recent events and Top clients now scroll inside fixed-height cards, and System status is sized around its current values. The Nexus sidebar shows S-UI-X branding and CPU/RAM percentages when the status API returns them. Emerald and Dracula palettes were added for dark and light Nexus themes with improved light-theme contrast.
++
++Nexus Settings now uses card-based sections. sing-box Basics moved into Settings as the Basics (Singbox) tab, and `/basics` opens that tab. The old Basics menu item was removed from both Classic and Nexus navigation. The moved Basics save button now clears its loading state after failed config saves.
++
++## Security, updates, and API access
++
++Expired sessions are handled more cleanly in the frontend. `Invalid login` clears local auth and CSRF state, returns the browser to the login page, and avoids calling the CSRF-protected logout endpoint. Repeated invalid-session responses are shown once until the next successful login. CSRF token loading now preserves backend errors instead of replacing them with a generic missing-token message.
++
++Scoped API tokens can now access the routes they are meant to use: `observability` tokens can read observability and core history, and `telegram` tokens can run manual Telegram database backups. Telegram test remains admin-only.
++
++The panel self-update path now uses owner-only permissions for pending markers and staging files, handles invalid markers explicitly, logs cleanup errors, and has regression coverage for traversal-looking tar entries, symlink entries, marker permissions, and invalid marker recovery. Managed IP certificate files also use owner-only permissions for both certificate chains and private keys.
++
++The release line also includes small code cleanup and release-pipeline maintenance, including GitHub Actions updates for current Node-backed actions and e2e coverage aligned with the Regional presets drawer.
++
++## Settings compatibility
++
++Settings saves now tolerate old or third-party rows that may still exist in the `settings` table. `GET /api/settings` returns only user-editable keys, so stale rows such as `globalReset` are not sent back to the browser. `POST /api/save` still rejects unknown setting keys, so the save-side allowlist remains strict.
++
++## Upgrade
++
++Upgrade normally. There is no manual database or configuration migration.
++
++If you used an earlier 1.5.10 beta only to test RU/ZH proxy-direction presets, review the Regional presets drawer after upgrading. The stable UI keeps the country-direct preset behavior only.
++
++Full per-beta history is in `CHANGELOG-EN.md`, `CHANGELOG-RU.md`, and `CHANGELOG-ZH.md`.
++
++---
++
++# Примечания к релизу: v1.5.10
++Дата релиза: 2026-07-03
++
++Стабильная v1.5.10 объединяет v1.5.10-beta1..beta9. В релиз вошли ускорения для больших установок, более безопасный путь обновления, доработки Nexus Dashboard и Settings, точные totals трафика, совместимость Settings со старыми строками в базе и финальное поведение RU/ZH country-direct пресетов.
++
++Ручная миграция базы данных или конфигурации не требуется. Индекс статистики, добавленный в этой линейке, применяется автоматически.
++
++## Производительность и большие установки
++
++Графики статистики теперь готовят большие наборы данных через одну сортировку и один проход по bucket'ам вместо повторного сканирования всего результата для каждого bucket и направления трафика. Запись статистики использует SQLite-safe batches, чтобы не создавать слишком большие insert statements на установках с большим числом клиентов, inbounds, outbounds или endpoints.
++
++`/api/load` читает Settings через один request-local snapshot и загружает независимые сущности параллельно. Полная перезагрузка данных панели делает меньше повторных запросов к базе.
++
++Незашифрованный локальный экспорт базы стримит подготовленный SQLite backup-файл в браузер, а не читает весь файл в память. Зашифрованные backup downloads сохраняют прежний формат с шифрованием всего payload целиком.
++
++Base, JSON и Clash подписки используют короткий cache для успешных ответов и очищают его после успешного сохранения конфигурации. Headers подписки кешируются вместе с ответом до 45 секунд, поэтому повторные запросы в этом окне могут показывать слегка устаревшие traffic counters.
++
++Frontend build теперь отделяет стабильные vendor chunks для Vue, Vuetify и HTTP-зависимостей. DateTime picker загружается lazy из client modals, лишние Moment locale imports удалены.
++
++## RU/ZH региональные пресеты
++
++Старый flat preset gallery заменён side drawer. В drawer есть preview перед применением, preset-managed элементы помечаются в Classic и Nexus, используются детерминированные preset tags, а в sing-box config не записываются неизвестные metadata-поля.
++
++Финальное стабильное поведение теперь только country-direct. Найденный RU и ZH страновой трафик идёт через выбранный direct outbound. Остальной трафик сохраняет текущий final-маршрут. Более ранние beta-настройки proxy direction и исключения по доменам удалены из drawer.
++
++RU-домены берутся из категории `direct-ru` репозитория `wastrel-g/geosite-ru-smart`. Панель скачивает `geosite.dat`, конвертирует эту категорию в локальный sing-box `.srs` rule set и сохраняет его в каталоге данных панели:
++
++```text
++rulesets/geosite-ru-smart/direct-ru.srs
++```
++
++В сохранённой конфигурации остаётся относительный managed rule-set path. Перед запуском sing-box runtime config получает абсолютный путь. Managed RU smart rule set обновляется после 24 часов и может продолжать использовать валидный кешированный `.srs`, если GitHub временно недоступен. Если файла нет или он повреждён, панель возвращает ошибку вместо запуска с нерабочим rule set.
++
++DNS-правила RU/ZH используют `preset-dns-direct` только для найденных страновых доменов. Они не заменяют глобальный `dns.final`. Direct DNS server по-прежнему записывается без `detour: "direct"`, если выбран пустой встроенный outbound `direct`.
++
++## Nexus Dashboard и Settings
++
++Разметка Nexus Dashboard стала плотнее в KPI cards, overview panels, protocol summaries, Recent events, System status и dense tables. Top clients показывает реальные totals, число online и всего клиентов, компактные traffic-колонки и ссылку на страницу Clients.
++
++Traffic widgets переработаны. Live traffic получил локальный выбор временного окна, а первый KPI Dashboard теперь показывает Traffic statistics. Новый endpoint `GET /api/stats/traffic` возвращает точные download и upload totals через `SUM(traffic)` за выбранный период. Длинные диапазоны больше не зависят от average-downsampled строк `/api/stats`. Dashboard учитывает исторический inbound-трафик даже для inbound'ов, которые позже отключили или удалили.
++
++Recent events и Top clients прокручиваются внутри карточек фиксированной высоты, а System status рассчитан под текущий набор значений. Nexus sidebar показывает бренд S-UI-X и проценты CPU/RAM, когда status API возвращает эти метрики. Добавлены палитры Emerald и Dracula для тёмной и светлой темы Nexus, с улучшенным контрастом в светлом варианте.
++
++Nexus Settings переведён на карточные секции. sing-box Basics перенесён в Settings как вкладка Basics (Singbox), а `/basics` открывает эту вкладку. Старый пункт Basics удалён из Classic и Nexus navigation. Перенесённая кнопка Save теперь сбрасывает loading state после неудачного сохранения config.
++
++## Безопасность, обновления и доступ API
++
++Истёкшие сессии обрабатываются аккуратнее во frontend. `Invalid login` очищает локальное auth и CSRF state, возвращает браузер на страницу входа и не вызывает CSRF-защищённый logout endpoint. Повторные invalid-session ответы показываются один раз до следующего успешного входа. Загрузка CSRF token теперь сохраняет backend-ошибки, а не заменяет их общим сообщением про отсутствующий token.
++
++Scoped API tokens получили доступ к нужным маршрутам: `observability` tokens могут читать observability и core history, а `telegram` tokens могут запускать ручной Telegram backup базы данных. Telegram test остаётся admin-only.
++
++Путь self-update в панели теперь использует owner-only permissions для pending markers и staging files, явно обрабатывает invalid markers, логирует cleanup errors и покрыт regression tests для traversal-looking tar entries, symlink entries, marker permissions и invalid marker recovery. Managed IP certificate files также используют owner-only permissions для certificate chains и private keys.
++
++В релиз также вошли небольшая чистка кода и обслуживание release pipeline, включая обновление GitHub Actions до актуальных Node-backed actions и e2e coverage под Regional presets drawer.
++
++## Совместимость Settings
++
++Сохранение Settings теперь нормально работает на базах, где в таблице `settings` остались старые или сторонние строки. `GET /api/settings` возвращает только user-editable keys, поэтому stale rows вроде `globalReset` не уходят в браузер. `POST /api/save` по-прежнему отклоняет неизвестные setting keys, так что save-side allowlist остаётся строгим.
++
++## Обновление
++
++Обновляйтесь обычным способом. Ручная миграция базы данных или конфигурации не требуется.
++
++Если вы использовали ранние beta 1.5.10 только для проверки RU/ZH proxy-direction пресетов, после обновления проверьте Regional presets drawer. Стабильный UI оставляет только country-direct поведение.
++
++Полная история beta-релизов находится в `CHANGELOG-EN.md`, `CHANGELOG-RU.md` и `CHANGELOG-ZH.md`.

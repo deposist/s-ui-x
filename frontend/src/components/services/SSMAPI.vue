@@ -1,6 +1,6 @@
 <template>
   <v-card style="padding: 8px;" rounded="xl" class="border">
-    <v-card-subtitle>Shadowsocks API
+    <v-card-subtitle>{{ $t('types.ssmApi') }}
       <v-chip color="primary" density="compact" variant="elevated" @click="add_server"><v-icon icon="mdi-plus" /></v-chip>
     </v-card-subtitle>
     <v-row>

@@ -440,7 +440,7 @@ fi
 echo "$(t current_release "${release}")"
 
 confirm() {
-    if [[ $# > 1 ]]; then
+    if [[ $# -gt 1 ]]; then
         echo && read -p "$1 [$(t default_n "$2")]: " temp
         if [[ x"${temp}" == x"" ]]; then
             temp=$2
@@ -962,7 +962,7 @@ enable_bbr() {
 }
 
 install_acme() {
-    cd ~
+    cd ~ || return 1
     LOGI "$(t installing_acme)"
     # Fail closed: -f rejects HTTP error bodies (a 404/partial page must never be
     # piped into a root shell), --proto '=https' forbids a downgrade/redirect to
@@ -1094,7 +1094,8 @@ ssl_cert_issue() {
     # (column 1) rather than only the last line, so the check stays correct
     # when several certificates are present.
     local force_flag=""
-    local existing=$(~/.acme.sh/acme.sh --list | awk -v d="${domain}" 'NR>1 && $1==d {print $1; exit}')
+    local existing
+    existing=$(~/.acme.sh/acme.sh --list | awk -v d="${domain}" 'NR>1 && $1==d {print $1; exit}')
 
     if [ "${existing}" == "${domain}" ]; then
         LOGI "$(~/.acme.sh/acme.sh --list)"
@@ -1327,7 +1328,7 @@ show_menu() {
     esac
 }
 
-if [[ $# > 0 ]]; then
+if [[ $# -gt 0 ]]; then
     case $1 in
     "start")     check_install 0 && start s-ui 0 ;;
     "stop")      check_install 0 && stop s-ui 0 ;;

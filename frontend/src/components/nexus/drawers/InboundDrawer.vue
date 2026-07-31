@@ -95,7 +95,7 @@
               <v-card-subtitle>{{ $t('in.multiDomain') }}
                 <v-chip color="primary" density="compact" variant="elevated" @click="add_addr"><v-icon icon="mdi-plus" /></v-chip>
               </v-card-subtitle>
-              <template v-for="addr,index in inbound.addrs">
+              <template v-for="(addr, index) in inbound.addrs" :key="addrKey(addr, index)">
                 {{ $t('in.addr') }} #{{ (index+1) }} <v-icon icon="mdi-delete" color="error" @click="inbound.addrs?.splice(index,1)" />
                 <v-divider></v-divider>
                 <AddrVue :addr="addr" :hasTls="HasTls.includes(inbound.type)" />
@@ -240,6 +240,9 @@ export default {
         delete this.inbound.out_json
       }
       this.side = "s"
+    },
+    addrKey(addr: Addr, index: number) {
+      return `${addr.server}:${addr.server_port}:${index}`
     },
     add_addr() {
       this.inbound.addrs?.push(<Addr>{ server: location.hostname, server_port: this.inbound.listen_port })

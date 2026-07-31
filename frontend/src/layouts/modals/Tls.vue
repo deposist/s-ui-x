@@ -243,7 +243,7 @@
               </v-col>
               <v-col cols="12">
                 <v-text-field
-                  label="Short IDs"
+                  :label="$t('tls.shortIds')"
                   hide-details
                   append-icon="mdi-refresh"
                   @click:append="randomSID"
@@ -252,7 +252,7 @@
               </v-col>
               <v-col cols="12" sm="6" md="4" v-if="optionTime">
                 <v-text-field
-                label="Max Time Diference"
+                :label="$t('tls.maxTimeDifference')"
                 type="number"
                 min="1"
                 :suffix="$t('date.m')"
@@ -284,7 +284,7 @@
             <v-col cols="12" sm="6" md="4">
               <v-select
                 hide-details
-                label="Fingerprint"
+                :label="$t('tls.fingerprint')"
                 :items="fingerprints"
                 v-model="outTls.utls.fingerprint">
               </v-select>
@@ -332,7 +332,7 @@
                   </template>
                   <template v-else>
                     <v-list-item>
-                      <v-switch v-model="optionTime" color="primary" label="Max Time Difference" hide-details></v-switch>
+                      <v-switch v-model="optionTime" color="primary" :label="$t('tls.maxTimeDifference')" hide-details></v-switch>
                     </v-list-item>
                   </template>
                 </v-list>
