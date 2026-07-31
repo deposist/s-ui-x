@@ -2,13 +2,7 @@
 
 Validated dependency:
 
-- `github.com/sagernet/sing-box v1.13.13`
-
-> Note: the upstream `v1.13.13` tag was moved after publishing. `go.mod` keeps
-> `require v1.13.13` but `replace`s it with the fixed release commit
-> (`v1.13.13-0.20260603083344-78b2e12fbdd8`, commit `78b2e12`) because the
-> original tag commit cached by the Go proxy breaks the Windows build. See the
-> `replace` comment in `go.mod`.
+- `github.com/sagernet/sing-box v1.13.15`
 
 The local `ConnTracker` and `StatsTracker` wrap sing-box routed TCP and packet
 connections. Any bump of `github.com/sagernet/sing-box` must revalidate this
@@ -46,3 +40,14 @@ Revalidation log:
   Reset-drain, and stable-counter-pointer invariants are local code and
   unchanged. `go build ./...`, `go vet ./...`, `go test ./core`, and the full
   non-race `go test ./...` (Windows TempDir-cleanup flakes excepted) pass.
+
+- 2026-07-31, v1.13.13 -> v1.13.15: revalidated against the official
+  `v1.13.15` release. `adapter.ConnectionTracker` remains unchanged:
+  `RoutedConnection(ctx, net.Conn, InboundContext, Rule, Outbound) net.Conn` and
+  `RoutedPacketConnection(ctx, N.PacketConn, InboundContext, Rule, Outbound) N.PacketConn`.
+  Both local tracker implementations compile against that interface;
+  `adapter.InboundContext.Source` remains an `M.Socksaddr`, and source-IP
+  extraction still uses `metadata.Source.Addr`. Done-once, Reset-drain, and
+  stable-counter-pointer invariants remain local and are covered by the core
+  tracker tests. Required verification: `go test ./core`, `go test -race ./core`,
+  and `go test -race ./service ./api`.
