@@ -265,7 +265,7 @@ jobs:
       - name: Verify local release checksums
         working-directory: release-assets
         shell: bash
-        run: sha256sum --check --strict --binary s-ui-linux-*.sha256 s-ui-windows-*.sha256
+        run: sha256sum --check --strict s-ui-linux-*.sha256 s-ui-windows-*.sha256
       - name: Ensure draft release exists
         id: release
         env:
