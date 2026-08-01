@@ -36,7 +36,7 @@ runs:
       shell: bash
       env:
         INPUT_TAG: ${{ inputs.tag }}
-      run: echo "tag=$(scripts/validate-release-tag.sh "$INPUT_TAG")" >> "$GITHUB_OUTPUT"
+      run: echo "tag=$(bash scripts/validate-release-tag.sh "$INPUT_TAG")" >> "$GITHUB_OUTPUT"
 
     - name: Stage trusted release verifier
       shell: bash
@@ -61,10 +61,10 @@ runs:
         EVENT_COMMIT: ${{ inputs.event_commit }}
       run: |
         set -euo pipefail
-        output=$("$RUNNER_TEMP/s-ui-release-tooling/verify-release-tag-checkout.sh" "$TAG" "$EXPECTED_COMMIT" "$EVENT_COMMIT")
+        output=$(bash "$RUNNER_TEMP/s-ui-release-tooling/verify-release-tag-checkout.sh" "$TAG" "$EXPECTED_COMMIT" "$EVENT_COMMIT")
         TAG_COMMIT=$(sed -n 's/^commit=//p' <<<"$output")
         VERSION=$(sed -n 's/^version=//p' <<<"$output")
-        PRERELEASE=$("$RUNNER_TEMP/s-ui-release-tooling/validate-release-tag.sh" --prerelease "$TAG")
+        PRERELEASE=$(bash "$RUNNER_TEMP/s-ui-release-tooling/validate-release-tag.sh" --prerelease "$TAG")
         {
           echo "tag=$TAG"
           echo "commit=$TAG_COMMIT"
