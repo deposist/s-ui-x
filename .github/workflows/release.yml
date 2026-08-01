@@ -277,26 +277,31 @@ jobs:
         run: |
           set -euo pipefail
           NOTES_PATH="$RUNNER_TEMP/empty-release-notes.md"
-          if [[ -f ".github/RELEASE_NOTES_${TAG}.md" ]]; then
+          if [[ -f "docs/releases/${TAG#v}.md" ]]; then
+            NOTES_PATH="docs/releases/${TAG#v}.md"
+          elif [[ -f ".github/RELEASE_NOTES_${TAG}.md" ]]; then
             NOTES_PATH=".github/RELEASE_NOTES_${TAG}.md"
           else
             : > "$NOTES_PATH"
           fi
           echo "notes_path=$NOTES_PATH" >> "$GITHUB_OUTPUT"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,targetCommitish,isDraft,isPrerelease,name,body >/tmp/release.json 2>/dev/null; then
-            jq -e --arg tag "$TAG" --arg commit "$COMMIT" --arg prerelease "$PRERELEASE" --arg notes "$(cat "$NOTES_PATH")" '
-              .tagName == $tag and
-              .targetCommitish == $commit and
-              .isDraft == true and
-              (.isPrerelease | tostring) == $prerelease and
-              (.name == ("s-ui " + $tag)) and
-              .body == $notes
-            ' /tmp/release.json >/dev/null
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft >/tmp/release.json 2>/dev/null; then
+            jq -e --arg tag "$TAG" '.tagName == $tag and .isDraft == true' /tmp/release.json >/dev/null
+            args=(release edit "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --target "$COMMIT" --title "s-ui $TAG" --notes-file "$NOTES_PATH" --draft --latest=false --prerelease="$PRERELEASE")
           else
             args=(release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --target "$COMMIT" --title "s-ui $TAG" --notes-file "$NOTES_PATH" --draft --latest=false)
             [[ "$PRERELEASE" == true ]] && args+=(--prerelease)
-            gh "${args[@]}"
           fi
+          gh "${args[@]}"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,targetCommitish,isDraft,isPrerelease,name,body >/tmp/release.json
+          jq -e --arg tag "$TAG" --arg commit "$COMMIT" --arg prerelease "$PRERELEASE" --rawfile notes "$NOTES_PATH" '
+            .tagName == $tag and
+            .targetCommitish == $commit and
+            .isDraft == true and
+            (.isPrerelease | tostring) == $prerelease and
+            (.name == ("s-ui " + $tag)) and
+            (.body == $notes or .body == ($notes | rtrimstr("\n")))
+          ' /tmp/release.json >/dev/null
       - name: Reconcile release assets by authoritative digest
         env:
           GH_TOKEN: ${{ github.token }}
