@@ -5,8 +5,8 @@ import { i18n } from '@/locales'
 import { Inbound } from '@/types/inbounds'
 import { Client } from '@/types/clients'
 import { FailoverStatusEntry } from '@/types/outbounds'
-
-type ActionableLogLevel = 'warning' | 'error'
+import { canSaveRuntimeType, isRuntimeCapabilities, RuntimeCapabilities } from '@/types/runtimeCapabilities'
+type ActionableLogLevel = 'error' | 'warning'
 
 const actionableLogLevel = (log: string): ActionableLogLevel | undefined => {
   if (/\b(?:ERROR|FATAL)\b/i.test(log)) return 'error'
@@ -16,14 +16,14 @@ const actionableLogLevel = (log: string): ActionableLogLevel | undefined => {
 }
 
 const Data = defineStore('Data', {
-  state: () => ({ 
+  state: () => ({
     lastLoad: 0,
-    reloadItems: localStorage.getItem("reloadItems")?.split(',')?? <string[]>[],
+    reloadItems: localStorage.getItem("reloadItems")?.split(',') ?? <string[]>[],
     subURI: "",
     subJsonURI: "",
     subClashURI: "",
     enableTraffic: false,
-    onlines: {inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[], failover: <Record<string, FailoverStatusEntry>>{}},
+    onlines: { inbound: <string[]>[], outbound: <string[]>[], user: <string[]>[], failover: <Record<string, FailoverStatusEntry>>{} },
     config: <any>{},
     inbounds: <any[]>[],
     outbounds: <any[]>[],
@@ -31,30 +31,34 @@ const Data = defineStore('Data', {
     endpoints: <any[]>[],
     clients: <any>[],
     tlsConfigs: <any[]>[],
+    capabilities: <RuntimeCapabilities | null>null,
   }),
   actions: {
     async loadData() {
-      const msg = await HttpUtils.get('api/load', this.lastLoad >0 ? {lu: this.lastLoad} : {} )
-      if(msg.success) {
+      if (!this.capabilities) {
+        const capabilityResponse = await HttpUtils.get('api/capabilities')
+        if (capabilityResponse.success && isRuntimeCapabilities(capabilityResponse.obj)) this.capabilities = capabilityResponse.obj
+      }
+      const msg = await HttpUtils.get('api/load', this.lastLoad > 0 ? { lu: this.lastLoad } : {})
+      if (msg.success) {
         this.onlines = msg.obj.onlines
         if (msg.obj.lastLog) {
           const logLevel = actionableLogLevel(String(msg.obj.lastLog))
-
           if (logLevel === 'error') {
             push.error({
               title: i18n.global.t('error.core'),
               duration: 8000,
-              message: msg.obj.lastLog
+              message: msg.obj.lastLog,
             })
           } else if (logLevel === 'warning') {
             push.warning({
               title: i18n.global.t('warning'),
               duration: 6000,
-              message: msg.obj.lastLog
+              message: msg.obj.lastLog,
             })
           }
         }
-        
+
         if (msg.obj.config) {
           this.setNewData(msg.obj)
         }
@@ -92,8 +96,27 @@ const Data = defineStore('Data', {
       }
       return <Client>{}
     },
+    canSaveType(category: 'inbounds' | 'outbounds', type: string, id: number): boolean {
+      const originalType = id > 0
+        ? (category === 'inbounds' ? this.inbounds : this.outbounds).find((entry: any) => entry.id === id)?.type
+        : undefined
+      return canSaveRuntimeType(this.capabilities, category, type, id, originalType)
+    },
     async save (object: string, action: string, data: any, initUsers?: number[]): Promise<boolean> {
-      let postData = {
+      const historical = ['inbounds', 'outbounds'].includes(object) && action === 'edit'
+        ? (object === 'inbounds' ? this.inbounds : this.outbounds).find((entry: any) => entry.id === data.id)?.type
+        : undefined
+      if (['inbounds', 'outbounds'].includes(object) && ['new', 'edit'].includes(action)) {
+        const category = object as 'inbounds' | 'outbounds'
+        if (!canSaveRuntimeType(this.capabilities, category, data.type, data.id ?? 0, historical)) {
+          push.warning({
+            title: i18n.global.t('warning'),
+            message: i18n.global.t('form.cannotSave.capabilityUnavailable'),
+          })
+          return false
+        }
+      }
+      const postData = {
         object: object,
         action: action,
         data: JSON.stringify(data, null, 2),

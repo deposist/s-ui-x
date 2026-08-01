@@ -1,4 +1,7 @@
-export default {
+import en from './en'
+import { completeLocale } from './completeLocale'
+
+const messages = {
   nav: {
     groups: {
       proxy: "代理",
@@ -21,18 +24,33 @@ export default {
     leaveTitle: "放弃更改？",
     leaveConfirm: "您有未保存的更改。要放弃吗？",
     discard: "放弃",
+    cannotSave: {
+      tagRequired: "请输入标签后保存",
+      nameRequired: "请输入名称后保存",
+      portRange: "端口必须在 1 到 65535 之间",
+      tlsRequired: "此协议需要 TLS 配置",
+      tlsIncompatible: "所选 TLS 配置与此协议不兼容",
+      capabilityUnavailable: "此类型在当前运行的核心构建中不可用",
+    },
     sections: {
       basic: "基本",
       configuration: "配置",
     },
   },
-  success: "成功",
-  warning: "警告",
-  failed: "失败",
-  enable: "启用",
-  disable: "禁用",
-  none: "无",
-  all: "全部",
+  guidance: {
+    title: "配置建议",
+    apply: "应用",
+    applyAll: "应用所有可用建议",
+    recommendedValue: "建议值",
+    protocols: {
+      vless: "使用有效的客户端 UUID。Vision flow 需要兼容的 TLS 和传输设置；若未明确配置这些前提，请将 flow 留空。",
+      vmess: "使用有效的客户端 UUID 和 Alter ID 0。除非兼容性要求指定密码套件，否则保留自动 security。",
+      trojan: "使用强且唯一的客户端密码。通常应启用 TLS；仅在确实运行回落服务时配置 fallback。",
+      shadowsocks: "选择所有客户端都支持的方法，并使用强且唯一的密码。除非两端都要求，否则不要配置插件。",
+      socks: "身份验证可选。现代客户端优先使用 SOCKS5，并仅向可信网络开放监听器。",
+      http: "身份验证可选。将 HTTP 代理开放到可信网络之外前，请启用 TLS。",
+    },
+  },
   loading: "加载中...",
   confirm: "是否确定？",
   yes: "确认",
@@ -336,6 +354,7 @@ export default {
         emptyOffline: "浏览器离线时无法查看流量历史。",
         emptyUnavailable: "无法从当前入站统计加载流量历史。",
         emptyNoHistory: "暂时没有入站流量历史。",
+        searchTimeZones: "搜索时区",
       },
       system: {
         title: "系统状态",
@@ -430,6 +449,7 @@ export default {
     password: "密码",
     pwRules: "密码不能为空",
     invalidCredentials: "用户名或密码无效。",
+    forcePasswordReset: "继续之前必须修改密码。",
   },
   menu: {
     logout: "退出登录",
@@ -626,20 +646,6 @@ export default {
       advRoutes: "广告路由",
       advExitNode: "广告出口节点",
       udpTimeout: "UDP 超时",
-    },
-    ocm: {
-      credentialPath: "凭据路径",
-      usagesPath: "用量统计路径",
-      users: "用户",
-      userName: "名称",
-      userToken: "令牌",
-    },
-    ccm: {
-      credentialPath: "凭据路径",
-      usagesPath: "用量统计路径",
-      users: "用户",
-      userName: "名称",
-      userToken: "令牌",
     },
     derp: {
       configPath: "配置路径",
@@ -948,3 +954,5 @@ export default {
     ms: "毫秒",
   },
 }
+
+export default completeLocale(en, messages)

@@ -1,16 +1,15 @@
 import { Listen } from "./inbounds"
 import { iTls } from "./tls"
+import { serviceCapabilities } from './capabilities'
 
 export const SrvTypes = {
   DERP: 'derp',
   Resolved: 'resolved',
   SSMAPI: 'ssm-api',
-  OCM: 'ocm', 
-  CCM: 'ccm', 
-  OOMKiller: 'oom-killer',
-}
+} as const
 
-type SrvType = typeof SrvTypes[keyof typeof SrvTypes]
+export type SrvType = typeof SrvTypes[keyof typeof SrvTypes]
+
 
 interface SrvBasics extends Listen {
   id: number
@@ -39,51 +38,36 @@ export interface SSMAPI extends SrvBasics {
   tls?: iTls
 }
 
-export interface OCM extends SrvBasics {
-  credential_path?: string
-  usages_path?: string
-  users?: { name: string; token: string }[]
-  headers?: { [key: string]: string | string[] }
-  detour?: string
-}
-
-export interface CCM extends SrvBasics {
-  credential_path?: string
-  usages_path?: string
-  users?: { name: string; token: string }[]
-  headers?: { [key: string]: string | string[] }
-  detour?: string
-}
-
-export interface OOMKiller extends SrvBasics {
-  memory_limit?: string | number
-  safety_margin?: string | number
-  min_interval?: string
-  max_interval?: string
-  checks_before_limit?: number
-}
 
 type InterfaceMap = {
   derp: DERP
   resolved: Resolved
   'ssm-api': SSMAPI
-  ocm: OCM
-  ccm: CCM
-  'oom-killer': OOMKiller
 }
 
 export type Srv = InterfaceMap[keyof InterfaceMap]
 
 const defaultValues: Record<SrvType, Srv> = {
-  derp: <DERP>{ type: 'derp', config_path: '', tls_id:0 },
+  derp: <DERP>{ type: 'derp', config_path: '', tls_id: 0 },
   resolved: <Resolved>{ type: 'resolved', listen: '::', listen_port: 53 },
   'ssm-api': <SSMAPI>{ type: 'ssm-api', tls_id: 0, servers: {} },
-  ocm: { type: 'ocm', id: 0, tag: '', listen: '::', listen_port: 8080, tls_id: 0, users: [] } as OCM,
-  ccm: { type: 'ccm', id: 0, tag: '', listen: '::', listen_port: 8080, tls_id: 0, users: [] } as CCM,
-  'oom-killer': { type: 'oom-killer', id: 0, tag: '', checks_before_limit: 3 } as OOMKiller,
+}
+
+export function availableSrvTypes(runtimeCapabilities?: Array<{ type: string; available?: boolean }>): Record<string, SrvType> {
+  const source = runtimeCapabilities?.length
+    ? runtimeCapabilities.filter(({ available }) => available !== false).map(({ type }) => type)
+    : serviceCapabilities.filter(({ buildTag }) => buildTag === '').map(({ type }) => type)
+  const allowed = new Set(source)
+  return Object.fromEntries(
+    Object.entries(SrvTypes).filter(([, type]) => allowed.has(type)),
+  ) as Record<string, SrvType>
+}
+
+export function defaultSrvType(runtimeCapabilities?: Array<{ type: string; available?: boolean }>): SrvType {
+  return Object.values(availableSrvTypes(runtimeCapabilities))[0] ?? SrvTypes.Resolved
 }
 
 export function createSrv<T extends Srv>(type: string, json?: Partial<T>): Srv {
-  const defaultObject: Srv = { ...defaultValues[type], ...(json || {}) }
+  const defaultObject: Srv = { ...defaultValues[type as SrvType], ...(json || {}) }
   return defaultObject
 }

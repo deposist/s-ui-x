@@ -5,17 +5,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/deposist/s-ui-x/core"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
-	"github.com/deposist/s-ui-x/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TestLoadDataIncludesSubscriptionURIOverrides(t *testing.T) {
 	settingService := initSessionTestDB(t)
-	service.NewConfigService(core.NewCore())
 	if _, err := settingService.GetAllSetting(); err != nil {
 		t.Fatal(err)
 	}

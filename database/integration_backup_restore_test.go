@@ -13,6 +13,7 @@ import (
 	"github.com/deposist/s-ui-x/config"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
+	"github.com/deposist/s-ui-x/paidsub"
 	"github.com/deposist/s-ui-x/service"
 
 	"gorm.io/driver/sqlite"
@@ -63,6 +64,7 @@ func TestIntegrationBackupEnvelopeRestorePreservesBackupTableCounts(t *testing.T
 	if !reflect.DeepEqual(before, after) {
 		t.Fatalf("backup table counts changed after restore:\nbefore=%v\nafter=%v", before, after)
 	}
+	assertPaidSubscriptionRecoveryState(t)
 }
 
 func TestIntegrationImportDBMigrationFailureRestoresFallback(t *testing.T) {
@@ -113,6 +115,11 @@ func initBackupRestoreIntegrationDB(t *testing.T) {
 		}
 		t.Fatal(err)
 	}
+	if err := paidsub.EnsureSchema(database.GetDB()); err != nil {
+		closeBackupRestoreIntegrationDB()
+		_ = os.RemoveAll(dbDir)
+		t.Fatal(err)
+	}
 	t.Cleanup(func() {
 		closeBackupRestoreIntegrationDB()
 		for _, suffix := range []string{"", "-wal", "-shm", "-journal", ".temp", ".backup"} {
@@ -144,11 +151,48 @@ func seedBackupRestoreTables(t *testing.T) {
 		&model.Client{Enable: true, Name: "phase3-client", Inbounds: []byte("[]"), Links: []byte("[]")},
 		&model.Changes{DateTime: 1, Actor: "phase3", Key: "settings", Action: "set", Obj: []byte(`{"subPath":"/phase3/"}`)},
 		&model.AuditEvent{DateTime: 1, Actor: "phase3", Event: "phase3_seed", Resource: "test", Severity: "info"},
+		&model.PaidSubBinding{ClientId: 501, TgUserId: 502},
+		&model.PaidSubTariff{Id: 501, Name: "phase3-paid", Currency: "RUB", AddDays: 30, AddTrafficBytes: 4096},
+		&model.PaidSubPaymentOrder{
+			Id: 502, ClientId: 501, TariffId: 501, Provider: "cryptobot", Amount: 100, Currency: "RUB",
+			Status: "recoverable", IdempotencyKey: "phase3-paid-order", ProviderRef: "7654321",
+			ProviderChargeID: "cryptobot:7654321", GrantedDays: 30, GrantedTrafficBytes: 4096,
+			SnapshotVersion: 1,
+		},
+		&model.PaidSubPollCursor{Provider: "cryptobot:poll", LastOrderID: 502},
+		&model.PaidSubInvoiceCancellation{OrderID: 502, Provider: "cryptobot", ProviderRef: "7654322"},
 	}
 	for _, row := range rows {
 		if err := db.Create(row).Error; err != nil {
 			t.Fatalf("seed %T: %v", row, err)
 		}
+	}
+}
+
+func assertPaidSubscriptionRecoveryState(t *testing.T) {
+	t.Helper()
+	var order model.PaidSubPaymentOrder
+	if err := database.GetDB().Where("idempotency_key = ?", "phase3-paid-order").First(&order).Error; err != nil {
+		t.Fatal(err)
+	}
+	if order.Status != "recoverable" || order.ProviderRef != "7654321" ||
+		order.ProviderChargeID != "cryptobot:7654321" || order.GrantedDays != 30 ||
+		order.GrantedTrafficBytes != 4096 || order.SnapshotVersion != 1 {
+		t.Fatalf("restored payment recovery state = %+v", order)
+	}
+	var cursor model.PaidSubPollCursor
+	if err := database.GetDB().First(&cursor, "provider = ?", "cryptobot:poll").Error; err != nil {
+		t.Fatal(err)
+	}
+	if cursor.LastOrderID != order.Id {
+		t.Fatalf("restored paid-sub poll cursor = %+v", cursor)
+	}
+	var cancellation model.PaidSubInvoiceCancellation
+	if err := database.GetDB().First(&cancellation, "provider_ref = ?", "7654322").Error; err != nil {
+		t.Fatal(err)
+	}
+	if cancellation.OrderID != order.Id {
+		t.Fatalf("restored invoice cancellation = %+v", cancellation)
 	}
 }
 
@@ -180,6 +224,11 @@ func integrationBackupTableNames() []string {
 		"clients",
 		"changes",
 		"audit_events",
+		"paidsub_bindings",
+		"tariffs",
+		"payment_orders",
+		"paidsub_poll_cursors",
+		"paidsub_invoice_cancellations",
 	}
 }
 

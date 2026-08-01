@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"testing"
@@ -17,14 +18,17 @@ func TestUserServiceLoginHappyWrongAndLastLogin(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	username, err := userService.Login("admin", "correct-password", "203.0.113.10")
+	username, forcePasswordReset, err := userService.Login("admin", "correct-password", "203.0.113.10")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if username != "admin" {
 		t.Fatalf("unexpected login username %q", username)
 	}
-	if _, err := userService.Login("admin", "wrong-password", "203.0.113.11"); err == nil {
+	if forcePasswordReset {
+		t.Fatal("normal login unexpectedly required a password reset")
+	}
+	if _, _, err := userService.Login("admin", "wrong-password", "203.0.113.11"); err == nil {
 		t.Fatal("wrong password should be rejected")
 	}
 
@@ -208,7 +212,7 @@ func TestIssue9ChangePassClearsForcePasswordReset(t *testing.T) {
 	}
 }
 
-func TestIssue9LoginPasswordHashMigrationClearsForcePasswordReset(t *testing.T) {
+func TestLoginPasswordHashMigrationPreservesForcePasswordReset(t *testing.T) {
 	initSettingTestDB(t)
 	userService := &UserService{}
 	prefixedHash, err := common.HashPassword("legacy-password")
@@ -230,16 +234,20 @@ func TestIssue9LoginPasswordHashMigrationClearsForcePasswordReset(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	if _, err := userService.Login("admin", "legacy-password", "203.0.113.20"); err != nil {
-		t.Fatal(err)
+	username, forcePasswordReset, err := userService.Login("admin", "legacy-password", "203.0.113.20")
+	if !errors.Is(err, ErrForcePasswordReset) {
+		t.Fatalf("login error = %v, want %v", err, ErrForcePasswordReset)
+	}
+	if username != "admin" || !forcePasswordReset {
+		t.Fatalf("login result = (%q, %v), want (admin, true)", username, forcePasswordReset)
 	}
 
 	var stored model.User
 	if err := database.GetDB().Where("id = ?", admin.Id).First(&stored).Error; err != nil {
 		t.Fatal(err)
 	}
-	if stored.ForcePasswordReset {
-		t.Fatalf("password hash migration should clear force reset: %#v", stored)
+	if !stored.ForcePasswordReset {
+		t.Fatalf("password hash migration consumed force reset: %#v", stored)
 	}
 	if !strings.HasPrefix(stored.Password, "bcrypt:") {
 		t.Fatalf("password was not migrated to canonical hash: %q", stored.Password)

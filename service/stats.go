@@ -16,10 +16,11 @@ import (
 )
 
 type onlines struct {
-	Inbound  []string                       `json:"inbound,omitempty"`
-	User     []string                       `json:"user,omitempty"`
-	Outbound []string                       `json:"outbound,omitempty"`
-	Failover map[string]FailoverStatusEntry `json:"failover,omitempty"`
+	Inbound        []string                          `json:"inbound,omitempty"`
+	User           []string                          `json:"user,omitempty"`
+	Outbound       []string                          `json:"outbound,omitempty"`
+	Failover       map[string]FailoverStatusEntry    `json:"failover,omitempty"`
+	OutboundHealth map[string]OutboundHealthSnapshot `json:"outboundHealth,omitempty"`
 }
 
 var (
@@ -114,6 +115,7 @@ func (s *StatsService) SaveStats(enableTraffic bool) (err error) {
 	// Failover groups have their own liveness, independent of traffic stats, so
 	// publish their live status on every tick (including the no-traffic path).
 	currentOnlines.Failover = FailoverLiveSnapshot()
+	currentOnlines.OutboundHealth = AllOutboundHealthSnapshots()
 
 	if len(*stats) == 0 {
 		onlineResourcesMu.Lock()
@@ -470,10 +472,11 @@ func (s *StatsService) GetOnlines() (onlines, error) {
 	onlineResourcesMu.RLock()
 	defer onlineResourcesMu.RUnlock()
 	return onlines{
-		Inbound:  append([]string(nil), onlineResources.Inbound...),
-		User:     append([]string(nil), onlineResources.User...),
-		Outbound: append([]string(nil), onlineResources.Outbound...),
-		Failover: FailoverLiveSnapshot(),
+		Inbound:        append([]string(nil), onlineResources.Inbound...),
+		User:           append([]string(nil), onlineResources.User...),
+		Outbound:       append([]string(nil), onlineResources.Outbound...),
+		Failover:       FailoverLiveSnapshot(),
+		OutboundHealth: AllOutboundHealthSnapshots(),
 	}, nil
 }
 func (s *StatsService) DelOldStats(days int) error {

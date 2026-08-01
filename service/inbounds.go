@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util"
@@ -276,6 +277,9 @@ func (s *InboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 		return nil, err
 	}
 	for _, inbound := range inbounds {
+		if !capabilities.IsTypeAvailable("inbounds", inbound.Type) {
+			continue
+		}
 		inboundJson, err := inbound.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -297,38 +301,9 @@ func (s *InboundService) hasUser(inboundType string) bool {
 // userJSONField maps an inbound type to the JSON path used inside
 // clients.config to locate per-user data. Do not extend this map without a
 // positive list for both the inbound type and the JSON field value.
-var userJSONField = map[string]string{
-	"mixed":         "mixed",
-	"socks":         "socks",
-	"http":          "http",
-	"shadowsocks":   "shadowsocks",
-	"shadowsocks16": "shadowsocks",
-	"vmess":         "vmess",
-	"trojan":        "trojan",
-	"naive":         "naive",
-	"hysteria":      "hysteria",
-	"shadowtls":     "shadowtls",
-	"tuic":          "tuic",
-	"hysteria2":     "hysteria2",
-	"vless":         "vless",
-	"anytls":        "anytls",
-}
+var userJSONField = capabilities.UserJSONFields()
 
-var allowedUserJSONFields = map[string]struct{}{
-	"mixed":       {},
-	"socks":       {},
-	"http":        {},
-	"shadowsocks": {},
-	"vmess":       {},
-	"trojan":      {},
-	"naive":       {},
-	"hysteria":    {},
-	"shadowtls":   {},
-	"tuic":        {},
-	"hysteria2":   {},
-	"vless":       {},
-	"anytls":      {},
-}
+var allowedUserJSONFields = capabilities.AllowedUserJSONFields()
 
 func (s *InboundService) addUsers(db *gorm.DB, inboundJson []byte, inboundId uint, inboundType string) ([]byte, error) {
 	if !s.hasUser(inboundType) {
@@ -460,6 +435,9 @@ func (s *InboundService) RestartInbounds(tx *gorm.DB, ids []uint) error {
 			}
 		}
 
+		if !capabilities.IsTypeAvailable("inbounds", inbound.Type) {
+			continue
+		}
 		inboundConfig, err := inbound.MarshalJSON()
 		if err != nil {
 			return err

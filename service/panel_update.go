@@ -42,6 +42,10 @@ type PanelUpdateService struct {
 }
 
 var errUpdateInProgress = errors.New("an update is already in progress")
+var errUpdateRecoveryRequired = errors.New("a previous update requires recovery")
+
+// ErrPanelUpdateRolledBack tells the entrypoint to restart the restored binary.
+var ErrPanelUpdateRolledBack = errors.New("self-update rolled back; restart required")
 
 // panelUpdateState holds the single allowed update job (FR-012, SR-009).
 var panelUpdateState = struct {
@@ -55,10 +59,12 @@ var panelUpdateState = struct {
 // binary (research R1). Injectable for tests.
 var panelUpdateExit = func() { os.Exit(1) }
 
-// newPanelUpdateDeps / panelUpdateAuditSink are injection seams for tests.
+// newPanelUpdateDeps / panelUpdateAuditSink / acquirePanelUpdateProcessLockFn
+// are injection seams for tests.
 var (
-	newPanelUpdateDeps   = defaultPanelUpdateDeps
-	panelUpdateAuditSink = writePanelUpdateAudit
+	newPanelUpdateDeps              = defaultPanelUpdateDeps
+	panelUpdateAuditSink            = writePanelUpdateAudit
+	acquirePanelUpdateProcessLockFn = acquirePanelUpdateProcessLock
 )
 
 // Status returns a snapshot of the current/last update job (idle if none).
@@ -101,29 +107,44 @@ func (s *PanelUpdateService) Apply(target ReleaseTarget, initiator string) error
 	}
 	panelUpdateState.Unlock()
 
-	go s.run(target)
+	deps := newPanelUpdateDeps()
+	if deps.execPath != "" {
+		if _, err := os.Stat(deps.execPath + pendingSuffix); err == nil {
+			panelUpdateState.Lock()
+			panelUpdateState.active = false
+			panelUpdateState.job = nil
+			panelUpdateState.Unlock()
+			return errUpdateRecoveryRequired
+		} else if !errors.Is(err, os.ErrNotExist) {
+			panelUpdateState.Lock()
+			panelUpdateState.active = false
+			panelUpdateState.job = nil
+			panelUpdateState.Unlock()
+			return fmt.Errorf("inspect previous update state: %w", err)
+		}
+	}
+	processLock, err := acquirePanelUpdateProcessLockFn(deps.execPath)
+	if err != nil {
+		panelUpdateState.Lock()
+		panelUpdateState.active = false
+		panelUpdateState.job = nil
+		panelUpdateState.Unlock()
+		return err
+	}
+	go s.run(target, deps, processLock)
 	return nil
 }
 
-func (s *PanelUpdateService) run(target ReleaseTarget) {
-	deps := newPanelUpdateDeps()
-	if err := applyPipeline(target, deps, s.setStage); err != nil {
-		s.fail(err, deps.execPath)
+func (s *PanelUpdateService) run(target ReleaseTarget, deps panelUpdateDeps, processLock panelUpdateProcessLock) {
+	swapped, err := applyPipeline(target, deps, s.setStage)
+	if err != nil {
+		s.fail(err, deps.execPath, swapped, processLock)
 		return
 	}
 	s.setStage(UpdateStageRestarting)
-	// Mark the swap pending so the next boot can roll back a non-starting new
-	// binary (SR-012). If the marker cannot be written, the boot-time rollback
-	// safety net would be gone - restore the previous binary and abort the
-	// restart rather than boot unprotected, instead of swallowing the error.
-	if err := writePendingMarker(deps.execPath); err != nil {
-		s.fail(fmt.Errorf("rollback marker could not be written after apply: %w", err), deps.execPath)
-		return
-	}
-	// Durably record the successful outcome (SR-006/SC-008) BEFORE exiting, since
-	// os.Exit bypasses the async audit writer's flush.
 	panelUpdateAuditSink(s.Status(), "applied", "")
 	logger.Info("panel update: applied", target.Version, "- restarting into new binary")
+	_ = processLock.release()
 	panelUpdateExit()
 }
 
@@ -135,15 +156,19 @@ func (s *PanelUpdateService) setStage(stage UpdateStage) {
 	}
 }
 
-// fail marks the job failed, releases the guard, and best-effort restores the
-// previous binary from backup so a partial apply never leaves a broken panel
-// (SR-007). The pipeline only touches the live binary at the final atomic
-// rename, so in practice the backup restore is a belt-and-braces safety net.
-func (s *PanelUpdateService) fail(err error, execPath string) {
+// fail marks the job failed and rolls back only when this transaction already
+// swapped the executable. Pre-swap failures never consume an older backup.
+func (s *PanelUpdateService) fail(err error, execPath string, swapped bool, locks ...panelUpdateProcessLock) {
 	logger.Warning("panel update failed:", err)
-	if execPath != "" {
-		if restoreErr := RestoreBackup(execPath); restoreErr != nil && !os.IsNotExist(restoreErr) {
-			logger.Warning("panel update: backup restore failed:", restoreErr)
+	if swapped && execPath != "" {
+		if restoreErr := rollbackCurrentUpdate(execPath); restoreErr != nil {
+			err = errors.Join(err, fmt.Errorf("automatic rollback failed: %w", restoreErr))
+			logger.Error("panel update: automatic rollback remains unresolved: ", restoreErr)
+		}
+	}
+	if len(locks) > 0 && locks[0] != nil {
+		if releaseErr := locks[0].release(); releaseErr != nil {
+			logger.Warning("panel update: process lock release failed:", releaseErr)
 		}
 	}
 	panelUpdateState.Lock()
@@ -155,7 +180,6 @@ func (s *PanelUpdateService) fail(err error, execPath string) {
 	}
 	panelUpdateState.active = false
 	panelUpdateState.Unlock()
-	// Record the failed outcome durably (SR-006/SC-008).
 	panelUpdateAuditSink(job, "failed", err.Error())
 }
 

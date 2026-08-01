@@ -1,15 +1,23 @@
 <template>
+  <v-theme-provider :theme="nexusThemeName" style="min-height: 100vh" with-background>
     <v-container class="fill-height" style="margin-top: 100px;">
       <v-row justify="center" align="center">
         <v-col cols="12" sm="8" md="4">
           <v-card>
             <v-card-title class="headline" v-text="$t('login.title')"></v-card-title>
             <v-card-text>
-              <v-form @submit.prevent="login" ref="form">
+              <v-form v-if="!forcePasswordReset" @submit.prevent="login" ref="form">
                 <v-text-field v-model="username" :label="$t('login.username')" :rules="usernameRules" required @update:modelValue="errorMsg = ''"></v-text-field>
-                <v-text-field v-model="password" :label="$t('login.password')" :rules="passwordRules" type="password" required @update:modelValue="errorMsg = ''"></v-text-field>
+                <v-text-field v-model="password" :label="$t('login.password')" :rules="passwordRules" type="password" autocomplete="current-password" required @update:modelValue="errorMsg = ''"></v-text-field>
                 <v-alert v-if="errorMsg" type="error" density="compact" variant="tonal" class="mt-1">{{ errorMsg }}</v-alert>
                 <v-btn :loading="loading" type="submit" color="primary" block class="mt-2" v-text="$t('actions.submit')"></v-btn>
+              </v-form>
+              <v-form v-else @submit.prevent="changeForcedPassword">
+                <v-alert type="warning" density="compact" variant="tonal" class="mb-2">{{ $t('login.forcePasswordReset') }}</v-alert>
+                <v-text-field v-model="resetUsername" :label="$t('admin.newUname')" :rules="usernameRules" required @update:modelValue="errorMsg = ''"></v-text-field>
+                <v-text-field v-model="resetPassword" :label="$t('admin.newPass')" :rules="passwordRules" type="password" autocomplete="new-password" required @update:modelValue="errorMsg = ''"></v-text-field>
+                <v-alert v-if="errorMsg" type="error" density="compact" variant="tonal" class="mt-1">{{ errorMsg }}</v-alert>
+                <v-btn :loading="loading" type="submit" color="primary" block class="mt-2" v-text="$t('actions.save')"></v-btn>
               </v-form>
               <v-select
                 density="compact"
@@ -51,6 +59,7 @@
         </v-col>
       </v-row>
     </v-container>
+  </v-theme-provider>
   </template>
   
 <script lang="ts" setup>
@@ -59,10 +68,13 @@ import { useLocale,useTheme } from 'vuetify'
 import { i18n, languages, setI18nLocale } from '@/locales'
 import { useRouter } from 'vue-router'
 import HttpUtil, { resetInvalidLoginHandling } from '@/plugins/httputil'
+import { authErrorMessage, forcedPasswordChangePayload, forcedPasswordResetUsername } from './loginFlow'
+import { useNexusTheme } from '@/uiMode/nexusTheme'
 
 
 const theme = useTheme()
 const locale = useLocale()
+const nexusThemeName = useNexusTheme()
 
 const themes = [
   { value: 'light', icon: 'mdi-white-balance-sunny' },
@@ -71,14 +83,16 @@ const themes = [
 ]
 
 const username = ref('')
+const password = ref('')
+const resetUsername = ref('')
+const resetPassword = ref('')
+const forcePasswordReset = ref(false)
 const usernameRules = [
   (value: string) => {
     if (value?.length > 0) return true
     return i18n.global.t('login.unRules')
   },
 ]
-
-const password = ref('')
 const passwordRules = [
   (value: string) => {
     if (value?.length > 0) return true
@@ -93,18 +107,37 @@ const router = useRouter()
 const login = async () => {
   if (username.value == '' || password.value == '') return
   errorMsg.value = ''
-  loading.value=true
-  const response = await HttpUtil.post('api/login',{user: username.value, pass: password.value})
-  if(response.success){
-    resetInvalidLoginHandling()
-    loading.value=false
-    router.push('/')
-  } else {
-    loading.value=false
-    // Surface the reason inline (e.g. lockout countdown) and fall back to a
-    // localized "invalid credentials" message for the common wrong-password case.
-    errorMsg.value = response.msg || i18n.global.t('login.invalidCredentials')
+  loading.value = true
+  const response = await HttpUtil.post('api/login', { user: username.value, pass: password.value })
+  const forcedUsername = forcedPasswordResetUsername(response, username.value)
+  if (forcedUsername !== null) {
+    forcePasswordReset.value = true
+    resetUsername.value = forcedUsername
+    resetPassword.value = ''
+    loading.value = false
+    return
   }
+  loading.value = false
+  if (response.success) {
+    resetInvalidLoginHandling()
+    router.push('/')
+    return
+  }
+  errorMsg.value = authErrorMessage(response, i18n.global.t('login.invalidCredentials'))
+}
+
+const changeForcedPassword = async () => {
+  if (resetUsername.value == '' || resetPassword.value == '') return
+  errorMsg.value = ''
+  loading.value = true
+  const response = await HttpUtil.post('api/changePass', forcedPasswordChangePayload(password.value, resetUsername.value, resetPassword.value))
+  loading.value = false
+  if (response.success) {
+    resetInvalidLoginHandling()
+    router.push('/')
+    return
+  }
+  errorMsg.value = authErrorMessage(response, i18n.global.t('login.invalidCredentials'))
 }
 const changeLocale = async (l: string | null) => {
   const selectedLocale = await setI18nLocale(l ?? 'en')

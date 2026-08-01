@@ -41,6 +41,7 @@ func TestApplyPaidOrderIdempotentRenewal(t *testing.T) {
 		ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa",
 		Amount: 10000, Currency: "RUB", Status: StatusPending,
 		TelegramUserId: 42, IdempotencyKey: "key-1", CreatedAt: time.Now().Unix(),
+		GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes, SnapshotVersion: paymentOrderSnapshotVersion,
 	}
 	if err := db.Create(&order).Error; err != nil {
 		t.Fatalf("create order: %v", err)
@@ -98,6 +99,91 @@ func TestApplyPaidOrderIdempotentRenewal(t *testing.T) {
 	}
 	if got2.Expiry != got.Expiry {
 		t.Errorf("expiry changed on replay: %d != %d", got2.Expiry, got.Expiry)
+	}
+}
+
+func TestApplyPaidOrderUsesImmutableSnapshotAfterTariffChange(t *testing.T) {
+	db := openTestDB(t)
+	if err := EnsureSchema(db); err != nil {
+		t.Fatalf("EnsureSchema: %v", err)
+	}
+	client := model.Client{Enable: false, Name: "immutable-snapshot", Inbounds: json.RawMessage("[]")}
+	if err := db.Create(&client).Error; err != nil {
+		t.Fatal(err)
+	}
+	tariff := Tariff{Name: "Original", Price: 10000, Currency: "RUB", AddDays: 30, AddTrafficBytes: 4096, Enabled: true}
+	if err := db.Create(&tariff).Error; err != nil {
+		t.Fatal(err)
+	}
+	order := PaymentOrder{
+		ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: tariff.Price,
+		Currency: tariff.Currency, Status: StatusPending, IdempotencyKey: "immutable-payment",
+		GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes,
+		SnapshotVersion: paymentOrderSnapshotVersion,
+	}
+	if err := db.Create(&order).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&Tariff{}).Where("id = ?", tariff.Id).
+		Updates(map[string]any{"add_days": 1, "add_traffic_bytes": 1}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Delete(&Tariff{}, tariff.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	applied, _, err := NewPaymentService().ApplyPaidOrder(order.Id, "immutable-charge", nil)
+	if err != nil || !applied {
+		t.Fatalf("ApplyPaidOrder = applied %v, err %v", applied, err)
+	}
+	var got model.Client
+	if err := db.First(&got, client.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if got.Volume != order.GrantedTrafficBytes {
+		t.Fatalf("volume = %d; want immutable grant %d", got.Volume, order.GrantedTrafficBytes)
+	}
+	now := time.Now().Unix()
+	if got.Expiry < now+29*86400 || got.Expiry > now+31*86400 {
+		t.Fatalf("expiry did not use immutable 30-day grant: %d", got.Expiry)
+	}
+}
+
+func TestApplyPaidOrderRejectsLegacyResolvedVersionWithoutStateChange(t *testing.T) {
+	db := openTestDB(t)
+	if err := EnsureSchema(db); err != nil {
+		t.Fatalf("EnsureSchema: %v", err)
+	}
+	client := model.Client{Enable: false, Name: "legacy-resolved-payment", Inbounds: json.RawMessage("[]"), Volume: 1024, Expiry: 100}
+	if err := db.Create(&client).Error; err != nil {
+		t.Fatal(err)
+	}
+	order := PaymentOrder{
+		ClientId: client.Id, TariffId: 1, Provider: string(ProviderCryptoBot), Amount: 100,
+		Currency: "RUB", Status: StatusPending, IdempotencyKey: "legacy-resolved-payment",
+		GrantedDays: 30, GrantedTrafficBytes: 2048, SnapshotVersion: paymentOrderLegacyResolvedVersion,
+	}
+	if err := db.Create(&order).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	applied, _, err := NewPaymentService().ApplyPaidOrder(order.Id, "cryptobot:legacy", nil)
+	if err == nil || applied {
+		t.Fatalf("legacy-resolved order = applied %v, err %v; want rejection", applied, err)
+	}
+	var storedOrder PaymentOrder
+	if err := db.First(&storedOrder, order.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if storedOrder.Status != StatusPending || storedOrder.ProviderChargeID != "" {
+		t.Fatalf("legacy-resolved apply mutated order: %+v", storedOrder)
+	}
+	var storedClient model.Client
+	if err := db.First(&storedClient, client.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if storedClient.Enable != client.Enable || storedClient.Volume != client.Volume || storedClient.Expiry != client.Expiry {
+		t.Fatalf("legacy-resolved apply mutated client: before=%+v after=%+v", client, storedClient)
 	}
 }
 
@@ -171,32 +257,38 @@ func TestExpireStaleOrders(t *testing.T) {
 	_ = database.GetDB()
 }
 
-func TestExpireStalePolledOrders(t *testing.T) {
+func TestExpireTerminalPolledOrders(t *testing.T) {
 	db := openTestDB(t)
 	if err := EnsureSchema(db); err != nil {
 		t.Fatalf("EnsureSchema: %v", err)
 	}
 	now := time.Now().Unix()
 	grace := int64(3600)
-	// Created well before the grace window -> reaped as abandoned.
-	old := PaymentOrder{ClientId: 1, TariffId: 1, Provider: "cryptobot", Amount: 1, Currency: "RUB", Status: StatusPending, IdempotencyKey: "cb-old", CreatedAt: now - grace - 10}
-	// Recent cryptobot order within grace -> stays pending (poll keeps trying).
-	recent := PaymentOrder{ClientId: 1, TariffId: 1, Provider: "cryptobot", Amount: 1, Currency: "RUB", Status: StatusPending, IdempotencyKey: "cb-recent", CreatedAt: now - 10}
-	db.Create(&old)
-	db.Create(&recent)
+	oldTerminal := PaymentOrder{ClientId: 1, TariffId: 1, Provider: "cryptobot", Amount: 1, Currency: "RUB", Status: StatusPending, IdempotencyKey: "cb-old-terminal", CreatedAt: now - grace - 10}
+	oldUnconfirmed := PaymentOrder{ClientId: 1, TariffId: 1, Provider: "cryptobot", Amount: 1, Currency: "RUB", Status: StatusPending, IdempotencyKey: "cb-old-unconfirmed", CreatedAt: now - grace - 10}
+	recentTerminal := PaymentOrder{ClientId: 1, TariffId: 1, Provider: "cryptobot", Amount: 1, Currency: "RUB", Status: StatusPending, IdempotencyKey: "cb-recent-terminal", CreatedAt: now - 10}
+	for _, order := range []*PaymentOrder{&oldTerminal, &oldUnconfirmed, &recentTerminal} {
+		if err := db.Create(order).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	ps := NewPaymentService()
-	if err := ps.ExpireStalePolledOrders(grace); err != nil {
-		t.Fatalf("ExpireStalePolledOrders: %v", err)
+	if err := ps.ExpireTerminalPolledOrders([]uint{oldTerminal.Id, recentTerminal.Id}, grace); err != nil {
+		t.Fatalf("ExpireTerminalPolledOrders: %v", err)
 	}
-	var o, r PaymentOrder
-	db.Where("idempotency_key = ?", "cb-old").First(&o)
-	db.Where("idempotency_key = ?", "cb-recent").First(&r)
-	if o.Status != StatusExpired {
-		t.Errorf("old polled order not reaped: %s", o.Status)
+	var terminal, unconfirmed, recent PaymentOrder
+	db.Where("idempotency_key = ?", oldTerminal.IdempotencyKey).First(&terminal)
+	db.Where("idempotency_key = ?", oldUnconfirmed.IdempotencyKey).First(&unconfirmed)
+	db.Where("idempotency_key = ?", recentTerminal.IdempotencyKey).First(&recent)
+	if terminal.Status != StatusExpired {
+		t.Errorf("old provider-terminal order not expired: %s", terminal.Status)
 	}
-	if r.Status != StatusPending {
-		t.Errorf("recent polled order should stay pending: %s", r.Status)
+	if unconfirmed.Status != StatusPending {
+		t.Errorf("old unconfirmed order must stay pending: %s", unconfirmed.Status)
+	}
+	if recent.Status != StatusPending {
+		t.Errorf("recent provider-terminal order should stay pending through grace: %s", recent.Status)
 	}
 }
 
@@ -242,7 +334,7 @@ func TestFinalizeRefundRevokeRollsBackOnce(t *testing.T) {
 	db.Create(&client)
 	tariff := Tariff{Name: "M", Price: 10000, Currency: "RUB", AddDays: 30, AddTrafficBytes: 1 << 30, Enabled: true}
 	db.Create(&tariff)
-	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 10000, Currency: "RUB", Status: StatusPaid, TelegramUserId: 7, IdempotencyKey: "r1"}
+	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 10000, Currency: "RUB", Status: StatusPaid, TelegramUserId: 7, IdempotencyKey: "r1", GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes, SnapshotVersion: paymentOrderSnapshotVersion}
 	db.Create(&order)
 
 	ps := NewPaymentService()
@@ -278,6 +370,90 @@ func TestFinalizeRefundRevokeRollsBackOnce(t *testing.T) {
 	}
 }
 
+func TestFinalizeRefundUsesImmutableSnapshotAfterTariffChange(t *testing.T) {
+	db := openTestDB(t)
+	if err := EnsureSchema(db); err != nil {
+		t.Fatalf("EnsureSchema: %v", err)
+	}
+	now := time.Now().Unix()
+	client := model.Client{Enable: true, Name: "immutable-refund", Inbounds: json.RawMessage("[]"), Volume: 8 << 30, Expiry: now + 40*86400}
+	if err := db.Create(&client).Error; err != nil {
+		t.Fatal(err)
+	}
+	tariff := Tariff{Name: "Original refund", Price: 10000, Currency: "RUB", AddDays: 30, AddTrafficBytes: 2 << 30, Enabled: true}
+	if err := db.Create(&tariff).Error; err != nil {
+		t.Fatal(err)
+	}
+	order := PaymentOrder{
+		ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: tariff.Price,
+		Currency: tariff.Currency, Status: StatusPaid, IdempotencyKey: "immutable-refund",
+		GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes,
+		SnapshotVersion: paymentOrderSnapshotVersion,
+	}
+	if err := db.Create(&order).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&Tariff{}).Where("id = ?", tariff.Id).
+		Updates(map[string]any{"add_days": 1, "add_traffic_bytes": 1}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Delete(&Tariff{}, tariff.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewPaymentService().finalizeRefund(order.Id, true); err != nil {
+		t.Fatalf("finalizeRefund: %v", err)
+	}
+	var got model.Client
+	if err := db.First(&got, client.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if got.Volume != client.Volume-order.GrantedTrafficBytes {
+		t.Fatalf("volume = %d; want immutable rollback %d", got.Volume, client.Volume-order.GrantedTrafficBytes)
+	}
+	wantExpiry := client.Expiry - int64(order.GrantedDays)*86400
+	if got.Expiry != wantExpiry {
+		t.Fatalf("expiry = %d; want immutable rollback %d", got.Expiry, wantExpiry)
+	}
+}
+
+func TestFinalizeRefundRejectsInvalidSnapshotWithoutStateChange(t *testing.T) {
+	db := openTestDB(t)
+	if err := EnsureSchema(db); err != nil {
+		t.Fatalf("EnsureSchema: %v", err)
+	}
+	client := model.Client{Enable: true, Name: "invalid-refund-snapshot", Inbounds: json.RawMessage("[]"), Volume: 4096, Expiry: time.Now().Unix() + 86400}
+	if err := db.Create(&client).Error; err != nil {
+		t.Fatal(err)
+	}
+	order := PaymentOrder{
+		ClientId: client.Id, TariffId: 1, Provider: "yookassa", Amount: 100,
+		Currency: "RUB", Status: StatusPaid, IdempotencyKey: "invalid-refund-snapshot",
+		GrantedDays: 30, GrantedTrafficBytes: 2048, SnapshotVersion: 0,
+	}
+	if err := db.Create(&order).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewPaymentService().finalizeRefund(order.Id, true); err == nil {
+		t.Fatal("invalid snapshot refund unexpectedly succeeded")
+	}
+	var storedOrder PaymentOrder
+	if err := db.First(&storedOrder, order.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if storedOrder.Status != StatusPaid {
+		t.Fatalf("invalid refund changed order status to %q", storedOrder.Status)
+	}
+	var storedClient model.Client
+	if err := db.First(&storedClient, client.Id).Error; err != nil {
+		t.Fatal(err)
+	}
+	if storedClient.Volume != client.Volume || storedClient.Expiry != client.Expiry || storedClient.Enable != client.Enable {
+		t.Fatalf("invalid refund mutated client: before=%+v after=%+v", client, storedClient)
+	}
+}
+
 func TestFinalizeRefundNoRevokeKeepsClient(t *testing.T) {
 	db := openTestDB(t)
 	if err := EnsureSchema(db); err != nil {
@@ -288,7 +464,7 @@ func TestFinalizeRefundNoRevokeKeepsClient(t *testing.T) {
 	db.Create(&client)
 	tariff := Tariff{Name: "M", Price: 10000, Currency: "RUB", AddDays: 30, AddTrafficBytes: 1 << 30, Enabled: true}
 	db.Create(&tariff)
-	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 10000, Currency: "RUB", Status: StatusPaid, TelegramUserId: 8, IdempotencyKey: "r2"}
+	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 10000, Currency: "RUB", Status: StatusPaid, TelegramUserId: 8, IdempotencyKey: "r2", GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes, SnapshotVersion: paymentOrderSnapshotVersion}
 	db.Create(&order)
 
 	ps := NewPaymentService()
@@ -318,7 +494,7 @@ func TestFinalizeRefundFloorsExpiryAndVolume(t *testing.T) {
 	db.Create(&client)
 	tariff := Tariff{Name: "Y", Price: 1, Currency: "RUB", AddDays: 365, AddTrafficBytes: 1 << 30, Enabled: true}
 	db.Create(&tariff)
-	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 1, Currency: "RUB", Status: StatusPaid, TelegramUserId: 9, IdempotencyKey: "r3"}
+	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: "yookassa", Amount: 1, Currency: "RUB", Status: StatusPaid, TelegramUserId: 9, IdempotencyKey: "r3", GrantedDays: tariff.AddDays, GrantedTrafficBytes: tariff.AddTrafficBytes, SnapshotVersion: paymentOrderSnapshotVersion}
 	db.Create(&order)
 
 	ps := NewPaymentService()

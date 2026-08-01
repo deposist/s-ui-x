@@ -19,10 +19,47 @@ concurrency:
 env:
   GOFLAGS: -mod=readonly
   MAKE_PS: pwsh -NoProfile -ExecutionPolicy Bypass
+  STATICCHECK_VERSION: "2026.1"
+  GOLANGCI_LINT_VERSION: "v2.12.2"
+  GOSEC_VERSION: "v2.28.0"
+  GOVULNCHECK_VERSION: "v1.6.0"
 
 jobs:
+  frontend-assets:
+    name: frontend-assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend lint
+        working-directory: frontend
+        run: npm run lint -- --max-warnings=0
+      - name: Frontend unit tests
+        working-directory: frontend
+        run: npm run test
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Verify production frontend dist
+        working-directory: frontend
+        run: npm run verify:dist
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: audit-frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 1
+
   build:
     name: build (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -35,6 +72,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -60,6 +108,7 @@ jobs:
 
   vet:
     name: vet (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -72,6 +121,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -94,6 +154,7 @@ jobs:
 
   test-go:
     name: test-go (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -106,6 +167,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -129,8 +201,8 @@ jobs:
 
   test-go-race:
     name: test-go-race (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -143,6 +215,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -165,8 +248,8 @@ jobs:
 
   coverage:
     name: coverage (ubuntu-latest)
+    needs: frontend-assets
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
@@ -174,6 +257,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: make audit:cover
         shell: bash
         run: make audit:cover PS="${MAKE_PS}"
@@ -191,8 +285,8 @@ jobs:
 
   lint-go:
     name: lint-go (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -204,6 +298,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -214,8 +319,9 @@ jobs:
       - name: Install Go lint tools
         shell: bash
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          set -euo pipefail
+          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: make audit:lint-go
         shell: bash
@@ -232,8 +338,8 @@ jobs:
 
   staticcheck:
     name: staticcheck (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -245,14 +351,26 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Install staticcheck
         shell: bash
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          set -euo pipefail
+          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: staticcheck
         shell: bash
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name staticcheck -CommandLine "staticcheck ./..." -ContinueOnError
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name staticcheck -CommandLine "staticcheck ./..."
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
@@ -265,8 +383,8 @@ jobs:
 
   gosec:
     name: gosec (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -278,6 +396,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -288,7 +417,8 @@ jobs:
       - name: Install gosec
         shell: bash
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          set -euo pipefail
+          go install github.com/securego/gosec/v2/cmd/gosec@${GOSEC_VERSION}
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: make audit:gosec
         shell: bash
@@ -305,8 +435,8 @@ jobs:
 
   govulncheck:
     name: govulncheck (${{ matrix.os }})
+    needs: frontend-assets
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -318,6 +448,17 @@ jobs:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: audit-frontend-dist
+          path: audit-frontend-dist
+      - name: Install verified frontend assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a audit-frontend-dist/. web/html/
       - name: Ensure make on Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -328,7 +469,8 @@ jobs:
       - name: Install govulncheck
         shell: bash
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
+          set -euo pipefail
+          go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: make audit:vuln
         shell: bash

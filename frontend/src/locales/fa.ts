@@ -1,4 +1,7 @@
-export default {
+import en from './en'
+import { completeLocale } from './completeLocale'
+
+const messages = {
   nav: {
     groups: {
       proxy: "پروکسی",
@@ -21,18 +24,33 @@ export default {
     leaveTitle: "تغییرات نادیده گرفته شود؟",
     leaveConfirm: "تغییرات ذخیره‌نشده دارید. نادیده گرفته شوند؟",
     discard: "نادیده‌گرفتن",
+    cannotSave: {
+      tagRequired: "برای ذخیره برچسب را وارد کنید",
+      nameRequired: "برای ذخیره نام را وارد کنید",
+      portRange: "پورت باید بین ۱ تا ۶۵۵۳۵ باشد",
+      tlsRequired: "این پروتکل به پیکربندی TLS نیاز دارد",
+      tlsIncompatible: "پیکربندی TLS انتخابشده با این پروتکل سازگار نیست",
+      capabilityUnavailable: "این نوع در نسخه در حال اجرای هسته در دسترس نیست",
+    },
     sections: {
       basic: "پایه",
       configuration: "پیکربندی",
     },
   },
-  success: "موفق",
-  warning: "هشدار",
-  failed: "خطا",
-  enable: "فعال",
-  disable: "غیرفعال",
-  none: "هیچ",
-  all: "همه",
+  guidance: {
+    title: "پیشنهادهای راهنما",
+    apply: "اعمال",
+    applyAll: "اعمال همه موارد موجود",
+    recommendedValue: "مقدار پیشنهادی",
+    protocols: {
+      vless: "از UUID معتبر کاربر استفاده کنید. جریان Vision به TLS و انتقال سازگار نیاز دارد؛ اگر این پیشنیازها را عمداً تنظیم نکردهاید، flow را خالی بگذارید.",
+      vmess: "از UUID معتبر کاربر و Alter ID برابر ۰ استفاده کنید. مگر برای سازگاری به رمز خاصی نیاز باشد، security خودکار را نگه دارید.",
+      trojan: "برای کاربر یک گذرواژه قوی و یکتا انتخاب کنید. معمولاً TLS لازم است؛ fallback را فقط هنگام اجرای سرویس مقصد تنظیم کنید.",
+      shadowsocks: "روشی را انتخاب کنید که همه کاربرها پشتیبانی کنند و گذرواژه قوی و یکتا بسازید. افزونه را فقط در صورت نیاز هر دو سمت تنظیم کنید.",
+      socks: "احراز هویت اختیاری است. برای کاربرهای جدید SOCKS5 را ترجیح دهید و listener را فقط در شبکههای مورد اعتماد باز کنید.",
+      http: "احراز هویت اختیاری است. پیش از ارائه پراکسی HTTP بیرون از شبکه مورد اعتماد، TLS را فعال کنید.",
+    },
+  },
   loading: "در حال بارگذاری...",
   confirm: "آیا مطمئن هستید ؟",
   yes: "بله",
@@ -336,6 +354,7 @@ export default {
         emptyOffline: "وقتی مرورگر آفلاین است تاریخچه ترافیک در دسترس نیست.",
         emptyUnavailable: "تاریخچه ترافیک از آمار ورودی فعلی بارگذاری نشد.",
         emptyNoHistory: "هنوز تاریخچه‌ای برای ترافیک ورودی موجود نیست.",
+        searchTimeZones: "جستجوی منطقههای زمانی",
       },
       system: {
         title: "وضعیت سیستم",
@@ -430,6 +449,7 @@ export default {
     password: "کلمه عبور",
     pwRules: "کلمه عبور نمی‌تواند خالی باشد",
     invalidCredentials: "نام کاربری یا کلمه عبور نامعتبر است.",
+    forcePasswordReset: "پیش از ادامه باید گذرواژه خود را تغییر دهید.",
   },
   menu: {
     logout: "خروج",
@@ -626,20 +646,6 @@ export default {
       advRoutes: "تبلیغ مسیرها",
       advExitNode: "تبلیغ درگاه خروج",
       udpTimeout: "مهلت UDP",
-    },
-    ocm: {
-      credentialPath: "مسیر اعتبارنامه",
-      usagesPath: "مسیر آمار استفاده",
-      users: "کاربران",
-      userName: "نام",
-      userToken: "توکن",
-    },
-    ccm: {
-      credentialPath: "مسیر اعتبارنامه",
-      usagesPath: "مسیر آمار استفاده",
-      users: "کاربران",
-      userName: "نام",
-      userToken: "توکن",
     },
     derp: {
       configPath: "مسیر پیکربندی",
@@ -946,5 +952,7 @@ export default {
     m: "د",
     s: "ث",
     ms: "م‌ث",
-  }
+  },
 }
+
+export default completeLocale(en, messages)

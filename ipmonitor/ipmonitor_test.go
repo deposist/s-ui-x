@@ -2,6 +2,7 @@ package ipmonitor
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,9 +26,6 @@ func initIPMonitorTestDB(t *testing.T) {
 	allowCache.Lock()
 	allowCache.byClient = map[string]allowCacheEntry{}
 	allowCache.Unlock()
-	allowCacheRefresh.Lock()
-	allowCacheRefresh.inFlight = map[string]struct{}{}
-	allowCacheRefresh.Unlock()
 	securityEvents.Lock()
 	securityEvents.lastEmittedAt = map[string]time.Time{}
 	securityEvents.Unlock()
@@ -458,7 +456,7 @@ func TestWarmUpLoadsActiveEnforceClients(t *testing.T) {
 	}
 }
 
-func TestAllowFailOpenOnCacheMissAndRefreshesAsync(t *testing.T) {
+func TestAllowEnforceCacheMissRefreshesBeforeDecision(t *testing.T) {
 	initIPMonitorTestDB(t)
 	if err := database.GetDB().Create(&model.Client{
 		Enable:      true,
@@ -479,12 +477,145 @@ func TestAllowFailOpenOnCacheMissAndRefreshesAsync(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !Allow("alice", "198.51.100.11") {
-		t.Fatal("cache miss should fail open while async refresh starts")
+	if Allow("alice", "198.51.100.11") {
+		t.Fatal("first forbidden IP after a cache miss must be rejected")
 	}
-	waitForIPMonitorCondition(t, time.Second, func() bool {
-		return !Allow("alice", "198.51.100.11")
-	})
+}
+
+func TestAllowConcurrentCacheMissPerformsOneRefresh(t *testing.T) {
+	initIPMonitorTestDB(t)
+	if err := database.GetDB().Create(&model.Client{
+		Enable: true, Name: "alice", LimitIP: 1, IPLimitMode: ModeEnforce,
+		Inbounds: []byte("[]"), Links: []byte("[]"),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	ipHashSalt.Lock()
+	ipHashSalt.value = []byte("test-salt")
+	ipHashSalt.Unlock()
+	queryCounter := &countingGormLogger{}
+	database.GetDB().Config.Logger = queryCounter
+	oldLoad := loadCacheEntryForAllow
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var once sync.Once
+	loadCacheEntryForAllow = func(clientName string, now time.Time) (allowCacheEntry, bool) {
+		once.Do(func() { close(started) })
+		<-release
+		return oldLoad(clientName, now)
+	}
+	t.Cleanup(func() { loadCacheEntryForAllow = oldLoad })
+
+	const workers = 32
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			Allow("alice", "198.51.100.10")
+		}()
+	}
+	close(start)
+	<-started
+	time.Sleep(50 * time.Millisecond)
+	close(release)
+	wg.Wait()
+	if got := queryCounter.Count(); got != 2 {
+		t.Fatalf("concurrent miss ran %d DB queries, want one two-query refresh", got)
+	}
+}
+
+func TestObserveAndAllowConcurrentFirstIPsReservesLimit(t *testing.T) {
+	initIPMonitorTestDB(t)
+	if err := database.GetDB().Create(&model.Client{
+		Enable: true, Name: "alice", LimitIP: 1, IPLimitMode: ModeEnforce,
+		Inbounds: []byte("[]"), Links: []byte("[]"),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	warmUpIPMonitorForTest(t)
+
+	const workers = 32
+	start := make(chan struct{})
+	var allowed atomic.Int64
+	var wg sync.WaitGroup
+	for i := range workers {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			if ObserveAndAllow("alice", fmt.Sprintf("198.51.100.%d", i+1)) {
+				allowed.Add(1)
+			}
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	if got := allowed.Load(); got != 1 {
+		t.Fatalf("concurrent first observations allowed %d IPs; want exactly 1", got)
+	}
+	pending.Lock()
+	reserved := len(pending.byClient["alice"])
+	pending.Unlock()
+	if reserved != 1 {
+		t.Fatalf("concurrent first observations reserved %d IPs; want 1", reserved)
+	}
+}
+
+func TestAllowRefreshCannotPublishAcrossInvalidation(t *testing.T) {
+	initIPMonitorTestDB(t)
+	ipHashSalt.Lock()
+	ipHashSalt.value = []byte("test-salt")
+	ipHashSalt.Unlock()
+	oldLoad := loadCacheEntryForAllow
+	started := make(chan struct{})
+	release := make(chan struct{})
+	loadCacheEntryForAllow = func(string, time.Time) (allowCacheEntry, bool) {
+		close(started)
+		<-release
+		return allowCacheEntry{mode: ModeMonitor, limit: 1, ips: map[string]struct{}{}, expiresAt: time.Now().Add(time.Minute)}, true
+	}
+	t.Cleanup(func() { loadCacheEntryForAllow = oldLoad })
+
+	result := make(chan bool, 1)
+	go func() { result <- Allow("alice", "198.51.100.10") }()
+	<-started
+	invalidateCache("alice")
+	close(release)
+
+	if <-result {
+		t.Fatal("refresh result from before invalidation was used for admission")
+	}
+	allowCache.Lock()
+	_, published := allowCache.byClient["alice"]
+	allowCache.Unlock()
+	if published {
+		t.Fatal("refresh result from before invalidation repopulated cache")
+	}
+}
+
+func TestAllowUsesChangedPolicyAfterInvalidation(t *testing.T) {
+	initIPMonitorTestDB(t)
+	if err := database.GetDB().Create(&model.Client{
+		Enable: true, Name: "alice", LimitIP: 1, IPLimitMode: ModeEnforce,
+		Inbounds: []byte("[]"), Links: []byte("[]"),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	Record("alice", "198.51.100.10")
+	if Allow("alice", "198.51.100.11") {
+		t.Fatal("enforce policy should reject the second IP")
+	}
+	if err := database.GetDB().Model(model.Client{}).Where("name = ?", "alice").Update("ip_limit_mode", ModeMonitor).Error; err != nil {
+		t.Fatal(err)
+	}
+	InvalidateAllCache()
+	if !Allow("alice", "198.51.100.11") {
+		t.Fatal("invalidated cache did not load the changed monitor policy")
+	}
 }
 
 func TestAllowCacheConcurrent10K(t *testing.T) {
@@ -542,9 +673,6 @@ func TestResetCachesClearsSaltAndAllowState(t *testing.T) {
 		"alice": {limit: 1, mode: ModeEnforce, ips: map[string]struct{}{"hash": {}}, expiresAt: time.Now().Add(time.Minute)},
 	}
 	allowCache.Unlock()
-	allowCacheRefresh.Lock()
-	allowCacheRefresh.inFlight = map[string]struct{}{"alice": {}}
-	allowCacheRefresh.Unlock()
 	securityEvents.Lock()
 	securityEvents.lastEmittedAt = map[string]time.Time{"alice|reject": time.Now()}
 	securityEvents.Unlock()
@@ -564,9 +692,6 @@ func TestResetCachesClearsSaltAndAllowState(t *testing.T) {
 	allowCache.Lock()
 	allowCount := len(allowCache.byClient)
 	allowCache.Unlock()
-	allowCacheRefresh.Lock()
-	refreshCount := len(allowCacheRefresh.inFlight)
-	allowCacheRefresh.Unlock()
 	securityEvents.Lock()
 	securityCount := len(securityEvents.lastEmittedAt)
 	securityEvents.Unlock()
@@ -578,9 +703,9 @@ func TestResetCachesClearsSaltAndAllowState(t *testing.T) {
 	privacyExpired := ipPrivacySettings.expiresAt.IsZero()
 	ipPrivacySettings.Unlock()
 
-	if pendingCount != 0 || allowCount != 0 || refreshCount != 0 || securityCount != 0 || saltLen != 0 || showRaw || !privacyExpired {
-		t.Fatalf("reset did not clear caches: pending=%d allow=%d refresh=%d security=%d salt=%d showRaw=%v privacyExpired=%v",
-			pendingCount, allowCount, refreshCount, securityCount, saltLen, showRaw, privacyExpired)
+	if pendingCount != 0 || allowCount != 0 || securityCount != 0 || saltLen != 0 || showRaw || !privacyExpired {
+		t.Fatalf("reset did not clear caches: pending=%d allow=%d security=%d salt=%d showRaw=%v privacyExpired=%v",
+			pendingCount, allowCount, securityCount, saltLen, showRaw, privacyExpired)
 	}
 }
 

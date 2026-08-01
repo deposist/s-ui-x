@@ -163,17 +163,6 @@
       "notes": "BROKEN delivery: backing-shadowsocks detour is never created; client out_json is a lone shadowtls outbound with no paired shadowsocks. Auto-pair design deferred."
     },
     {
-      "type": "ssh",
-      "hasUsers": true,
-      "userField": "ssh",
-      "clientDelivery": "json",
-      "outJsonBuilder": "ssh",
-      "hasInData": true,
-      "credentialMap": { "name": "user", "password": "password" },
-      "uiEditor": "Ssh",
-      "notes": "out_json copies nothing server-side (host_key* are private server keys); user/password merged per-user"
-    },
-    {
       "type": "direct",
       "hasUsers": false,
       "clientDelivery": "none",
@@ -205,7 +194,6 @@
   "outbounds": [
     { "type": "direct" },
     { "type": "block" },
-    { "type": "dns" },
     { "type": "socks" },
     { "type": "http" },
     { "type": "shadowsocks" },
@@ -235,12 +223,6 @@
       "notes": "Latency-based group backed directly by the core urltest outbound."
     },
     {
-      "type": "fallback",
-      "coreType": "fallback",
-      "sessionRecovery": false,
-      "notes": "Dial-time fallback group backed directly by the core fallback outbound."
-    },
-    {
       "type": "failover",
       "assembledAs": "selector",
       "panelManaged": true,
@@ -262,6 +244,6 @@
   "services": [
     { "type": "resolved" },
     { "type": "ssm-api" },
-    { "type": "derp" }
+    { "type": "derp", "buildTag": "with_tailscale" }
   ]
 }

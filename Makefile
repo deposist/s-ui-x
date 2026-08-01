@@ -1,5 +1,5 @@
 PS ?= powershell -NoProfile -ExecutionPolicy Bypass
-RUN = $(PS) -File tests/baseline/run-command.ps1 -ContinueOnError
+RUN = $(PS) -File tests/baseline/run-command.ps1
 
 .PHONY: audit audit\:lint-go audit\:vet audit\:build audit\:test-go audit\:test-go-race audit\:cover audit\:gosec audit\:vuln audit\:fe-typecheck audit\:fe-lint audit\:fe-build audit\:test-fe audit\:e2e audit\:fe-install
 

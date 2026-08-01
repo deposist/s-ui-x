@@ -4,6 +4,7 @@
     :loading="loading"
     :model-value="visible"
     :save-disabled="!validate"
+    :save-disabled-reason="saveBlockedReason"
     :saving="loading"
     :title="$t('actions.' + title) + ' ' + $t('objects.inbound')"
     :width="720"
@@ -15,16 +16,22 @@
         <v-col cols="12" sm="6">
           <v-select
             hide-details
-            :items="Object.keys(inTypes).map((key,index) => ({title: key, value: Object.values(inTypes)[index]}))"
+            :items="typeOptions"
             :label="$t('type')"
             v-model="inbound.type"
             @update:modelValue="changeType">
           </v-select>
         </v-col>
         <v-col cols="12" sm="6">
-          <v-text-field v-model="inbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
+          <v-text-field v-model="inbound.tag" :label="$t('objects.tag')" hide-details :error="isBlankIdentity(inbound.tag)"></v-text-field>
         </v-col>
       </v-row>
+      <ProtocolGuidance
+        :capabilities="capabilities"
+        category="inbounds"
+        :mode="id > 0 ? 'edit' : 'create'"
+        :model="inbound"
+      />
       <v-card
         v-if="[inTypes.HTTP, inTypes.Mixed].includes(inbound.type)"
         border
@@ -115,6 +122,7 @@ import Dial from '@/components/Dial.vue'
 import DomainResolver from '@/components/DomainResolver.vue'
 import Listen from '@/components/Listen.vue'
 import Direct from '@/components/protocols/Direct.vue'
+import Data from '@/store/modules/data'
 import Users from '@/components/Users.vue'
 import Shadowsocks from '@/components/protocols/Shadowsocks.vue'
 import Hysteria from '@/components/protocols/Hysteria.vue'
@@ -131,9 +139,11 @@ import Multiplex from '@/components/Multiplex.vue'
 import Transport from '@/components/Transport.vue'
 import AddrVue from '@/components/Addr.vue'
 import OutJsonVue from '@/components/OutJson.vue'
-import Data from '@/store/modules/data'
 import EntityDrawer from './EntityDrawer.vue'
 import FormSection from './FormSection.vue'
+import { isBlankIdentity } from '@/utils/entityIdentity'
+import { availableInboundEditorTypes, defaultInboundType, typeOptions } from '@/types/runtimeCapabilities'
+import ProtocolGuidance from '@/components/recommendations/ProtocolGuidance.vue'
 export default {
   // The drawer is driven explicitly by the `visible` prop (the parent passes it
   // alongside v-model); inheritAttrs:false stops the v-model's modelValue from
@@ -143,7 +153,7 @@ export default {
   emits: ['close'],
   data() {
     return {
-      inbound: createInbound("direct",{ id:0, "tag": "" }),
+      inbound: createInbound(defaultInboundType(Data().capabilities) ?? '',{ id:0, "tag": "" }),
       title: "add",
       loading: false,
       side: "s",
@@ -190,6 +200,7 @@ export default {
     }
   },
   methods: {
+    isBlankIdentity,
     async loadData(id: number) {
       this.loading = true
       const inboundArray = await Data().loadInbounds([id])
@@ -206,8 +217,9 @@ export default {
         this.title = "edit"
       }
       else {
+        const type = defaultInboundType(Data().capabilities) ?? ''
         const port = RandomUtil.randomIntRange(10000, 60000)
-        this.inbound = createInbound("direct",{ id: 0, tag: "direct-"+port ,listen: "::", listen_port: port })
+        this.inbound = createInbound(type,{ id: 0, tag: type ? type + "-" + port : "" ,listen: "::", listen_port: port })
         if (this.HasInData.includes(this.inbound.type)){
           this.inbound.addrs = []
           this.inbound.out_json = {}
@@ -252,10 +264,8 @@ export default {
       this.$emit('close')
     },
     async saveChanges() {
-      // Guard against double-submit (button is also :disabled while loading).
-      if (!this.$props.visible || this.loading) return
-      // check duplicate tag
-      const isDuplicatedTag = Data().checkTag("inbound", this.inbound.id, this.inbound.tag)
+      if (!this.$props.visible || this.loading || !this.validate) return
+      const isDuplicatedTag = Data().checkTag('inbound', this.inbound.id, this.inbound.tag)
       if (isDuplicatedTag) return
 
       // save data
@@ -282,15 +292,25 @@ export default {
     },
   },
   computed: {
-    dirty(): boolean {
-      return this.snapshot !== "" && JSON.stringify(this.inbound) !== this.snapshot
+    capabilities() {
+      return Data().capabilities
     },
-    validate() {
-      if (this.inbound == undefined) return false
-      if (this.inbound.tag == "") return false
-      if (this.inbound.listen_port > 65535 || this.inbound.listen_port < 1) return false
-      if (this.OnlyTLS.includes(this.inbound.type) && this.inbound.tls_id == 0) return false
-      return true
+    dirty(): boolean {
+      return this.snapshot !== '' && JSON.stringify(this.inbound) !== this.snapshot
+    },
+    saveBlockedReason(): string {
+      if (this.inbound == undefined) return this.$t('error.invalidData')
+      if (!Data().canSaveType('inbounds', this.inbound.type, this.inbound.id ?? 0)) return this.$t('form.cannotSave.capabilityUnavailable')
+      if (isBlankIdentity(this.inbound.tag)) return this.$t('form.cannotSave.tagRequired')
+      if (this.inbound.listen_port != null && (this.inbound.listen_port > 65535 || this.inbound.listen_port < 1)) return this.$t('form.cannotSave.portRange')
+      if (this.OnlyTLS.includes(this.inbound.type) && !this.inbound.tls_id) return this.$t('form.cannotSave.tlsRequired')
+      return ''
+    },
+    validate(): boolean {
+      return this.saveBlockedReason === ''
+    },
+    typeOptions() {
+      return typeOptions(this.inTypes, availableInboundEditorTypes(Data().capabilities), this.inbound?.type)
     },
     clients() {
       return Data().clients?? []
@@ -328,7 +348,8 @@ export default {
     EntityDrawer, FormSection,
     Listen, InTls, Hysteria2, Naive, Direct, Shadowsocks,
     Users, Hysteria, ShadowTls, TProxy, Multiplex, Tuic, Tun,
-    Trojan, AnyTls, Transport, AddrVue, OutJsonVue, Dial, DomainResolver
+    Trojan, AnyTls, Transport, AddrVue, OutJsonVue, Dial, DomainResolver,
+    ProtocolGuidance,
   }
 }
 </script>

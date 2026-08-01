@@ -8,30 +8,65 @@ on:
         required: true
         default: "v1.5.10-beta4"
         type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: Validated release tag from the caller
+        required: true
+        type: string
+      expected_commit:
+        description: Commit already resolved by the caller
+        required: true
+        type: string
   push:
     tags:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   NODE_VERSION: "25"
-  TAGS: "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0,with_tailscale"
-  # Pinned, immutable cronet-go release tag (not releases/latest). The .dll is
-  # dlopen'd in-process by the root core, so it is verified by sha256 below.
+  TAGS: "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0,with_tailscale,with_wireguard"
+  # Pinned cronet-go release tag (not releases/latest). GitHub currently marks
+  # this release mutable, so the per-architecture SHA-256 checks below are the
+  # fail-closed integrity boundary for the downloaded DLL.
   LIBCRONET_BASE_URL: "https://github.com/SagerNet/cronet-go/releases/download/v148.0.7778.96-1"
 
 jobs:
-  build-frontend:
+  release-ref:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.checkout.outputs.tag }}
+      commit: ${{ steps.checkout.outputs.commit }}
+      version: ${{ steps.checkout.outputs.version }}
+      prerelease: ${{ steps.checkout.outputs.prerelease }}
     steps:
-      - name: Check out repository
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          submodules: recursive
           fetch-depth: 1
+      - name: Validate and check out exact release tag
+        id: checkout
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ inputs.tag || github.ref_name }}
+          expected_commit: ${{ inputs.expected_commit || '' }}
+          event_commit: ${{ github.event_name == 'push' && github.sha || '' }}
 
+  build-frontend:
+    needs: release-ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -40,13 +75,25 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies (strict)
         working-directory: frontend
         run: npm ci
+
+      - name: Frontend lint
+        working-directory: frontend
+        run: npm run lint -- --max-warnings=0
+
+      - name: Frontend unit tests
+        working-directory: frontend
+        run: npm run test
 
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Verify production frontend dist
+        working-directory: frontend
+        run: npm run verify:dist
 
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -56,7 +103,7 @@ jobs:
           retention-days: 1
 
   build-windows:
-    needs: build-frontend
+    needs: [release-ref, build-frontend]
     name: Build-windows-${{ matrix.arch }}
     strategy:
       fail-fast: false
@@ -66,15 +113,20 @@ jobs:
           - { arch: arm64, runner: ubuntu-latest, cgo: "0" }
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Check out repository
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
+        with:
+          fetch-depth: 1
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
       - name: Download frontend build artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: frontend-dist
           path: web/html
-
       - name: Set up Go
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
@@ -95,6 +147,7 @@ jobs:
       - name: Build s-ui
         shell: bash
         run: |
+          set -euo pipefail
           export CGO_ENABLED=${{ matrix.cgo }}
           export GOOS=windows
           export GOARCH=${{ matrix.arch }}
@@ -103,7 +156,7 @@ jobs:
           go version
           go env GOOS GOARCH
 
-          go build -ldflags="-w -s -checklinkname=0" -tags "${{ env.TAGS }}" -o sui.exe main.go
+          go build -ldflags="-w -s -X github.com/deposist/s-ui-x/config.ArtifactPlatform=${{ matrix.arch }} -X internal/godebug.defaultGODEBUG=multipathtcp=0 -checklinkname=0" -tags "${{ env.TAGS }}" -o sui.exe main.go
           file sui.exe
 
           mkdir s-ui-windows
@@ -121,64 +174,21 @@ jobs:
             arm64) CRONET_SHA256="fc9e3bae0b326d83092a5de2c04d8b4139dc5c1ba576a035dee4bde780a3c95f" ;;
             *) echo "no pinned libcronet sha256 for arch ${{ matrix.arch }}" >&2; exit 1 ;;
           esac
-          curl -fsSL -o s-ui-windows/libcronet.dll ${{ env.LIBCRONET_BASE_URL }}/libcronet-windows-${{ matrix.arch }}.dll
-          echo "${CRONET_SHA256}  s-ui-windows/libcronet.dll" | sha256sum -c -
+          curl --fail --location --silent --show-error -o s-ui-windows/libcronet.dll "${{ env.LIBCRONET_BASE_URL }}/libcronet-windows-${{ matrix.arch }}.dll"
+          printf '%s  *s-ui-windows/libcronet.dll\n' "$CRONET_SHA256" | sha256sum --check --binary -
 
       - name: Package
         shell: bash
         run: |
+          set -euo pipefail
           zip -r "s-ui-windows-${{ matrix.arch }}.zip" s-ui-windows
+          sha256sum --binary "s-ui-windows-${{ matrix.arch }}.zip" > "s-ui-windows-${{ matrix.arch }}.zip.sha256"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: s-ui-windows-${{ matrix.arch }}
-          path: ./s-ui-windows-${{ matrix.arch }}.zip
+          path: |
+            ./s-ui-windows-${{ matrix.arch }}.zip
+            ./s-ui-windows-${{ matrix.arch }}.zip.sha256
           retention-days: 1
-
-  publish-windows:
-    name: Publish Windows artifacts
-    needs: build-windows
-    runs-on: ubuntu-latest
-    steps:
-      - name: Normalize release tag
-        id: vars
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
-          case "$TAG" in
-            v*) ;;
-            *) TAG="v$TAG" ;;
-          esac
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          case "$TAG" in
-            *-alpha*|*-beta*|*-rc*|*-pre*)
-              echo "prerelease=true" >> "$GITHUB_OUTPUT"
-              echo "make_latest=false" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "prerelease=false" >> "$GITHUB_OUTPUT"
-              echo "make_latest=true" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
-      - name: Download Windows build artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          pattern: s-ui-windows-*
-          path: release-assets
-          merge-multiple: true
-
-      - name: Publish to current repository Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
-        with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: s-ui ${{ steps.vars.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          prerelease: ${{ steps.vars.outputs.prerelease == 'true' }}
-          make_latest: ${{ steps.vars.outputs.make_latest }}
-          fail_on_unmatched_files: true
-          files: release-assets/*

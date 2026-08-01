@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -281,5 +282,51 @@ func TestRotateSessionGenerationInvalidatesExistingSessions(t *testing.T) {
 	newSession := performSessionRequest(router, "/protected", newLogin.Result().Cookies()...)
 	if newSession.Code != http.StatusNoContent {
 		t.Fatalf("new session should be valid after rotation, got %d", newSession.Code)
+	}
+}
+
+func TestClearSessionRemovesForcedPasswordResetState(t *testing.T) {
+	settingService := initSessionTestDB(t)
+	router := gin.New()
+	router.Use(sessions.Sessions("s-ui", cookie.NewStore([]byte("test-secret"))))
+	router.GET("/reset", func(c *gin.Context) {
+		generation, err := settingService.GetSessionGeneration()
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		if err := SetForcePasswordResetUser(c, "admin", 0, generation); err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+	router.GET("/state", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"user":  GetLoginUser(c),
+			"reset": SessionRequiresPasswordReset(c),
+			"login": IsLogin(c),
+		})
+	})
+	router.GET("/logout", func(c *gin.Context) {
+		ClearSession(c)
+		c.Status(http.StatusNoContent)
+	})
+
+	reset := performSessionRequest(router, "/reset")
+	if reset.Code != http.StatusNoContent {
+		t.Fatalf("reset session setup returned %d", reset.Code)
+	}
+	state := performSessionRequest(router, "/state", reset.Result().Cookies()...)
+	if state.Code != http.StatusOK || !strings.Contains(state.Body.String(), `"user":"admin"`) || !strings.Contains(state.Body.String(), `"reset":true`) || !strings.Contains(state.Body.String(), `"login":false`) {
+		t.Fatalf("forced reset state = %d %s", state.Code, state.Body.String())
+	}
+	logout := performSessionRequest(router, "/logout", reset.Result().Cookies()...)
+	if logout.Code != http.StatusNoContent {
+		t.Fatalf("logout returned %d", logout.Code)
+	}
+	state = performSessionRequest(router, "/state", logout.Result().Cookies()...)
+	if state.Code != http.StatusOK || strings.Contains(state.Body.String(), `"user":"admin"`) || strings.Contains(state.Body.String(), `"reset":true`) || strings.Contains(state.Body.String(), `"login":true`) {
+		t.Fatalf("cleared session state = %d %s", state.Code, state.Body.String())
 	}
 }

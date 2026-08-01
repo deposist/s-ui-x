@@ -59,9 +59,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { locale } from '@/locales'
 import HttpUtils from '@/plugins/httputil'
+import { createLatestRequestRunner } from './asyncRequestFence'
 import { ClientIPHistoryRow, displayIP, hasRawIPRows } from '@/components/ipHistory'
 
 const props = withDefaults(defineProps<{
@@ -84,40 +85,45 @@ const confirmRaw = ref(false)
 
 const hasRawRows = computed(() => hasRawIPRows(rows.value))
 
-watch(() => [props.visible, props.client] as const, async ([visible, client]) => {
+const requests = createLatestRequestRunner(value => {
+  loading.value = value
+})
+const cancelRequests = requests.abort
+
+watch(() => [props.visible, props.client] as const, ([visible, client], _, onCleanup) => {
   if (visible && client) {
-    await loadHistory(client)
+    const request = requests.start(signal => {
+      return HttpUtils.get('api/ip-monitor/' + encodeURIComponent(client), {}, { signal })
+    }, response => {
+      showRaw.value = false
+      rows.value = response.success ? response.obj ?? [] : []
+    })
+    onCleanup(request.abort)
     return
   }
+
+  if (!visible) cancelRequests()
   if (!visible) {
     showRaw.value = false
     confirmRaw.value = false
   }
 }, { immediate: true })
 
-const loadHistory = async (client: string) => {
-  loading.value = true
-  showRaw.value = false
-  rows.value = []
-  const response = await HttpUtils.get('api/ip-monitor/' + encodeURIComponent(client))
-  if (response.success) {
-    rows.value = response.obj ?? []
-  }
-  loading.value = false
-}
-
-const clearHistory = async () => {
-  loading.value = true
-  const response = await HttpUtils.post('api/ip-monitor/' + encodeURIComponent(props.client) + '/clear', {})
-  if (response.success) {
+const clearHistory = () => {
+  const request = requests.start(signal => {
+    return HttpUtils.post('api/ip-monitor/' + encodeURIComponent(props.client) + '/clear', {}, { signal })
+  }, response => {
+    if (!response.success) return
     rows.value = []
     showRaw.value = false
     emit('cleared')
-  }
-  loading.value = false
+  })
+
+  void request.done
 }
 
 const setVisible = (value: boolean) => {
+  if (!value) cancelRequests()
   emit('update:visible', value)
 }
 
@@ -144,4 +150,6 @@ const formatTime = (value: number) => {
   if (!value) return '-'
   return new Date(value * 1000).toLocaleString(locale)
 }
+
+onBeforeUnmount(cancelRequests)
 </script>

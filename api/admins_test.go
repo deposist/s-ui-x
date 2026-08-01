@@ -133,6 +133,56 @@ func TestAdminCreateDeleteFlowRequiresCurrentPasswordAndAudits(t *testing.T) {
 	}
 }
 
+func TestBrowserTokenMutationReloadsLiveAPIV2Handler(t *testing.T) {
+	resetRateLimitState()
+	settingService := initSessionTestDB(t)
+	if _, err := settingService.GetAllSetting(); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(model.Setting{}).Where("key = ?", "webPath").Update("value", "/").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := (&service.UserService{}).UpdateFirstUser("admin", "reload-password"); err != nil {
+		t.Fatal(err)
+	}
+	token, err := (&service.UserService{}).AddToken("admin", 0, "reload-test", "admin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var tokenRow model.Tokens
+	if err := database.GetDB().Where("desc = ?", "reload-test").First(&tokenRow).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	router, _ := newAdminFlowRouter(t)
+	jar := &integrationCookieJar{}
+	loginAdminFlowUser(t, router, jar, "admin", "reload-password")
+	csrf := adminFlowCSRFToken(t, router, jar)
+
+	assertLiveAPIV2TokenAccepted(t, router, token, true)
+	disabled := adminFlowPost(t, router, jar, csrf, "/api/setTokenEnabled", url.Values{
+		"id":      {strconv.FormatUint(uint64(tokenRow.Id), 10)},
+		"enabled": {"false"},
+	})
+	assertAdminFlowMsgSuccess(t, disabled, true)
+	assertLiveAPIV2TokenAccepted(t, router, token, false)
+
+	enabled := adminFlowPost(t, router, jar, csrf, "/api/setTokenEnabled", url.Values{
+		"id":      {strconv.FormatUint(uint64(tokenRow.Id), 10)},
+		"enabled": {"true"},
+	})
+	assertAdminFlowMsgSuccess(t, enabled, true)
+	assertLiveAPIV2TokenAccepted(t, router, token, true)
+}
+
+func assertLiveAPIV2TokenAccepted(t *testing.T, router *gin.Engine, token string, want bool) {
+	t.Helper()
+	recorder := performAPIV2TokenRequest(router, "Authorization", "Bearer "+token)
+	if got := recorder.Code == http.StatusOK; got != want {
+		t.Fatalf("live API-v2 token accepted=%v, want %v, status=%d body=%s", got, want, recorder.Code, recorder.Body.String())
+	}
+}
+
 func newAdminFlowRouter(t *testing.T) (*gin.Engine, *APIv2Handler) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

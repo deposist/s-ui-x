@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -53,6 +54,88 @@ func TestDoctorRunReportsMissingReferences(t *testing.T) {
 	}
 }
 
+func TestDoctorRunReportsRuleConditionProblems(t *testing.T) {
+	initDoctorTestDB(t)
+	config := `{"log":{"disabled":true},"outbounds":[{"type":"direct","tag":"direct"}],"route":{"final":"direct","rules":[{"type":"logical","mode":"and","rules":[]}]}}`
+	if err := (&SettingService{}).SetConfig(config); err != nil {
+		t.Fatalf("set config: %v", err)
+	}
+
+	report := (&DoctorService{}).Run("example.com")
+	item := doctorReportItem(report, "rule-conditions")
+	if item == nil || item.Severity != DoctorSeverityError {
+		t.Fatalf("missing rule condition error: %#v", report.Items)
+	}
+	if !strings.Contains(item.Message, "no conditions") {
+		t.Fatalf("unexpected rule condition message: %#v", item)
+	}
+	if details, ok := item.Details.([]string); !ok || len(details) != 1 || !strings.Contains(details[0], "route.rules[0].rules") {
+		t.Fatalf("unexpected rule condition details: %#v", item.Details)
+	}
+}
+
+func TestDoctorRunWarnsOnDroppedRule(t *testing.T) {
+	initDoctorTestDB(t)
+	config := `{"log":{"disabled":true},"outbounds":[{"type":"direct","tag":"direct"}],"dns":{"servers":[],"rules":[{}]},"route":{"final":"direct","rules":[]}}`
+	if err := (&SettingService{}).SetConfig(config); err != nil {
+		t.Fatalf("set config: %v", err)
+	}
+
+	report := (&DoctorService{}).Run("example.com")
+	item := doctorReportItem(report, "rule-conditions")
+	if item == nil || item.Severity != DoctorSeverityWarn {
+		t.Fatalf("missing dropped-rule warning: %#v", report.Items)
+	}
+	if !strings.Contains(item.Message, "silently discarded") {
+		t.Fatalf("unexpected dropped-rule message: %#v", item)
+	}
+}
+
+func TestDoctorRunDistinguishesUnsupportedAndUnavailableCapabilities(t *testing.T) {
+	initDoctorTestDB(t)
+
+	if err := database.GetDB().Create(&model.Service{
+		Type:    "sudoku",
+		Tag:     "legacy-sudoku",
+		Options: json.RawMessage(`{}`),
+	}).Error; err != nil {
+		t.Fatalf("create unsupported service: %v", err)
+	}
+	if err := database.GetDB().Create(&model.Endpoint{
+		Type:    "wireguard",
+		Tag:     "wireguard-build-tag",
+		Options: json.RawMessage(`{"system":false,"interface_name":"wg-test","server":"127.0.0.1","server_port":1,"local_address":["10.0.0.2/32"],"private_key":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}`),
+	}).Error; err != nil {
+		t.Fatalf("create unavailable endpoint: %v", err)
+	}
+
+	report := (&DoctorService{}).Run("example.com")
+	var unsupported, unavailable bool
+	for _, item := range report.Items {
+		if item.ID == "capability-services-1" && strings.Contains(item.Message, "unsupported by official core") {
+			unsupported = true
+		}
+		if item.ID == "capability-endpoints-1" && strings.Contains(item.Message, "unavailable in this build") {
+			unavailable = true
+		}
+	}
+	if !unsupported {
+		t.Fatalf("doctor did not report unsupported historical service: %#v", report.Items)
+	}
+	if !unavailable {
+		t.Fatalf("doctor did not report unavailable historical endpoint: %#v", report.Items)
+	}
+}
+
+func doctorReportItem(report DoctorReport, id string) *DoctorItem {
+	for i := range report.Items {
+		if report.Items[i].ID == id {
+			return &report.Items[i]
+		}
+	}
+	return nil
+}
+
 func TestDiagnoseClientReportsDisabledExpiredAndOverLimit(t *testing.T) {
 	initDoctorTestDB(t)
 	inbounds, _ := json.Marshal([]uint{})
@@ -83,9 +166,6 @@ func TestDiagnoseClientReportsDisabledExpiredAndOverLimit(t *testing.T) {
 func TestDiagnoseClientTrafficBoundary(t *testing.T) {
 	initDoctorTestDB(t)
 	inbounds, _ := json.Marshal([]uint{})
-
-	// used == Volume must count as over-limit (error), and the enabled/non-expired
-	// branches must report OK - pinning the OK direction the earlier test never asserts.
 	atLimit := model.Client{Enable: true, Name: "atlimit", Inbounds: inbounds, Volume: 10, Up: 6, Down: 4}
 	if err := database.GetDB().Create(&atLimit).Error; err != nil {
 		t.Fatalf("create atlimit client: %v", err)
@@ -104,7 +184,6 @@ func TestDiagnoseClientTrafficBoundary(t *testing.T) {
 		t.Fatalf("non-expired client must report client-expiry OK: %#v", report.Items)
 	}
 
-	// used == Volume-1 must count as within limit (OK).
 	under := model.Client{Enable: true, Name: "under", Inbounds: inbounds, Volume: 10, Up: 5, Down: 4}
 	if err := database.GetDB().Create(&under).Error; err != nil {
 		t.Fatalf("create under client: %v", err)

@@ -21,7 +21,7 @@
                   <v-select
                   hide-details
                   :label="$t('type')"
-                  :items="Object.keys(outTypes).map((key,index) => ({title: key, value: Object.values(outTypes)[index]}))"
+                  :items="typeOptions"
                   v-model="outbound.type"
                   @update:modelValue="changeType">
                   </v-select>
@@ -30,6 +30,12 @@
                   <v-text-field v-model="outbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
                 </v-col>
               </v-row>
+              <ProtocolGuidance
+                :capabilities="capabilities"
+                category="outbounds"
+                :mode="id > 0 ? 'edit' : 'create'"
+                :model="outbound"
+              />
               <v-row v-if="!NoServer.includes(outbound.type)">
                 <v-col cols="12" sm="6" md="4">
                   <v-text-field
@@ -85,6 +91,9 @@
         </v-container>
       </v-card-text>
       <v-card-actions>
+        <span v-if="saveBlockedReason" class="text-error text-caption">
+          {{ saveBlockedReason }}
+        </span>
         <v-spacer></v-spacer>
         <v-btn
           color="primary"
@@ -97,7 +106,7 @@
           color="primary"
           variant="tonal"
           :loading="loading"
-          :disabled="loading"
+          :disabled="loading || !validate"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -135,12 +144,14 @@ import Failover from '@/components/protocols/Failover.vue'
 import HttpUtils from '@/plugins/httputil'
 import AnyTls from '@/components/protocols/AnyTls.vue'
 import Data from '@/store/modules/data'
+import ProtocolGuidance from '@/components/recommendations/ProtocolGuidance.vue'
+import { availableOutboundEditorTypes, defaultOutboundType, typeOptions } from '@/types/runtimeCapabilities'
 export default {
   props: ['visible', 'data', 'id', 'tags'],
   emits: ['close'],
   data() {
     return {
-      outbound: createOutbound("direct",{ "tag": "" }),
+      outbound: createOutbound(defaultOutboundType(Data().capabilities) ?? '',{ "tag": "" }),
       title: "add",
       tab: "t1",
       link: "",
@@ -158,7 +169,8 @@ export default {
         this.title = "edit"
       }
       else {
-        this.outbound = createOutbound("direct",{ tag: "direct-" + RandomUtil.randomSeq(3) })
+        const type = defaultOutboundType(Data().capabilities) ?? ''
+        this.outbound = createOutbound(type,{ tag: type ? type + "-" + RandomUtil.randomSeq(3) : "" })
         this.title = "add"
       }
       this.tab = "t1"
@@ -176,7 +188,7 @@ export default {
     },
     async saveChanges() {
       // Guard against double-submit (button is also :disabled while loading).
-      if (!this.$props.visible || this.loading) return
+      if (!this.$props.visible || this.loading || !this.validate) return
       // check duplicate tag
       const isDuplicatedTag = Data().checkTag("outbound",this.$props.id, this.outbound.tag)
       if (isDuplicatedTag) return
@@ -211,9 +223,26 @@ export default {
       }
     },
   },
+  computed: {
+    capabilities() {
+      return Data().capabilities
+    },
+    typeOptions() {
+      return typeOptions(this.outTypes, availableOutboundEditorTypes(Data().capabilities), this.outbound?.type)
+    },
+    saveBlockedReason() {
+      if (!Data().canSaveType('outbounds', this.outbound.type, this.outbound.id ?? 0)) return this.$t('form.cannotSave.capabilityUnavailable')
+      if (this.outbound?.tag?.trim() === '') return this.$t('form.cannotSave.tagRequired')
+      return ''
+    },
+    validate() {
+      return this.saveBlockedReason === ''
+    },
+  },
   components: { Dial, Multiplex, Transport, OutTLS,
     Direct, Socks, Http, Shadowsocks, Vmess, Trojan,
     Wireguard, Hysteria, Naive, ShadowTls, Vless, Tuic,
-    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest, Failover }
+    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest, Failover,
+    ProtocolGuidance }
 }
 </script>

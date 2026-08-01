@@ -34,7 +34,8 @@ class ManualTimers {
   intervals: Array<{ id: number; callback: () => void; delay?: number }> = []
 
   setTimeout = vi.fn((handler: TimerHandler, delay?: number) => {
-    const callback = typeof handler === 'function' ? handler as () => void : () => undefined
+    const callback =
+      typeof handler === 'function' ? (handler as () => void) : () => undefined
     const timer = { id: this.nextID++, callback, delay }
     this.timeouts.push(timer)
     return timer.id
@@ -45,7 +46,8 @@ class ManualTimers {
   }) as unknown as typeof clearTimeout
 
   setInterval = vi.fn((handler: TimerHandler, delay?: number) => {
-    const callback = typeof handler === 'function' ? handler as () => void : () => undefined
+    const callback =
+      typeof handler === 'function' ? (handler as () => void) : () => undefined
     const timer = { id: this.nextID++, callback, delay }
     this.intervals.push(timer)
     return timer.id
@@ -70,7 +72,19 @@ const flushPromises = async () => {
   await Promise.resolve()
 }
 
-const runtimeDeps = (overrides: Partial<ConstructorParameters<typeof WsRuntime>[0]> = {}) => ({
+const deferred = <T>() => {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, resolve, reject }
+}
+
+const runtimeDeps = (
+  overrides: Partial<ConstructorParameters<typeof WsRuntime>[0]> = {},
+) => ({
   getToken: vi.fn(async () => 'ws-token'),
   createSocket: vi.fn(() => new FakeSocket()),
   loadData: vi.fn(),
@@ -83,6 +97,84 @@ describe('WsRuntime regression anchors', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+  })
+  it('deduplicates simultaneous connection attempts', async () => {
+    const token = deferred<string | null>()
+    const socket = new FakeSocket()
+    const deps = runtimeDeps({
+      getToken: vi.fn(() => token.promise),
+      createSocket: vi.fn(() => socket),
+    })
+    const runtime = new WsRuntime(deps)
+
+    const first = runtime.connect()
+    const second = runtime.connect()
+
+    expect(first).toBe(second)
+    expect(deps.getToken).toHaveBeenCalledTimes(1)
+
+    token.resolve('ws-token')
+    await first
+
+    expect(deps.createSocket).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows a new connection after disconnect invalidates a pending token request', async () => {
+    const firstToken = deferred<string | null>()
+    const socket = new FakeSocket()
+    const deps = runtimeDeps({
+      getToken: vi
+        .fn()
+        .mockReturnValueOnce(firstToken.promise)
+        .mockResolvedValueOnce('new-token'),
+      createSocket: vi.fn(() => socket),
+    })
+    const runtime = new WsRuntime(deps)
+
+    const first = runtime.connect()
+    runtime.disconnect()
+    const second = runtime.connect()
+
+    expect(second).not.toBe(first)
+    expect(deps.getToken).toHaveBeenCalledTimes(2)
+
+    firstToken.resolve('stale-token')
+    await first
+    await second
+
+    expect(deps.createSocket).toHaveBeenCalledTimes(1)
+    expect(deps.createSocket).toHaveBeenCalledWith(
+      'ws://panel.test/api/realtime/ws',
+      'new-token',
+    )
+  })
+
+  it('cleans reconnect timers during disconnect', async () => {
+    const timers = new ManualTimers()
+    const sockets: FakeSocket[] = []
+    const deps = runtimeDeps({
+      createSocket: vi.fn(() => {
+        const socket = new FakeSocket()
+        sockets.push(socket)
+        return socket
+      }),
+      setTimeout: timers.setTimeout,
+      clearTimeout: timers.clearTimeout,
+    })
+    const runtime = new WsRuntime(deps)
+
+    await runtime.connect()
+    sockets[0].onopen?.()
+    sockets[0].onclose?.({ code: 1006 })
+    expect(timers.timeouts).toHaveLength(1)
+
+    runtime.disconnect()
+    timers.runNextTimeout()
+    await flushPromises()
+
+    expect(deps.getToken).toHaveBeenCalledTimes(1)
+    expect(deps.createSocket).toHaveBeenCalledTimes(1)
+    expect(runtime.state).toBe('degraded')
   })
 
   it('connects on the happy path and dispatches parsed events', async () => {
@@ -97,7 +189,10 @@ describe('WsRuntime regression anchors', () => {
     const runtime = new WsRuntime(deps)
 
     await runtime.connect()
-    expect(deps.createSocket).toHaveBeenCalledWith('ws://panel.test/api/realtime/ws', 'ws-token')
+    expect(deps.createSocket).toHaveBeenCalledWith(
+      'ws://panel.test/api/realtime/ws',
+      'ws-token',
+    )
     expect(runtime.state).toBe('reconnecting')
 
     socket.onopen?.()
@@ -105,7 +200,10 @@ describe('WsRuntime regression anchors', () => {
     expect(onState).toHaveBeenLastCalledWith('connected')
 
     socket.onmessage?.({ data: '{"type":"onlines","payload":{"alice":true}}' })
-    expect(onEvent).toHaveBeenCalledWith({ type: 'onlines', payload: { alice: true } })
+    expect(onEvent).toHaveBeenCalledWith({
+      type: 'onlines',
+      payload: { alice: true },
+    })
   })
 
   it('falls back to degraded polling when no websocket token is available', async () => {
@@ -125,6 +223,34 @@ describe('WsRuntime regression anchors', () => {
 
     timers.runInterval()
     expect(deps.loadData).toHaveBeenCalledTimes(1)
+  })
+
+  it('falls back and retries when fetching the websocket token rejects', async () => {
+    const timers = new ManualTimers()
+    const socket = new FakeSocket()
+    const deps = runtimeDeps({
+      getToken: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('network offline'))
+        .mockResolvedValueOnce('ws-token'),
+      createSocket: vi.fn(() => socket),
+      setInterval: timers.setInterval,
+      clearInterval: timers.clearInterval,
+    })
+    const runtime = new WsRuntime(deps)
+
+    await expect(runtime.connect()).resolves.toBeUndefined()
+
+    expect(runtime.state).toBe('degraded')
+    expect(timers.setInterval).toHaveBeenCalledWith(expect.any(Function), 10000)
+
+    timers.runInterval()
+    await flushPromises()
+
+    expect(deps.getToken).toHaveBeenCalledTimes(2)
+    expect(deps.createSocket).toHaveBeenCalledTimes(1)
+    socket.onopen?.()
+    expect(runtime.state).toBe('connected')
   })
 
   it('falls back when the socket does not open before the timeout', async () => {
@@ -152,10 +278,12 @@ describe('WsRuntime regression anchors', () => {
   it('ignores malformed messages without closing a healthy websocket', async () => {
     const socket = new FakeSocket()
     const onEvent = vi.fn()
-    const runtime = new WsRuntime(runtimeDeps({
-      createSocket: vi.fn(() => socket),
-      onEvent,
-    }))
+    const runtime = new WsRuntime(
+      runtimeDeps({
+        createSocket: vi.fn(() => socket),
+        onEvent,
+      }),
+    )
 
     await runtime.connect()
     socket.onopen?.()
@@ -185,7 +313,10 @@ describe('WsRuntime regression anchors', () => {
     sockets[0].onclose?.({ code: 1006 })
 
     expect(runtime.state).toBe('reconnecting')
-    expect(timers.setTimeout).toHaveBeenLastCalledWith(expect.any(Function), expect.any(Number))
+    expect(timers.setTimeout).toHaveBeenLastCalledWith(
+      expect.any(Function),
+      expect.any(Number),
+    )
 
     timers.runNextTimeout()
     await flushPromises()
@@ -227,7 +358,8 @@ describe('WsRuntime regression anchors', () => {
     vi.useFakeTimers()
     const socket = new FakeSocket()
     const deps = runtimeDeps({
-      getToken: vi.fn()
+      getToken: vi
+        .fn()
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce('ws-token'),
       createSocket: vi.fn(() => socket),

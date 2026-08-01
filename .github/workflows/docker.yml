@@ -20,14 +20,37 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
-  build:
+  release-ref:
     runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.checkout.outputs.tag }}
+      commit: ${{ steps.checkout.outputs.commit }}
+      prerelease: ${{ steps.checkout.outputs.prerelease }}
     steps:
-      - name: Check out repository
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          submodules: recursive
+          fetch-depth: 1
+      - name: Validate and check out exact release tag
+        id: checkout
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ inputs.tag || github.ref_name }}
+          event_commit: ${{ github.event_name == 'push' && github.sha || '' }}
 
+  build:
+    needs: release-ref
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4
 
@@ -41,36 +64,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Normalize release tag
+      - name: Set Docker tags
         id: vars
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+          PRERELEASE: ${{ needs.release-ref.outputs.prerelease }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
-          case "$TAG" in
-            v*) ;;
-            *) TAG="v$TAG" ;;
-          esac
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          case "$TAG" in
-            *-alpha*|*-beta*|*-rc*|*-pre*)
-              {
-                echo "tags<<EOF"
-                echo "${{ env.IMAGE_NAME }}:$TAG"
-                echo "EOF"
-              } >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              {
-                echo "tags<<EOF"
-                echo "${{ env.IMAGE_NAME }}:$TAG"
-                echo "${{ env.IMAGE_NAME }}:latest"
-                echo "EOF"
-              } >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+          set -euo pipefail
+          {
+            echo 'tags<<EOF'
+            echo "$IMAGE_NAME:$TAG"
+            if [[ "$PRERELEASE" != true ]]; then
+              echo "$IMAGE_NAME:latest"
+            fi
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7

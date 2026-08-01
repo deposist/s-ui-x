@@ -35,28 +35,6 @@
             </v-row>
           </v-card-subtitle>
           <v-card-text>
-            <v-row v-if="item.type != 'oom-killer'">
-              <v-col>{{ $t('in.addr') }}</v-col>
-              <v-col>
-                {{ item.listen }}
-              </v-col>
-            </v-row>
-            <v-row v-if="item.type != 'oom-killer'">
-              <v-col>{{ $t('in.port') }}</v-col>
-              <v-col>
-                {{ item.listen_port }}
-              </v-col>
-            </v-row>
-            <v-row v-if="item.type != 'oom-killer'">
-              <v-col>{{ $t('objects.tls') }}</v-col>
-              <v-col>
-                {{ item.tls_id > 0 ? $t('enable') : $t('disable') }}
-              </v-col>
-            </v-row>
-            <v-row v-if="item.type == 'oom-killer'">
-              <v-col>{{ $t('types.oom.memoryLimit') }}</v-col>
-              <v-col>{{ item.memory_limit || '-' }}</v-col>
-            </v-row>
           </v-card-text>
           <v-divider></v-divider>
           <v-card-actions style="padding: 0;">

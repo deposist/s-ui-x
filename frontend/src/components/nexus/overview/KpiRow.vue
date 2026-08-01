@@ -32,6 +32,43 @@
               </v-list-item>
             </v-list>
           </v-menu>
+
+          <v-menu v-model="trafficTimeZoneMenuOpen">
+            <template #activator="{ props }">
+              <v-btn
+                variant="text"
+                density="compact"
+                size="small"
+                class="nexus-overview-kpis__window-btn"
+                :title="trafficTimeZoneLabel"
+                v-bind="props"
+              >
+                {{ trafficTimeZone }}
+                <v-icon icon="lucide:chevron-down" size="14" class="ms-1" />
+              </v-btn>
+            </template>
+            <v-list density="compact" class="nexus-overview-kpis__timezone-list" min-width="260">
+              <div class="nexus-overview-kpis__timezone-search" @click.stop>
+                <v-text-field
+                  v-model="trafficTimeZoneSearch"
+                  :aria-label="$t('nexus.overview.traffic.searchTimeZones')"
+                  density="compact"
+                  hide-details
+                  :placeholder="$t('nexus.overview.traffic.searchTimeZones')"
+                  prepend-inner-icon="lucide:search"
+                  variant="outlined"
+                />
+              </div>
+              <v-list-item
+                v-for="opt in trafficTimeZoneOptions"
+                :key="opt.value"
+                :active="opt.value === trafficTimeZone"
+                @click="selectTrafficTimeZone(opt.value)"
+              >
+                <v-list-item-title class="text-caption">{{ opt.label }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </div>
       </template>
 
@@ -75,7 +112,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AreaSeries from '@/components/nexus/primitives/AreaSeries.vue'
@@ -87,7 +124,12 @@ import {
 } from './overviewFormatters'
 import type { KpiSummary } from './selectors/kpiSelectors'
 import type { SystemStatus } from './selectors/systemStatusSelectors'
-import type { TrafficRange, TrafficSeries } from './selectors/trafficSelectors'
+import {
+  trafficTimeZoneOptions as createTrafficTimeZoneOptions,
+  type TrafficRange,
+  type TrafficSeries,
+  type TrafficTimeZoneOption,
+} from './selectors/trafficSelectors'
 
 const props = defineProps<{
   loading: boolean
@@ -96,15 +138,22 @@ const props = defineProps<{
   traffic: TrafficSeries
   wsState: WsConnectionState
   trafficRange: TrafficRange
+  trafficTimeZone: string
 }>()
 
 const emit = defineEmits<{
   'update:trafficRange': [value: TrafficRange]
+  'update:trafficTimeZone': [value: string]
 }>()
 
 const trafficRange = computed({
   get: () => props.trafficRange,
   set: (val) => emit('update:trafficRange', val),
+})
+
+const trafficTimeZone = computed({
+  get: () => props.trafficTimeZone,
+  set: (val) => emit('update:trafficTimeZone', val),
 })
 
 const { n, t } = useI18n()
@@ -121,6 +170,25 @@ const trafficRangeOptions = computed<{ value: TrafficRange; label: string }[]>((
 const trafficRangeLabel = computed(() => {
   const activeOpt = trafficRangeOptions.value.find(opt => opt.value === trafficRange.value)
   return activeOpt ? activeOpt.label : `${n(24)}${t('date.h')}`
+})
+
+const trafficTimeZoneMenuOpen = ref(false)
+const trafficTimeZoneSearch = ref('')
+const selectTrafficTimeZone = (value: string) => {
+  trafficTimeZone.value = value
+  trafficTimeZoneSearch.value = ''
+  trafficTimeZoneMenuOpen.value = false
+}
+watch(trafficTimeZoneMenuOpen, (open) => {
+  if (!open) trafficTimeZoneSearch.value = ''
+})
+const trafficTimeZoneOptions = computed<TrafficTimeZoneOption[]>(() => createTrafficTimeZoneOptions(
+  trafficTimeZone.value,
+  trafficTimeZoneSearch.value,
+))
+const trafficTimeZoneLabel = computed(() => {
+  const activeOpt = trafficTimeZoneOptions.value.find(opt => opt.value === trafficTimeZone.value)
+  return activeOpt ? activeOpt.label : trafficTimeZone.value
 })
 
 const trafficTotal = computed(() => {
@@ -175,7 +243,11 @@ const wsStateLabel = computed(() => {
 }
 
 .nexus-overview-kpis__window-selector {
+  align-items: center;
+  display: flex;
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .nexus-overview-kpis__window-btn {
@@ -191,6 +263,18 @@ const wsStateLabel = computed(() => {
 .nexus-overview-kpis__window-btn:hover {
   color: var(--nexus-text-primary);
   border-color: var(--nexus-border-strong);
+}
+.nexus-overview-kpis__timezone-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.nexus-overview-kpis__timezone-search {
+  padding: 6px 8px 4px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgb(var(--v-theme-surface));
 }
 
 .nexus-overview-kpis__signal {

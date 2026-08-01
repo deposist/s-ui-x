@@ -35,9 +35,9 @@ func (r *recordedCoreOps) stubServiceHooks(t *testing.T) {
 func createTestService(t *testing.T, tag string) model.Service {
 	t.Helper()
 	svc := model.Service{
-		Type:    "derp",
+		Type:    "resolved",
 		Tag:     tag,
-		Options: json.RawMessage(`{"listen":"127.0.0.1","listen_port":0}`),
+		Options: json.RawMessage(`{}`),
 	}
 	if err := database.GetDB().Create(&svc).Error; err != nil {
 		t.Fatal(err)
@@ -54,7 +54,7 @@ func TestConfigSaveServicesEditHotReloadsWithoutCoreRestart(t *testing.T) {
 	recorder.stubServiceHooks(t)
 
 	before := coreInstance.GetInstance()
-	payload := json.RawMessage(fmt.Sprintf(`{"id":%d,"type":"derp","tag":"svc-hot-edit","listen":"127.0.0.1","listen_port":1}`, svc.Id))
+	payload := json.RawMessage(fmt.Sprintf(`{"id":%d,"type":"resolved","tag":"svc-hot-edit"}`, svc.Id))
 	configService := NewConfigServiceWithRuntime(NewRuntime(coreInstance))
 	objs, err := configService.Save("services", "edit", payload, "", "admin", "example.com")
 	if err != nil {
@@ -81,7 +81,7 @@ func TestConfigSaveServicesNewHotAddsWithoutCoreRestart(t *testing.T) {
 	recorder.stubServiceHooks(t)
 
 	before := coreInstance.GetInstance()
-	payload := json.RawMessage(`{"type":"derp","tag":"svc-hot-new","listen":"127.0.0.1","listen_port":0}`)
+	payload := json.RawMessage(`{"type":"resolved","tag":"svc-hot-new"}`)
 	configService := NewConfigServiceWithRuntime(NewRuntime(coreInstance))
 	if _, err := configService.Save("services", "new", payload, "", "admin", "example.com"); err != nil {
 		t.Fatal(err)
@@ -108,7 +108,7 @@ func TestConfigSaveServicesRenameRemovesOldTagThenReloads(t *testing.T) {
 	recorder := &recordedCoreOps{}
 	recorder.stubServiceHooks(t)
 
-	payload := json.RawMessage(fmt.Sprintf(`{"id":%d,"type":"derp","tag":"svc-new-name","listen":"127.0.0.1","listen_port":0}`, svc.Id))
+	payload := json.RawMessage(fmt.Sprintf(`{"id":%d,"type":"resolved","tag":"svc-new-name"}`, svc.Id))
 	configService := NewConfigServiceWithRuntime(NewRuntime(coreInstance))
 	if _, err := configService.Save("services", "edit", payload, "", "admin", "example.com"); err != nil {
 		t.Fatal(err)

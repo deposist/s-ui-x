@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/deposist/s-ui-x/logger"
 	"github.com/deposist/s-ui-x/realtime"
 	"github.com/deposist/s-ui-x/util/common"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -50,16 +52,14 @@ type allowCacheEntry struct {
 var allowCache = struct {
 	sync.Mutex
 	byClient map[string]allowCacheEntry
+	revision uint64
 }{
 	byClient: map[string]allowCacheEntry{},
 }
 
-var allowCacheRefresh = struct {
-	sync.Mutex
-	inFlight map[string]struct{}
-}{
-	inFlight: map[string]struct{}{},
-}
+var allowCacheRefresh singleflight.Group
+
+var loadCacheEntryForAllow = loadCacheEntry
 
 var securityEvents = struct {
 	sync.Mutex
@@ -90,11 +90,8 @@ func ResetCaches() {
 
 	allowCache.Lock()
 	allowCache.byClient = map[string]allowCacheEntry{}
+	allowCache.revision++
 	allowCache.Unlock()
-
-	allowCacheRefresh.Lock()
-	allowCacheRefresh.inFlight = map[string]struct{}{}
-	allowCacheRefresh.Unlock()
 
 	securityEvents.Lock()
 	securityEvents.lastEmittedAt = map[string]time.Time{}
@@ -137,17 +134,63 @@ func Allow(clientName string, ip string) bool {
 	}
 	ipHash, err := hashIP(ip)
 	if err != nil {
-		return true
+		return false
 	}
-	entry, ok := cachedClient(clientName, time.Now())
+	entry, ok := clientEntryForAllow(clientName, time.Now())
 	if !ok {
-		refreshClientAsync(clientName)
+		return false
+	}
+	return allowWithEntry(clientName, ipHash, entry)
+}
+
+// ObserveAndAllow atomically checks an IP against the client's limit and
+// reserves accepted observations so concurrent first connections cannot all
+// consume the same free slot.
+func ObserveAndAllow(clientName string, ip string) bool {
+	if clientName == "" || ip == "" {
 		return true
 	}
+	ipHash, display, ok := recordIPFields(ip)
+	if !ok {
+		return false
+	}
+	entry, loaded := clientEntryForAllow(clientName, time.Now())
+	if !loaded {
+		return false
+	}
+
+	now := time.Now().Unix()
+	pending.Lock()
+	if entry.mode == ModeEnforce && entry.limit > 0 {
+		seen := make(map[string]struct{}, len(entry.ips)+len(pending.byClient[clientName])+1)
+		for seenHash := range entry.ips {
+			seen[seenHash] = struct{}{}
+		}
+		for seenHash := range pending.byClient[clientName] {
+			seen[seenHash] = struct{}{}
+		}
+		seen[ipHash] = struct{}{}
+		if len(seen) > entry.limit {
+			pending.Unlock()
+			publishIPEnforcedReject(clientName, ipHash, entry.limit, len(seen))
+			return false
+		}
+	}
+	if pending.byClient[clientName] == nil {
+		pending.byClient[clientName] = map[string]pendingIP{}
+	}
+	pending.byClient[clientName][ipHash] = pendingIP{lastSeen: now, display: display}
+	pending.Unlock()
+	cacheAddIP(clientName, ipHash)
+	return true
+}
+
+func allowWithEntry(clientName string, ipHash string, entry allowCacheEntry) bool {
 	if entry.mode != ModeEnforce || entry.limit <= 0 {
 		return true
 	}
-	seen := map[string]struct{}{ipHash: {}}
+	seen := make(map[string]struct{}, len(entry.ips)+1)
+	seen[ipHash] = struct{}{}
 	for seenHash := range entry.ips {
 		seen[seenHash] = struct{}{}
 	}
@@ -159,14 +202,18 @@ func Allow(clientName string, ip string) bool {
 	if len(seen) <= entry.limit {
 		return true
 	}
+	publishIPEnforcedReject(clientName, ipHash, entry.limit, len(seen))
+	return false
+}
+
+func publishIPEnforcedReject(clientName string, ipHash string, limit int, count int) {
 	publishSecurityEvent(clientName, "ip_enforced_reject", map[string]any{
 		"kind":   "ip_enforced_reject",
 		"client": clientName,
 		"ipHash": ipHash,
-		"limit":  entry.limit,
-		"count":  len(seen),
+		"limit":  limit,
+		"count":  count,
 	})
-	return false
 }
 
 func WarmUp() error {
@@ -177,7 +224,7 @@ func WarmUp() error {
 	if _, err := getInstallSalt(); err != nil {
 		return err
 	}
-	entries, err := loadActiveEnforceEntries(db, time.Now())
+	entries, err := loadPolicyEntries(db, time.Now())
 	if err != nil {
 		return err
 	}
@@ -338,9 +385,54 @@ func cachedClient(clientName string, now time.Time) (allowCacheEntry, bool) {
 	return allowCacheEntry{}, false
 }
 
-// loadErrLog throttles fail-open DB-error logging so a database outage cannot
-// flood the log: ip-limit checks fail open (allow) on a DB error, and without a
-// throttle every refresh during the outage would emit a line.
+func staleCachedClient(clientName string) (allowCacheEntry, bool) {
+	allowCache.Lock()
+	defer allowCache.Unlock()
+	entry, ok := allowCache.byClient[clientName]
+	if !ok {
+		return allowCacheEntry{}, false
+	}
+	return cloneCacheEntry(entry), true
+}
+
+type cacheRefreshResult struct {
+	entry    allowCacheEntry
+	loaded   bool
+	revision uint64
+}
+
+func clientEntryForAllow(clientName string, now time.Time) (allowCacheEntry, bool) {
+	if entry, ok := cachedClient(clientName, now); ok {
+		return entry, true
+	}
+	allowCache.Lock()
+	revision := allowCache.revision
+	allowCache.Unlock()
+	refreshKey := fmt.Sprintf("%s:%d", clientName, revision)
+	refreshed, _, _ := allowCacheRefresh.Do(refreshKey, func() (any, error) {
+		entry, loaded := loadCacheEntryForAllow(clientName, now)
+		if loaded {
+			allowCache.Lock()
+			if revision == allowCache.revision {
+				allowCache.byClient[clientName] = entry
+			} else {
+				loaded = false
+			}
+			allowCache.Unlock()
+		}
+		return cacheRefreshResult{entry: entry, loaded: loaded, revision: revision}, nil
+	})
+	result, ok := refreshed.(cacheRefreshResult)
+	allowCache.Lock()
+	currentRevision := allowCache.revision
+	allowCache.Unlock()
+	if ok && result.loaded && result.revision == currentRevision {
+		return result.entry, true
+	}
+	return staleCachedClient(clientName)
+}
+
+// loadErrLog throttles DB-error logging so an outage cannot flood the log.
 var loadErrLog = struct {
 	sync.Mutex
 	last time.Time
@@ -353,7 +445,7 @@ func logLoadCacheError(context string, err error) {
 		return
 	}
 	loadErrLog.last = time.Now()
-	logger.Warning("ipmonitor: ip-limit ", context, " lookup failed; failing open (allowing): ", err)
+	logger.Warning("ipmonitor: ip-limit ", context, " lookup failed; keeping stale policy or failing closed: ", err)
 }
 
 func loadCacheEntry(clientName string, now time.Time) (allowCacheEntry, bool) {
@@ -369,7 +461,7 @@ func loadCacheEntry(clientName string, now time.Time) (allowCacheEntry, bool) {
 		return allowCacheEntry{}, false
 	}
 	if !client.Enable {
-		return allowCacheEntry{}, false
+		return allowCacheEntry{expiresAt: now.Add(allowCacheTTL)}, true
 	}
 	entry := allowCacheEntry{
 		limit:     client.LimitIP,
@@ -402,7 +494,7 @@ type activeEnforceCacheRow struct {
 	IPHash      sql.NullString
 }
 
-func loadActiveEnforceEntries(db *gorm.DB, now time.Time) (map[string]allowCacheEntry, error) {
+func loadPolicyEntries(db *gorm.DB, now time.Time) (map[string]allowCacheEntry, error) {
 	rows := make([]activeEnforceCacheRow, 0)
 	err := db.Raw(`
 		SELECT
@@ -414,10 +506,9 @@ func loadActiveEnforceEntries(db *gorm.DB, now time.Time) (map[string]allowCache
 		FROM clients
 		LEFT JOIN client_ips ON client_ips.client_name = clients.name
 		WHERE clients.enable = true
-			AND clients.ip_limit_mode = ?
-			AND clients.limit_ip > 0
+			AND clients.ip_limit_mode IN (?, ?)
 		ORDER BY clients.name
-	`, ModeEnforce).Scan(&rows).Error
+	`, ModeMonitor, ModeEnforce).Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -448,34 +539,14 @@ func loadActiveEnforceEntries(db *gorm.DB, now time.Time) (map[string]allowCache
 	return entries, nil
 }
 
-func refreshClientAsync(clientName string) {
-	allowCacheRefresh.Lock()
-	if _, ok := allowCacheRefresh.inFlight[clientName]; ok {
-		allowCacheRefresh.Unlock()
-		return
-	}
-	allowCacheRefresh.inFlight[clientName] = struct{}{}
-	allowCacheRefresh.Unlock()
-
-	go func() {
-		defer func() {
-			allowCacheRefresh.Lock()
-			delete(allowCacheRefresh.inFlight, clientName)
-			allowCacheRefresh.Unlock()
-		}()
-		refreshClient(clientName, time.Now())
-	}()
-}
-
 func refreshClient(clientName string, now time.Time) bool {
 	entry, ok := loadCacheEntry(clientName, now)
-	allowCache.Lock()
-	defer allowCache.Unlock()
 	if !ok {
-		delete(allowCache.byClient, clientName)
 		return false
 	}
+	allowCache.Lock()
 	allowCache.byClient[clientName] = entry
+	allowCache.Unlock()
 	return true
 }
 
@@ -509,12 +580,14 @@ func cacheAddIP(clientName string, ip string) {
 func invalidateCache(clientName string) {
 	allowCache.Lock()
 	defer allowCache.Unlock()
+	allowCache.revision++
 	delete(allowCache.byClient, clientName)
 }
 
 func InvalidateAllCache() {
 	allowCache.Lock()
 	defer allowCache.Unlock()
+	allowCache.revision++
 	allowCache.byClient = map[string]allowCacheEntry{}
 }
 

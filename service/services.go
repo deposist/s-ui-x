@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
@@ -60,6 +61,9 @@ func (s *ServicesService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 		return nil, err
 	}
 	for _, srv := range services {
+		if !capabilities.IsTypeAvailable("services", srv.Type) {
+			continue
+		}
 		srvJson, err := srv.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -142,6 +146,9 @@ func (s *ServicesService) RestartServices(tx *gorm.DB, ids []uint) error {
 		err = coreInstance.RemoveService(srv.Tag)
 		if err != nil && err != os.ErrInvalid {
 			return err
+		}
+		if !capabilities.IsTypeAvailable("services", srv.Type) {
+			continue
 		}
 		srvConfig, err := srv.MarshalJSON()
 		if err != nil {

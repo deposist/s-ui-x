@@ -7,11 +7,12 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
 )
 
-var InboundTypeWithLink = []string{"socks", "http", "mixed", "shadowsocks", "naive", "hysteria", "hysteria2", "anytls", "tuic", "vless", "trojan", "vmess"}
+var InboundTypeWithLink = capabilities.InboundTypesWithLink()
 
 type LinkParam struct {
 	Key   string

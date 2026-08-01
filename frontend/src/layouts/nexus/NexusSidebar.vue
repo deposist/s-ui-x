@@ -76,7 +76,7 @@
               offset-x="-2"
               offset-y="-2"
             >
-              <v-icon :icon="item.icon" />
+              <v-icon :icon="item.nexusIcon" />
             </v-badge>
           </template>
 

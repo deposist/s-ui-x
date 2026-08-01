@@ -28,7 +28,7 @@
         :to="item.path"
         :active="router.currentRoute.value.path == item.path">
         <template v-slot:prepend>
-          <v-icon :icon="item.icon"></v-icon>
+          <v-icon :icon="item.classicIcon"></v-icon>
         </template>
         <v-list-item-title v-text="$t(item.title)"></v-list-item-title>
       </v-list-item>
@@ -43,6 +43,7 @@
 import { computed } from 'vue'
 import router from '@/router'
 import { logout } from '@/plugins/httputil'
+import { appMenu as menu } from '@/layouts/menu'
 
 const props = defineProps(['isMobile','displayDrawer'])
 
@@ -50,22 +51,6 @@ const showDrawer = computed((): boolean => {
   return props.displayDrawer
 })
 
-const menu = [
-  { title: 'pages.home', icon: 'mdi-home',  path: '/' },
-  { title: 'pages.inbounds', icon: 'mdi-cloud-download',  path: '/inbounds' },
-  { title: 'pages.clients', icon: 'mdi-account-multiple',  path: '/clients' },
-  { title: 'pages.outbounds', icon: 'mdi-cloud-upload',  path: '/outbounds' },
-  { title: 'pages.endpoints', icon: 'mdi-cloud-tags',  path: '/endpoints' },
-  { title: 'pages.services', icon: 'mdi-server',  path: '/services' },
-  { title: 'pages.tls', icon: 'mdi-certificate',  path: '/tls' },
-  { title: 'pages.rules', icon: 'mdi-routes',  path: '/rules' },
-  { title: 'pages.dns', icon: 'mdi-dns',  path: '/dns' },
-  { title: 'pages.admins', icon: 'mdi-account-tie',  path: '/admins' },
-  { title: 'pages.telegram', icon: 'mdi-send',  path: '/telegram' },
-  { title: 'pages.audit', icon: 'mdi-shield-search',  path: '/audit' },
-  { title: 'pages.settings', icon: 'mdi-cog',  path: '/settings' },
-  { title: 'pages.donations', icon: 'mdi-heart',  path: '/donations' },
-]
 
 const Logout = async () => {
   logout()

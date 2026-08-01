@@ -14,6 +14,20 @@ const mockAuthenticatedShell = async (page: Page) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('locale', 'en')
   })
+  await page.route('**/api/capabilities', async route => route.fulfill({
+    json: {
+      success: true,
+      msg: '',
+      obj: {
+        coreVersion: '1.13.15',
+        inbounds: [],
+        outbounds: [],
+        endpointTypes: [],
+        serviceTypes: [],
+        buildTags: [],
+      },
+    },
+  }))
   await page.route('**/api/load**', async route => route.fulfill({
     json: {
       success: true,

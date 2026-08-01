@@ -1,11 +1,14 @@
 package importxui
 
+import "fmt"
+
 type Report struct {
-	Summary         Summary          `json:"summary"`
-	Warnings        []string         `json:"warnings"`
-	ByInbound       []InboundStat    `json:"by_inbound"`
-	BackupPath      string           `json:"backup_path,omitempty"`
-	GeneratedAdmins []GeneratedAdmin `json:"generated_admins,omitempty"`
+	Summary         Summary             `json:"summary"`
+	Warnings        []string            `json:"warnings"`
+	ByInbound       []InboundStat       `json:"by_inbound"`
+	BackupPath      string              `json:"backup_path,omitempty"`
+	GeneratedAdmins []GeneratedAdmin    `json:"generated_admins,omitempty"`
+	Unsupported     []UnsupportedEntity `json:"unsupported,omitempty"`
 }
 
 type Summary struct {
@@ -50,6 +53,18 @@ type InboundStat struct {
 type GeneratedAdmin struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type UnsupportedEntity struct {
+	Kind   string `json:"kind"`
+	Source string `json:"source"`
+	Type   string `json:"type"`
+	Reason string `json:"reason"`
+}
+
+func (r *Report) markUnsupported(kind, source, entityType, reason string) {
+	r.Unsupported = append(r.Unsupported, UnsupportedEntity{Kind: kind, Source: source, Type: entityType, Reason: reason})
+	r.warn(fmt.Sprintf("%s %s: %s", kind, source, reason))
 }
 
 func (r *Report) warn(message string) {

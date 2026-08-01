@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/deposist/s-ui-x/core"
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
+	"gorm.io/gorm"
 )
 
 type DoctorSeverity string
@@ -64,6 +66,7 @@ func (s *DoctorService) Run(hostname string) DoctorReport {
 	configService := NewConfigServiceWithRuntime(s.runtime())
 	serverService := ServerService{Runtime: s.runtime()}
 
+	items = append(items, capabilityContractChecks(database.GetDB())...)
 	rawConfig, err := configService.GetConfig("")
 	if err != nil {
 		items = append(items, doctorError("config-build", "Build sing-box config", "Unable to build config: "+err.Error(), "Fix database/config rows before restarting sing-box.", nil))
@@ -132,6 +135,51 @@ func (s *DoctorService) DiagnoseClient(req DoctorClientRequest, hostname string)
 	items = append(items, s.clientRuntimeChecks(client, req.Target)...)
 
 	return finishDoctorReport(start, items), nil
+}
+
+func capabilityContractChecks(db *gorm.DB) []DoctorItem {
+	type categoryCheck struct {
+		name  string
+		model any
+	}
+	checks := []categoryCheck{
+		{name: "inbounds", model: &model.Inbound{}},
+		{name: "outbounds", model: &model.Outbound{}},
+		{name: "endpoints", model: &model.Endpoint{}},
+		{name: "services", model: &model.Service{}},
+	}
+	var items []DoctorItem
+	for _, check := range checks {
+		var rows []struct {
+			ID   uint
+			Type string
+			Tag  string
+		}
+		if err := db.Model(check.model).Select("id", "type", "tag").Scan(&rows).Error; err != nil {
+			items = append(items, doctorError("capability-"+check.name, "Official core capabilities", "Unable to inspect "+check.name+": "+err.Error(), "Check the database schema and retry.", nil))
+			continue
+		}
+		for _, row := range rows {
+			reason := ""
+			switch {
+			case !capabilities.IsTypeAllowed(check.name, row.Type):
+				reason = "unsupported by official core"
+			case !capabilities.IsTypeAvailable(check.name, row.Type):
+				reason = "unavailable in this build"
+			}
+			if reason == "" {
+				continue
+			}
+			items = append(items, doctorError(
+				fmt.Sprintf("capability-%s-%d", check.name, row.ID),
+				"Unsupported historical entity",
+				fmt.Sprintf("%s %q has type %q: %s.", strings.TrimSuffix(check.name, "s"), row.Tag, row.Type, reason),
+				"Keep the row for export/history, or replace its type before restarting sing-box.",
+				map[string]any{"category": check.name, "id": row.ID, "tag": row.Tag, "type": row.Type, "reason": reason},
+			))
+		}
+	}
+	return items
 }
 
 func finishDoctorReport(start time.Time, items []DoctorItem) DoctorReport {
@@ -246,7 +294,34 @@ func doctorReferenceChecks(rawConfig []byte) []DoctorItem {
 	}
 
 	items = append(items, doctorRuleSetURLChecks(cfg.Route.RuleSet)...)
+	items = append(items, doctorRuleConditionChecks(rawConfig)...)
 	return items
+}
+
+// doctorRuleConditionChecks keeps doctor diagnostics aligned with the official
+// rule decoder used by config-save validation. Dropped rules are warnings: the
+// core can start, but silently discarding a rule is still data loss.
+func doctorRuleConditionChecks(rawConfig []byte) []DoctorItem {
+	issues, err := core.RuleConditionIssues(rawConfig)
+	if err != nil {
+		return []DoctorItem{doctorError("rule-conditions", "Rule conditions", err.Error(), "Fix malformed config JSON.", nil)}
+	}
+	var fatal, dropped []string
+	for _, issue := range issues {
+		entry := fmt.Sprintf("%s: %s", issue.Path, issue.Message)
+		if issue.Code == core.RuleConditionCodeDroppedRule {
+			dropped = append(dropped, entry)
+			continue
+		}
+		fatal = append(fatal, entry)
+	}
+	if len(fatal) > 0 {
+		return []DoctorItem{doctorError("rule-conditions", "Rule conditions", "Some rules have no conditions, so sing-box will not start.", "Add a condition to each listed rule, or delete the rule.", fatal)}
+	}
+	if len(dropped) > 0 {
+		return []DoctorItem{doctorWarn("rule-conditions", "Rule conditions", "Some rules are empty and are silently discarded when the config is loaded.", "Remove the empty rules, or give them a condition so they take effect.", dropped)}
+	}
+	return []DoctorItem{doctorOK("rule-conditions", "Rule conditions", "Every rule has at least one condition.", nil)}
 }
 
 func appendMissingRouteOutbound(missing []string, rule map[string]any, index int, tags map[string]bool) []string {

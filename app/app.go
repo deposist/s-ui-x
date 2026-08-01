@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -38,14 +39,21 @@ func (a *APP) Init() error {
 
 	a.initLog()
 
-	// Self-update safety net (SR-012): if a freshly-applied binary keeps failing
-	// to boot, roll back to the backed-up previous binary and exit so systemd
-	// restarts into the restored version. Runs once per process (not on the
-	// in-process SIGHUP RestartApp, which does not re-run Init).
+	service.PanelUpdateDatabaseSnapshot = database.PreparePanelUpdateSnapshot
+	service.PanelUpdateDatabaseRestore = database.RestorePanelUpdateSnapshot
+
+	// Recover before migration: an unconfirmed binary must never leave the
+	// database migrated if its matching binary rollback cannot complete.
 	if exe, err := os.Executable(); err == nil && exe != "" {
-		if service.CheckPendingUpdate(exe) {
-			logger.Warning("self-update: new binary failed to boot; rolled back to previous version, restarting")
-			os.Exit(1)
+		rolledBack, recoveryErr := service.RecoverPendingUpdate(exe)
+		if recoveryErr != nil {
+			return fmt.Errorf("recover pending self-update: %w", recoveryErr)
+		}
+		if rolledBack {
+			return service.ErrPanelUpdateRolledBack
+		}
+		if err := service.MarkPendingUpdateBooting(exe); err != nil {
+			return fmt.Errorf("mark pending self-update boot: %w", err)
 		}
 	}
 
@@ -157,11 +165,12 @@ func (a *APP) Start() error {
 		logger.Error("sing-box core failed to start; panel stays up so you can fix the config: ", err)
 	}
 
-	// Healthy boot reached: clear any pending self-update marker so this start is
-	// not counted as a failed update attempt (SR-012). No-op when no update is
-	// pending (e.g. normal restarts).
+	// Only a fully started application confirms the transaction and deletes its
+	// binary/database rollback artifacts.
 	if exe, err := os.Executable(); err == nil && exe != "" {
-		service.ClearPendingUpdate(exe)
+		if err := service.ConfirmPendingUpdate(exe); err != nil {
+			return fmt.Errorf("confirm self-update: %w", err)
+		}
 	}
 
 	return nil

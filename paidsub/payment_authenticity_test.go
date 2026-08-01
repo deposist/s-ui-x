@@ -122,7 +122,7 @@ func TestHandleSuccessfulPaymentAppliesRenewalOnMatch(t *testing.T) {
 	db.Create(&client)
 	tariff := Tariff{Name: "Stars", StarsAmount: 100, Currency: "XTR", AddDays: 30, Enabled: true}
 	db.Create(&tariff)
-	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: string(ProviderStars), Amount: 100, Currency: "XTR", Status: StatusPending, TelegramUserId: 7, IdempotencyKey: "sp-ok"}
+	order := PaymentOrder{ClientId: client.Id, TariffId: tariff.Id, Provider: string(ProviderStars), Amount: 100, Currency: "XTR", Status: StatusPending, TelegramUserId: 7, IdempotencyKey: "sp-ok", GrantedDays: tariff.AddDays, SnapshotVersion: paymentOrderSnapshotVersion}
 	db.Create(&order)
 
 	rt := &recordingTransport{}

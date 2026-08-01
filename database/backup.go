@@ -47,6 +47,11 @@ func backupTables() []backupTable {
 		{name: "clients", model: &model.Client{}},
 		{name: "changes", model: &model.Changes{}},
 		{name: "audit_events", model: &model.AuditEvent{}},
+		{name: "paidsub_bindings", model: &model.PaidSubBinding{}},
+		{name: "tariffs", model: &model.PaidSubTariff{}},
+		{name: "payment_orders", model: &model.PaidSubPaymentOrder{}},
+		{name: "paidsub_poll_cursors", model: &model.PaidSubPollCursor{}},
+		{name: "paidsub_invoice_cancellations", model: &model.PaidSubInvoiceCancellation{}},
 	}
 }
 
@@ -81,7 +86,8 @@ func PrepareDbBackup(exclude string) (backupPath string, cleanup func(), err err
 		return "", nil, err
 	}
 	dbPath := tmpFile.Name()
-	cleanup = func() { cleanupBackupTempFiles(dbPath) }
+	cleanupPath := dbPath
+	cleanup = func() { cleanupBackupTempFiles(cleanupPath) }
 	if err := tmpFile.Close(); err != nil {
 		cleanup()
 		return "", nil, err
@@ -89,9 +95,10 @@ func PrepareDbBackup(exclude string) (backupPath string, cleanup func(), err err
 	if backupTempPathHook != nil {
 		backupTempPathHook(dbPath)
 	}
+	cleanupOnFailure := cleanup
 	defer func() {
 		if err != nil {
-			cleanup()
+			cleanupOnFailure()
 		}
 	}()
 
@@ -116,6 +123,9 @@ func PrepareDbBackup(exclude string) (backupPath string, cleanup func(), err err
 
 	for _, table := range tables {
 		if excludedTables[table.name] {
+			continue
+		}
+		if !db.Migrator().HasTable(table.name) {
 			continue
 		}
 		sourceDB := db
@@ -233,6 +243,12 @@ func walCheckpointWithFallback(db *gorm.DB) error {
 }
 
 func ImportDB(file multipart.File) error {
+	leaveMaintenance, err := beginRestore()
+	if err != nil {
+		return err
+	}
+	defer leaveMaintenance()
+
 	// Check if the file is a SQLite database.
 	isValidDb, err := IsSQLiteDB(file)
 	if err != nil {
@@ -338,13 +354,12 @@ func ImportDB(file multipart.File) error {
 }
 
 func closeLiveDB() {
-	// Swap the global pointer under dbMu (mirrors OpenDB), so concurrent
-	// GetDB() readers — e.g. a cron job firing mid-import — never race the write.
-	// The actual Close() is done outside the lock (I/O, touches no global).
-	dbMu.Lock()
+	// Database replacement holds maintenanceMu exclusively. Keep the last
+	// non-nil pointer published until OpenDB replaces it so GetDB callers never
+	// observe a transient nil during a restore.
+	dbMu.RLock()
 	current := db
-	db = nil
-	dbMu.Unlock()
+	dbMu.RUnlock()
 	if current == nil {
 		return
 	}

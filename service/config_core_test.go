@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/deposist/s-ui-x/core"
 )
 
 func TestConfigCoreMethodsHandleNilCore(t *testing.T) {
@@ -24,6 +26,41 @@ func TestConfigCoreMethodsHandleNilCore(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "core not initialized") {
 			t.Fatalf("%s returned %v, want core not initialized", name, err)
 		}
+	}
+}
+
+func TestConfigCoreLifecycleStartReloadStop(t *testing.T) {
+	initSettingTestDB(t)
+
+	coreInstance := core.NewCore()
+	configService := NewConfigServiceWithRuntime(NewRuntime(coreInstance))
+	t.Cleanup(func() {
+		_ = configService.StopCore()
+	})
+
+	if err := configService.StartCore(); err != nil {
+		t.Fatalf("start core: %v", err)
+	}
+	if !configService.IsCoreRunning() || coreInstance.GetInstance() == nil {
+		t.Fatal("core should be running after start")
+	}
+	started := coreInstance.GetInstance()
+
+	if err := configService.RestartCore(); err != nil {
+		t.Fatalf("reload core: %v", err)
+	}
+	if !configService.IsCoreRunning() || coreInstance.GetInstance() == nil {
+		t.Fatal("core should be running after reload")
+	}
+	if coreInstance.GetInstance() == started {
+		t.Fatal("reload should replace the running core instance")
+	}
+
+	if err := configService.StopCore(); err != nil {
+		t.Fatalf("stop core: %v", err)
+	}
+	if configService.IsCoreRunning() || coreInstance.GetInstance() != nil {
+		t.Fatal("core should be stopped after stop")
 	}
 }
 

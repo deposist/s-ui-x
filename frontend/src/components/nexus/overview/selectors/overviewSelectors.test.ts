@@ -9,7 +9,15 @@ import { selectKpiSummary } from './kpiSelectors'
 import { selectProtocolSummaries } from './protocolSummarySelectors'
 import { selectSystemStatus } from './systemStatusSelectors'
 import { selectTopClients } from './topClientsSelectors'
-import { selectTrafficSeries } from './trafficSelectors'
+import {
+  formatTrafficLabel,
+  isValidTrafficTimeZone,
+  loadTrafficTimeZone,
+  persistTrafficTimeZone,
+  selectTrafficSeries,
+  trafficTimeZoneOptions,
+  trafficTimeZoneStorageKey,
+} from './trafficSelectors'
 
 describe('overview selectors', () => {
   it('returns empty-safe defaults', () => {
@@ -74,10 +82,10 @@ describe('overview selectors', () => {
     ]
     const originalTrafficStats = trafficStats.map((stat) => ({ ...stat }))
 
-    expect(selectTrafficSeries({ stats: trafficStats, range: '7d' })).toEqual({
+    expect(selectTrafficSeries({ stats: trafficStats, range: '7d', timeZone: 'UTC' })).toEqual({
       labels: [
-        '2024-03-09T16:00:00.000Z',
-        '2024-03-09T16:01:00.000Z',
+        '2024-03-09 16:00',
+        '2024-03-09 16:01',
       ],
       download: [11, 0],
       upload: [8, 7],
@@ -187,10 +195,11 @@ describe('overview selectors', () => {
       stats: [
         { dateTime: 1710000000, direction: false, traffic: 999 },
       ],
+      timeZone: 'UTC',
     })).toEqual({
       labels: [
-        '2024-03-09T16:00:00.000Z',
-        '2024-03-09T16:30:00.000Z',
+        '2024-03-09 16:00',
+        '2024-03-09 16:30',
       ],
       download: [10, 30],
       upload: [4, 5],
@@ -209,17 +218,69 @@ describe('overview selectors', () => {
         { dateTime: 1710001800, direction: false, traffic: 6 },
         { dateTime: 1709999900, direction: false, traffic: 99 },
       ],
+      timeZone: 'UTC',
     })).toEqual({
       labels: [
-        '2024-03-09T16:00:00.000Z',
-        '2024-03-09T16:15:00.000Z',
-        '2024-03-09T16:30:00.000Z',
-        '2024-03-09T16:45:00.000Z',
+        '2024-03-09 16:00',
+        '2024-03-09 16:15',
+        '2024-03-09 16:30',
+        '2024-03-09 16:45',
       ],
       download: [10, 0, 6, 0],
       upload: [4, 0, 0, 0],
       range: '1h',
     })
+  })
+
+  it('formats traffic labels in the selected timezone', () => {
+    expect(formatTrafficLabel(1710000000, 'UTC')).toBe('2024-03-09 16:00')
+    expect(formatTrafficLabel(1710000000, 'Europe/Moscow')).toBe('2024-03-09 19:00')
+    expect(selectTrafficSeries({
+      timeZone: 'Europe/Moscow',
+      summary: {
+        buckets: [{ startTime: 1710000000, download: 1, upload: 2 }],
+      },
+    }).labels).toEqual(['2024-03-09 19:00'])
+  })
+
+  it('persists only valid traffic timezones under the stable storage key', () => {
+    const values = new Map<string, string>()
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    }
+
+    expect(trafficTimeZoneStorageKey).toBe('nexus-overview-traffic-timezone')
+    persistTrafficTimeZone('Europe/Moscow', storage)
+    expect(values.get(trafficTimeZoneStorageKey)).toBe('Europe/Moscow')
+    expect(loadTrafficTimeZone(storage)).toBe('Europe/Moscow')
+
+    persistTrafficTimeZone('Not/AZone', storage)
+    expect(loadTrafficTimeZone({
+      getItem: () => 'Not/AZone',
+      setItem: () => undefined,
+    })).not.toBe('Not/AZone')
+    expect(isValidTrafficTimeZone('Not/AZone')).toBe(false)
+  })
+
+  it('keeps normal timezone options curated without enumerating all IANA zones', () => {
+    const originalSupportedValuesOf = Intl.supportedValuesOf
+    let called = false
+    Intl.supportedValuesOf = (() => {
+      called = true
+      return ['Pacific/Apia']
+    }) as typeof Intl.supportedValuesOf
+
+    try {
+      const options = trafficTimeZoneOptions('UTC')
+      expect(called).toBe(false)
+      expect(options.map(option => option.value)).toContain('Europe/Moscow')
+      expect(options.map(option => option.value)).not.toContain('Pacific/Apia')
+      expect(trafficTimeZoneOptions('UTC', 'Apia').map(option => option.value)).toContain('Pacific/Apia')
+      expect(called).toBe(true)
+    } finally {
+      Intl.supportedValuesOf = originalSupportedValuesOf
+    }
   })
 
   it('maps known and unknown audit or partial API payloads to plain display data', () => {
@@ -296,13 +357,13 @@ describe('overview selectors', () => {
 
     expect(selectTrafficSeries({
       range: 'tomorrow',
+      timeZone: 'UTC',
       stats: [
         null,
-        { dateTime: 1710000000, direction: 'down', traffic: 5 },
         { dateTime: 1710000000, direction: false, traffic: -1 },
       ],
     })).toEqual({
-      labels: ['2024-03-09T16:00:00.000Z'],
+      labels: ['2024-03-09 16:00'],
       download: [0],
       upload: [0],
       range: '24h',

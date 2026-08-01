@@ -11,7 +11,7 @@
             <v-select
             hide-details
             :label="$t('type')"
-            :items="Object.keys(srvTypes).map((key,index) => ({title: key, value: Object.values(srvTypes)[index]}))"
+            :items="srvTypeItems"
             v-model="srv.type"
             @update:modelValue="changeType">
             </v-select>
@@ -24,9 +24,6 @@
         <Listen v-if="!NoListen.includes(srv.type)" :data="srv" :inTags="inTags" />
         <Derp v-if="srv.type == srvTypes.DERP" :data="srv" :inTags="inTags" :tsTags="tsTags" />
         <SSMapi v-if="srv.type == srvTypes.SSMAPI" :data="srv" :ssTags="ssTags" />
-        <Ocm v-if="srv.type == srvTypes.OCM" :data="srv" />
-        <Ccm v-if="srv.type == srvTypes.CCM" :data="srv" />
-        <OomKiller v-if="srv.type == srvTypes.OOMKiller" :data="srv" />
         <InTLS v-if="HasTls.includes(srv.type)"  :inbound="srv" :tlsConfigs="tlsConfigs" :tls_id="srv.tls_id" />
       </v-card-text>
       <v-card-actions>
@@ -53,13 +50,10 @@
 </template>
 
 <script lang="ts">
-import { SrvTypes, createSrv } from '@/types/services'
+import { SrvType, SrvTypes, availableSrvTypes, createSrv, defaultSrvType } from '@/types/services'
 import RandomUtil from '@/plugins/randomUtil'
 import Listen from '@/components/Listen.vue'
 import Derp from '@/components/services/Derp.vue'
-import Ocm from '@/components/services/Ocm.vue'
-import Ccm from '@/components/services/Ccm.vue'
-import OomKiller from '@/components/services/OomKiller.vue'
 import InTLS from '@/components/tls/InTLS.vue'
 import SSMapi from '@/components/services/SSMAPI.vue'
 import Data from '@/store/modules/data'
@@ -68,13 +62,13 @@ export default {
   emits: ['close'],
   data() {
     return {
-      srv: createSrv("derp",{ "tag": "" }),
+      srv: createSrv(defaultSrvType(Data().capabilities?.services), { "tag": "" }),
       title: "add",
       tab: "t1",
       loading: false,
       srvTypes: SrvTypes,
-      HasTls: [SrvTypes.DERP, SrvTypes.SSMAPI, SrvTypes.OCM, SrvTypes.CCM],
-      NoListen: [SrvTypes.OOMKiller],
+      HasTls: [SrvTypes.DERP, SrvTypes.SSMAPI] as SrvType[],
+      NoListen: [] as SrvType[],
     }
   },
   methods: {
@@ -86,8 +80,8 @@ export default {
       }
       else {
         const port = RandomUtil.randomIntRange(10000, 60000)
-        this.srv = createSrv("derp", {
-          tag: "derp-" + RandomUtil.randomSeq(3),
+        this.srv = createSrv(defaultSrvType(Data().capabilities?.services), {
+          tag: defaultSrvType(Data().capabilities?.services) + "-" + RandomUtil.randomSeq(3),
           listen: '::',
           listen_port: port,
         })
@@ -99,9 +93,7 @@ export default {
       // Tag change only in add service
       const tag = this.$props.id > 0 ? this.srv.tag : this.srv.type + "-" + RandomUtil.randomSeq(3)
       // Use previous data
-      const prevConfig = this.srv.type == SrvTypes.OOMKiller
-        ? { id: this.srv.id, tag: tag }
-        : { id: this.srv.id, tag: tag, listen: this.srv.listen, listen_port: this.srv.listen_port }
+      const prevConfig = { id: this.srv.id, tag: tag, listen: this.srv.listen, listen_port: this.srv.listen_port }
       this.srv = createSrv(this.srv.type, prevConfig)
     },
     closeModal() {
@@ -133,6 +125,11 @@ export default {
       }
     },
   },
-  components: { Listen, InTLS, Derp, Ocm, Ccm, OomKiller, SSMapi },
+  computed: {
+    srvTypeItems() {
+      return Object.entries(availableSrvTypes(Data().capabilities?.services)).map(([key, value]) => ({ title: key, value }))
+    },
+  },
+  components: { Listen, InTLS, Derp, SSMapi },
 }
 </script>

@@ -15,13 +15,14 @@ import (
 )
 
 type TokenInMemory struct {
-	ID          uint   `json:"id"`
-	TokenHash   string `json:"tokenHash"`
-	TokenPrefix string `json:"tokenPrefix"`
-	Scope       string `json:"scope"`
-	Enabled     bool   `json:"enabled"`
-	Expiry      int64  `json:"expiry"`
-	Username    string `json:"username"`
+	ID                 uint   `json:"id"`
+	TokenHash          string `json:"tokenHash"`
+	TokenPrefix        string `json:"tokenPrefix"`
+	Scope              string `json:"scope"`
+	Enabled            bool   `json:"enabled"`
+	Expiry             int64  `json:"expiry"`
+	Username           string `json:"username"`
+	ForcePasswordReset bool   `json:"forcePasswordReset"`
 }
 
 type APIv2Handler struct {
@@ -84,18 +85,19 @@ var apiV2ActionScopes = map[string][]string{
 	"linkConvert":   {"read", "write"},
 	"subConvert":    {"read", "write"},
 	// Config / identity / secret reads — observability and telegram excluded.
-	"load":      {"read", "write"},
-	"inbounds":  {"read", "write"},
-	"outbounds": {"read", "write"},
-	"endpoints": {"read", "write"},
-	"services":  {"read", "write"},
-	"tls":       {"read", "write"},
-	"clients":   {"read", "write"},
-	"config":    {"read", "write"},
-	"users":     {"read", "write"},
-	"settings":  {"read", "write"},
-	"changes":   {"read", "write"},
-	"keypairs":  {"read", "write"},
+	"load":         {"read", "write"},
+	"inbounds":     {"read", "write"},
+	"outbounds":    {"read", "write"},
+	"endpoints":    {"read", "write"},
+	"services":     {"read", "write"},
+	"tls":          {"read", "write"},
+	"clients":      {"read", "write"},
+	"config":       {"read", "write"},
+	"users":        {"read", "write"},
+	"settings":     {"read", "write"},
+	"capabilities": {"read", "write"},
+	"changes":      {"read", "write"},
+	"keypairs":     {"read", "write"},
 	// Operational metrics — observability tokens may read these.
 	"stats":   {"read", "write", "observability"},
 	"status":  {"read", "write", "observability"},
@@ -169,6 +171,8 @@ func (a *APIv2Handler) getHandler(c *gin.Context) {
 		a.ApiService.GetOnlines(c)
 	case "logs":
 		a.ApiService.GetLogs(c)
+	case "capabilities":
+		a.ApiService.GetCapabilities(c)
 	case "changes":
 		a.ApiService.CheckChanges(c)
 	case "keypairs":
@@ -203,6 +207,9 @@ func (a *APIv2Handler) findUsername(c *gin.Context) string {
 		return ""
 	}
 	if t.Expiry > 0 && t.Expiry < now {
+		return ""
+	}
+	if t.ForcePasswordReset {
 		return ""
 	}
 	if legacyHeader {

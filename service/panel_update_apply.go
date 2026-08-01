@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -51,9 +50,9 @@ func defaultPanelUpdateDeps() panelUpdateDeps {
 // applyPipeline downloads, integrity-checks, extracts and atomically swaps the
 // panel binary. It only mutates the live executable at the final rename, and
 // only after a successful checksum verification (SR-002, SR-007).
-func applyPipeline(target ReleaseTarget, deps panelUpdateDeps, setStage func(UpdateStage)) error {
+func applyPipeline(target ReleaseTarget, deps panelUpdateDeps, setStage func(UpdateStage)) (bool, error) {
 	if deps.execPath == "" {
-		return errors.New("cannot locate current executable")
+		return false, errors.New("cannot locate current executable")
 	}
 	dir := filepath.Dir(deps.execPath)
 
@@ -61,16 +60,16 @@ func applyPipeline(target ReleaseTarget, deps panelUpdateDeps, setStage func(Upd
 	archive := filepath.Join(dir, ".sui-update.tar.gz")
 	defer os.Remove(archive)
 	if err := downloadToFile(deps.client, target.AssetURL, archive); err != nil {
-		return err
+		return false, err
 	}
 	expected, err := downloadChecksum(deps.client, target.ChecksumURL)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	setStage(UpdateStageVerifying)
 	if err := verifySHA256(archive, expected); err != nil {
-		return err
+		return false, err
 	}
 
 	setStage(UpdateStageApplying)
@@ -79,26 +78,36 @@ func applyPipeline(target ReleaseTarget, deps panelUpdateDeps, setStage func(Upd
 
 // swapBinary extracts the new binary next to the current one and atomically
 // replaces it, keeping the previous binary as <exec>.bak for rollback.
-func swapBinary(archive string, execPath string) error {
+func swapBinary(archive string, execPath string) (bool, error) {
 	newBin := execPath + ".new"
+	backup := execPath + backupSuffix
 	if err := extractBinary(archive, newBin); err != nil {
-		removeUpdateFileBestEffort(newBin)
-		return err
+		return false, errors.Join(err, removeUpdateFile(newBin))
 	}
-	// #nosec G302 -- the replacement panel binary must remain executable after the self-update swap.
+	// #nosec G302 -- the replacement panel binary must remain executable.
 	if err := os.Chmod(newBin, 0o755); err != nil {
-		removeUpdateFileBestEffort(newBin)
-		return err
+		return false, errors.Join(err, removeUpdateFile(newBin))
 	}
-	if err := copyFile(execPath, execPath+backupSuffix); err != nil {
-		removeUpdateFileBestEffort(newBin)
-		return err
+	if err := copyFile(execPath, backup); err != nil {
+		return false, errors.Join(err, removeUpdateFile(newBin))
+	}
+	if err := panelUpdateMarkerWriter(execPath, newBin); err != nil {
+		return false, errors.Join(err, removeUpdateFile(newBin), removeUpdateFile(backup))
 	}
 	if err := os.Rename(newBin, execPath); err != nil {
-		removeUpdateFileBestEffort(newBin) // live binary is untouched; .bak remains for safety
-		return err
+		marker, markerErr := readPendingUpdateMarker(execPath)
+		if markerErr == nil {
+			markerErr = removePendingDatabaseSnapshot(execPath, marker)
+		}
+		return false, errors.Join(err, markerErr, removeUpdateFile(newBin), removeUpdateFile(backup), removeUpdateFile(execPath+pendingSuffix))
 	}
-	return nil
+	if err := panelUpdatePostSwapSync(filepath.Dir(execPath)); err != nil {
+		return true, err
+	}
+	if err := markPendingUpdateApplied(execPath); err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 func downloadToFile(client httpDoer, url string, dest string) error {
@@ -245,57 +254,17 @@ func copyFile(src string, dst string) error {
 }
 
 // RestoreBackup restores <execPath>.bak over execPath (rollback, SR-012).
+// Rename is required on Unix: writing a running executable can fail with
+// ETXTBSY, while replacing its directory entry remains atomic.
 func RestoreBackup(execPath string) error {
 	backup := execPath + backupSuffix
 	if _, err := os.Stat(backup); err != nil {
 		return err
 	}
-	return copyFile(backup, execPath)
-}
-
-func writePendingMarker(execPath string) error {
-	return os.WriteFile(execPath+pendingSuffix, []byte("0"), 0o600)
-}
-
-// ClearPendingUpdate removes the pending-update marker. The freshly-booted new
-// binary calls this once it has started successfully, so a clean boot does not
-// trigger a rollback.
-func ClearPendingUpdate(execPath string) {
-	_ = os.Remove(execPath + pendingSuffix)
-}
-
-// CheckPendingUpdate runs at startup before the marker is cleared: it counts how
-// many times a freshly-applied binary has failed to reach a clean boot and, past
-// the threshold, restores the backup so a verified-but-unbootable release cannot
-// brick the panel (SR-012). Returns true if a rollback was performed.
-func CheckPendingUpdate(execPath string) bool {
-	marker := execPath + pendingSuffix
-	// #nosec G304 -- marker path is derived from the current executable path and the fixed pending suffix.
-	raw, err := os.ReadFile(marker)
-	if err != nil {
-		return false
+	if err := os.Rename(backup, execPath); err != nil {
+		return err
 	}
-	attempts, err := strconv.Atoi(strings.TrimSpace(string(raw)))
-	if err != nil {
-		logger.Warning("panel update: invalid pending marker, resetting attempts:", err)
-		attempts = 0
-	}
-	attempts++
-	if attempts >= rollbackAfterAttempts {
-		restoreErr := RestoreBackup(execPath)
-		if restoreErr == nil {
-			_ = os.Remove(marker)
-			return true
-		}
-		// Threshold reached but the backup is unavailable: make the failure
-		// operator-visible rather than silently boot-looping (SR-012).
-		logger.Error("panel update: new binary failed to boot ", attempts,
-			" times and the rollback backup is unavailable: ", restoreErr)
-	}
-	if err := os.WriteFile(marker, []byte(strconv.Itoa(attempts)), 0o600); err != nil {
-		logger.Warning("panel update: pending marker update failed:", err)
-	}
-	return false
+	return syncUpdateDirectory(filepath.Dir(execPath))
 }
 
 func removeUpdateFileBestEffort(path string) {

@@ -44,7 +44,10 @@ export const reconnectDelayForRetry = (retry: number) => {
   return Math.min(exponentialDelay + jitter, reconnectMaxDelayMs)
 }
 
-export const wsProtocolsForToken = (token: string) => ['sui.realtime', `sui.token.${token}`]
+export const wsProtocolsForToken = (token: string) => [
+  'sui.realtime',
+  `sui.token.${token}`,
+]
 
 export class WsRuntime {
   state: WsConnectionState = 'degraded'
@@ -52,29 +55,58 @@ export class WsRuntime {
   private noOpenTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private fallbackTimer: ReturnType<typeof setInterval> | null = null
+  private connectPromise: Promise<void> | null = null
+  private generation = 0
   private closeCount = 0
 
   constructor(private deps: WsRuntimeDeps) {}
 
-  async connect() {
-    if (this.ws || this.state === 'connected') return
+  connect() {
+    if (
+      this.ws ||
+      this.state === 'connected' ||
+      this.reconnectTimer ||
+      this.connectPromise
+    ) {
+      return this.connectPromise ?? Promise.resolve()
+    }
+    const generation = this.generation
+    const promise = this.connectInternal(generation)
+    const tracked = promise.finally(() => {
+      if (this.connectPromise === tracked) this.connectPromise = null
+    })
+    this.connectPromise = tracked
+    return tracked
+  }
+
+  private async connectInternal(generation: number) {
     this.setState('reconnecting')
     this.stopFallback()
-    const token = await this.deps.getToken()
+    let token: string | null
+    try {
+      token = await this.deps.getToken()
+    } catch {
+      if (generation === this.generation) this.startFallback()
+      return
+    }
+    if (generation !== this.generation) return
     if (!token) {
       this.startFallback()
       return
     }
     try {
+      if (generation !== this.generation || this.ws) return
       const ws = this.deps.createSocket(this.wsURL(), token)
       this.ws = ws
       this.noOpenTimer = this.setRuntimeTimeout(() => {
+        if (generation !== this.generation || this.ws !== ws) return
         this.ws = null
         ws.onclose = null
         ws.close()
         this.startFallback()
       }, noOpenFallbackMs)
       ws.onopen = () => {
+        if (generation !== this.generation || this.ws !== ws) return
         this.closeCount = 0
         this.clearNoOpenTimer()
         this.setState('connected')
@@ -88,6 +120,7 @@ export class WsRuntime {
         }
       }
       ws.onclose = (event) => {
+        if (this.ws !== ws || generation !== this.generation) return
         if (isSessionClose(event)) {
           clearCSRFToken()
         }
@@ -106,14 +139,16 @@ export class WsRuntime {
         }, reconnectDelayForRetry(retry))
       }
       ws.onerror = () => {
-        ws.close()
+        if (this.ws === ws) ws.close()
       }
     } catch {
-      this.startFallback()
+      if (generation === this.generation) this.startFallback()
     }
   }
 
   disconnect() {
+    this.generation++
+    this.connectPromise = null
     this.clearNoOpenTimer()
     if (this.reconnectTimer) {
       this.clearRuntimeTimeout(this.reconnectTimer)
@@ -131,15 +166,18 @@ export class WsRuntime {
 
   private startFallback() {
     this.clearNoOpenTimer()
+    if (this.reconnectTimer) {
+      this.clearRuntimeTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     this.setState('degraded')
     if (this.fallbackTimer) return
     this.fallbackTimer = this.setRuntimeInterval(() => {
       void this.deps.loadData()
-      if (this.reconnectTimer || this.ws) return
+      if (this.reconnectTimer || this.ws || this.connectPromise) return
       void this.connect()
     }, fallbackPollMs)
   }
-
   private stopFallback() {
     if (!this.fallbackTimer) return
     this.clearRuntimeInterval(this.fallbackTimer)
@@ -170,17 +208,20 @@ export class WsRuntime {
   }
 
   private clearRuntimeTimeout(timerID: ReturnType<typeof setTimeout>) {
-    const clear = this.deps.clearTimeout ?? globalThis.clearTimeout.bind(globalThis)
+    const clear =
+      this.deps.clearTimeout ?? globalThis.clearTimeout.bind(globalThis)
     clear(timerID)
   }
 
   private setRuntimeInterval(callback: () => void, delay: number) {
-    const timer = this.deps.setInterval ?? globalThis.setInterval.bind(globalThis)
+    const timer =
+      this.deps.setInterval ?? globalThis.setInterval.bind(globalThis)
     return timer(callback, delay)
   }
 
   private clearRuntimeInterval(timerID: ReturnType<typeof setInterval>) {
-    const clear = this.deps.clearInterval ?? globalThis.clearInterval.bind(globalThis)
+    const clear =
+      this.deps.clearInterval ?? globalThis.clearInterval.bind(globalThis)
     clear(timerID)
   }
 }
@@ -196,7 +237,8 @@ export const handleCoreStateWarning = (payload: unknown) => {
   push.warning({
     title: i18n.global.t('warning'),
     duration: 6000,
-    message: i18n.global.t('types.failover.allDown') + (p.group ? ': ' + p.group : ''),
+    message:
+      i18n.global.t('types.failover.allDown') + (p.group ? ': ' + p.group : ''),
   })
 }
 
@@ -220,7 +262,8 @@ const applyRealtimeEvent = (event: any) => {
   }
 }
 
-const isSessionClose = (event?: any) => event?.code === 4401 || event?.reason === 'session_rotated'
+const isSessionClose = (event?: any) =>
+  event?.code === 4401 || event?.reason === 'session_rotated'
 
 const Ws = defineStore('Ws', {
   state: () => ({
@@ -235,9 +278,12 @@ const Ws = defineStore('Ws', {
           getToken: async () => {
             const tokenResponse = await HttpUtils.get('api/realtime/ws-token')
             const token = tokenResponse.obj?.token
-            return tokenResponse.success && typeof token === 'string' ? token : null
+            return tokenResponse.success && typeof token === 'string'
+              ? token
+              : null
           },
-          createSocket: (url, token) => new WebSocket(url, wsProtocolsForToken(token)),
+          createSocket: (url, token) =>
+            new WebSocket(url, wsProtocolsForToken(token)),
           loadData: () => Data().loadData(),
           onState: (state) => {
             this.state = state

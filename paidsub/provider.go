@@ -54,6 +54,25 @@ type PollResult struct {
 	RawPayload       []byte
 }
 
+// PollOutcome separates confirmed payments from provider-terminal invoices.
+// TerminalOrderIDs may be expired locally only after a successful provider
+// response proves the corresponding invoices cannot still be paid.
+type PollOutcome struct {
+	Paid             []PollResult
+	TerminalOrderIDs []uint
+}
+
+// ReconciledInvoice describes a provider invoice recovered by immutable order payload.
+type ReconciledInvoice struct {
+	OrderID          uint
+	ProviderRef      string
+	PayURL           string
+	Paid             bool
+	ProviderStatus   string
+	MetadataMismatch bool
+	ProviderChargeID string
+}
+
 // PaymentProvider prepares invoices and declares how it confirms.
 type PaymentProvider interface {
 	Kind() ProviderKind
@@ -61,9 +80,17 @@ type PaymentProvider interface {
 	CreateInvoice(ctx context.Context, order *PaymentOrder, tariff *Tariff, client *model.Client) (*Invoice, error)
 }
 
+type invoiceDeleter interface {
+	DeleteInvoice(ctx context.Context, providerRef string) error
+}
+
+type invoiceReconciler interface {
+	ReconcileInvoices(ctx context.Context, unresolved []PaymentOrder) ([]ReconciledInvoice, error)
+}
+
 // pollingProvider is implemented by providers confirmed via polling (CryptoBot).
 type pollingProvider interface {
-	Poll(ctx context.Context, pending []PaymentOrder) ([]PollResult, error)
+	Poll(ctx context.Context, pending []PaymentOrder) (PollOutcome, error)
 }
 
 func providerTitle(kind ProviderKind, l lang) string {

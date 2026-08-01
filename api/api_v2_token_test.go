@@ -129,3 +129,34 @@ func TestAPIV2BearerTokenAcceptedAfterLegacySunsetIssue34(t *testing.T) {
 		t.Fatalf("bearer token request failed after legacy sunset: %s", msg.Msg)
 	}
 }
+
+func TestAPIV2RejectsTokenOwnedByResetRequiredUser(t *testing.T) {
+	resetRateLimitState()
+	initSessionTestDB(t)
+	if err := database.GetDB().Create(&model.Tokens{
+		Desc:   "reset-required",
+		Token:  "reset-token",
+		Expiry: 0,
+		UserId: 1,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(model.User{}).Where("id = ?", 1).Update("force_password_reset", true).Error; err != nil {
+		t.Fatal(err)
+	}
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	NewAPIv2Handler(router.Group("/apiv2"))
+
+	recorder := performAPIV2TokenRequest(router, "Authorization", "Bearer reset-token")
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("reset-required token returned status %d body=%s", recorder.Code, recorder.Body.String())
+	}
+	var msg Msg
+	if err := json.Unmarshal(recorder.Body.Bytes(), &msg); err != nil {
+		t.Fatal(err)
+	}
+	if msg.Success || msg.Msg != "invalid token" {
+		t.Fatalf("reset-required token response = %#v", msg)
+	}
+}

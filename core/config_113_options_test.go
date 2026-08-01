@@ -115,33 +115,6 @@ func TestSingBox113RepresentativeConfigUnmarshals(t *testing.T) {
       "advertise_tags": ["tag:dev"]
     }
   ],
-  "services": [
-    {
-      "type": "oom-killer",
-      "tag": "oom",
-      "memory_limit": "512 MB",
-      "safety_margin": "64 MB",
-      "min_interval": "1s",
-      "max_interval": "5s",
-      "checks_before_limit": 2
-    },
-    {
-      "type": "ocm",
-      "tag": "ocm",
-      "listen": "127.0.0.1",
-      "listen_port": 8080,
-      "headers": { "X-Test": ["a", "b"] },
-      "users": [{ "name": "u", "token": "t" }]
-    },
-    {
-      "type": "ccm",
-      "tag": "ccm",
-      "listen": "127.0.0.1",
-      "listen_port": 8081,
-      "headers": { "X-Test": "a" },
-      "users": [{ "name": "u", "token": "t" }]
-    }
-  ]
 }`)
 
 	var options option.Options

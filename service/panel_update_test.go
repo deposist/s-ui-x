@@ -104,6 +104,18 @@ func artifactServer(t *testing.T, tarball []byte, checksumHex string) *httptest.
 	return server
 }
 
+func installPanelUpdateTestDatabaseHooks(t *testing.T) {
+	t.Helper()
+	previousSnapshot := PanelUpdateDatabaseSnapshot
+	previousRestore := PanelUpdateDatabaseRestore
+	PanelUpdateDatabaseSnapshot = func() (string, string, error) { return "", "", nil }
+	PanelUpdateDatabaseRestore = func(string, string) error { return nil }
+	t.Cleanup(func() {
+		PanelUpdateDatabaseSnapshot = previousSnapshot
+		PanelUpdateDatabaseRestore = previousRestore
+	})
+}
+
 // T025 / SR-002 / SR-007: a checksum mismatch aborts the apply before the live
 // binary is touched.
 func TestApplyPipelineRejectsChecksumMismatch(t *testing.T) {
@@ -118,7 +130,7 @@ func TestApplyPipelineRejectsChecksumMismatch(t *testing.T) {
 
 	target := ReleaseTarget{AssetURL: server.URL + "/asset", ChecksumURL: server.URL + "/checksum", Version: "9.9.9"}
 	deps := panelUpdateDeps{client: server.Client(), execPath: execPath}
-	if err := applyPipeline(target, deps, func(UpdateStage) {}); err != errChecksumMismatch {
+	if _, err := applyPipeline(target, deps, func(UpdateStage) {}); err != errChecksumMismatch {
 		t.Fatalf("expected errChecksumMismatch, got %v", err)
 	}
 	got, _ := os.ReadFile(execPath)
@@ -133,6 +145,7 @@ func TestApplyPipelineRejectsChecksumMismatch(t *testing.T) {
 // SR-002 happy path: a matching checksum applies the new binary and keeps the
 // previous one as a backup (SR-007/SR-012 enabler).
 func TestApplyPipelineReplacesBinaryAndKeepsBackup(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
 	oldContent := []byte("OLD-WORKING-BINARY")
@@ -146,7 +159,7 @@ func TestApplyPipelineReplacesBinaryAndKeepsBackup(t *testing.T) {
 
 	target := ReleaseTarget{AssetURL: server.URL + "/asset", ChecksumURL: server.URL + "/checksum", Version: "9.9.9"}
 	deps := panelUpdateDeps{client: server.Client(), execPath: execPath}
-	if err := applyPipeline(target, deps, func(UpdateStage) {}); err != nil {
+	if _, err := applyPipeline(target, deps, func(UpdateStage) {}); err != nil {
 		t.Fatalf("apply pipeline failed: %v", err)
 	}
 	if got, _ := os.ReadFile(execPath); !bytes.Equal(got, newContent) {
@@ -205,6 +218,68 @@ func TestApplyRejectsConcurrentUpdate(t *testing.T) {
 	}
 }
 
+func TestPanelUpdateProcessLockRejectsSecondOwner(t *testing.T) {
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	first, err := acquirePanelUpdateProcessLock(execPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = first.release() })
+	if _, err := acquirePanelUpdateProcessLock(execPath); !errors.Is(err, errUpdateInProgress) {
+		t.Fatalf("second process lock error = %v, want %v", err, errUpdateInProgress)
+	}
+	if err := first.release(); err != nil {
+		t.Fatal(err)
+	}
+	second, err := acquirePanelUpdateProcessLock(execPath)
+	if err != nil {
+		t.Fatalf("lock was not reusable after release: %v", err)
+	}
+	if err := second.release(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestPanelUpdateProcessLockConcurrentOwners(t *testing.T) {
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	results := make(chan error, 2)
+	start := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan struct{}, 2)
+	for range 2 {
+		go func() {
+			<-start
+			lock, err := acquirePanelUpdateProcessLock(execPath)
+			if err == nil {
+				results <- nil
+				<-release
+				_ = lock.release()
+			} else {
+				results <- err
+			}
+			done <- struct{}{}
+		}()
+	}
+	close(start)
+	first := <-results
+	second := <-results
+	close(release)
+	<-done
+	<-done
+	if (first == nil) == (second == nil) {
+		t.Fatalf("concurrent lock attempts = %v, %v; want exactly one success", first, second)
+	}
+	failure := first
+	if failure == nil {
+		failure = second
+	}
+	if !errors.Is(failure, errUpdateInProgress) {
+		t.Fatalf("lock failure = %v, want %v", failure, errUpdateInProgress)
+	}
+}
+
 // T047 / SR-012: RestoreBackup rolls the live binary back to its backup.
 func TestRestoreBackupRollsBack(t *testing.T) {
 	dir := t.TempDir()
@@ -243,25 +318,28 @@ func TestWritePendingMarkerUsesOwnerOnlyMode(t *testing.T) {
 	}
 }
 
-func TestCheckPendingUpdateResetsInvalidMarker(t *testing.T) {
+func TestRecoverPendingUpdateInvalidMarkerFailsClosed(t *testing.T) {
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
-	if err := os.WriteFile(execPath+pendingSuffix, []byte("not-a-number"), testPrivateFileMode); err != nil {
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
-	if CheckPendingUpdate(execPath) {
-		t.Fatal("invalid marker should reset attempts without rollback")
-	}
-	got, err := os.ReadFile(execPath + pendingSuffix)
-	if err != nil {
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
 		t.Fatal(err)
 	}
-	if string(got) != "1" {
-		t.Fatalf("pending marker = %q, want 1", got)
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("not-json"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if rolledBack, err := RecoverPendingUpdate(execPath); err == nil || rolledBack {
+		t.Fatalf("invalid marker recovery = (%t, %v), want unresolved error", rolledBack, err)
+	}
+	if got, err := os.ReadFile(execPath); err != nil || string(got) != "BROKEN-NEW" {
+		t.Fatalf("invalid marker changed live binary: %q, %v", got, err)
 	}
 }
 
 func TestCheckPendingUpdateRollsBackAfterThreshold(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
 	dir := t.TempDir()
 	execPath := filepath.Join(dir, "sui")
 	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
@@ -306,7 +384,7 @@ func TestFailRecordsFailedOutcomeAudit(t *testing.T) {
 	panelUpdateAuditSink = func(job UpdateJob, result string, errMsg string) { gotResult, gotErr, gotJob = result, errMsg, job }
 	t.Cleanup(func() { panelUpdateAuditSink = oldSink })
 
-	(&PanelUpdateService{}).fail(errors.New("boom"), "")
+	(&PanelUpdateService{}).fail(errors.New("boom"), "", false)
 
 	if gotResult != "failed" {
 		t.Fatalf("expected failed outcome audit, got %q", gotResult)
@@ -325,6 +403,7 @@ func TestFailRecordsFailedOutcomeAudit(t *testing.T) {
 // SR-006 / SC-008: a successful apply records the "applied" outcome BEFORE the
 // process exits, and writes the rollback pending-marker.
 func TestApplySuccessRecordsAppliedAuditBeforeExit(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
 	resetPanelUpdateStateForTest()
 	t.Cleanup(resetPanelUpdateStateForTest)
 	dir := t.TempDir()

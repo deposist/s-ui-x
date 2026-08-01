@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/deposist/s-ui-x/config"
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/logger"
@@ -234,6 +235,11 @@ func (s *importState) importPlainTLS(tx *gorm.DB, row xuiInboundRow) error {
 
 func (s *importState) importInboundsAndEndpoints(tx *gorm.DB, src *sourceDB, strategy Strategy) error {
 	return src.eachInbound(func(row xuiInboundRow) error {
+		if !capabilities.IsTypeAllowed("inbounds", row.Protocol) && row.Protocol != "wireguard" {
+			s.report.Summary.Inbounds.Skipped++
+			s.report.markUnsupported("inbound", row.Tag, row.Protocol, "unsupported by official core")
+			return nil
+		}
 		if row.Protocol == "wireguard" {
 			endpoint, warnings, err := mapWireguardEndpoint(row)
 			if err != nil {

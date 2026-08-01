@@ -3,6 +3,8 @@
     :dirty="dirty"
     :loading="loading"
     :model-value="visible"
+    :save-disabled="saveBlockedReason !== ''"
+    :save-disabled-reason="saveBlockedReason"
     :saving="loading"
     :title="$t('actions.' + title) + ' ' + $t('objects.tls')"
     :width="720"
@@ -12,7 +14,7 @@
     <v-card class="rounded-lg">
       <v-row>
         <v-col cols="12" sm="6" md="4">
-          <v-text-field :label="$t('client.name')" hide-details v-model="tls.name"></v-text-field>
+          <v-text-field :label="$t('client.name')" hide-details v-model="tls.name" :error="isBlankIdentity(tls.name)"></v-text-field>
         </v-col>
         <v-col align="end">
           <v-btn-toggle v-model="tlsType"
@@ -196,6 +198,7 @@ import { push } from 'notivue'
 import { i18n } from '@/locales'
 import RandomUtil from '@/plugins/randomUtil'
 import EntityDrawer from './EntityDrawer.vue'
+import { isBlankIdentity } from '@/utils/entityIdentity'
 export default {
   inheritAttrs: false,
   props: ['visible', 'data', 'id'],
@@ -261,6 +264,7 @@ export default {
     }
   },
   methods: {
+    isBlankIdentity,
     updateData(id: number) {
       if (id > 0) {
         const newData = <tls>JSON.parse(this.$props.data)
@@ -297,6 +301,7 @@ export default {
       this.$emit('close')
     },
     saveChanges() {
+      if (this.saveBlockedReason !== '') return
       this.loading = true
       this.$emit('save', this.tls)
       this.loading = false
@@ -372,6 +377,10 @@ export default {
     }
   },
   computed: {
+    saveBlockedReason(): string {
+      if (isBlankIdentity(this.tls.name)) return this.$t('form.cannotSave.nameRequired')
+      return ''
+    },
     dirty(): boolean {
       return this.snapshot !== "" && JSON.stringify(this.tls) !== this.snapshot
     },

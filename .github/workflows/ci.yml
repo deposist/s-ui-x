@@ -24,6 +24,14 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version-file: go.mod
+      - name: Reject extended Go modules
+        shell: bash
+        run: |
+          bash scripts/check-official-module.sh go.mod
+          bash tests/module-guard.sh
+
+      - name: Build asset replacement regression tests
+        run: tests/build-assets.sh
 
       - name: Check Go formatting
         shell: bash

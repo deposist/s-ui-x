@@ -3,19 +3,19 @@ package core
 import (
 	"testing"
 
-	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/option"
+	"github.com/deposist/s-ui-x/core/capabilities"
 )
 
-func TestServiceRegistryIncludesOOMKiller(t *testing.T) {
+func TestServiceRegistryMatchesCapabilityManifest(t *testing.T) {
 	registry := ServiceRegistry()
-
-	rawOptions, ok := registry.CreateOptions(C.TypeOOMKiller)
-	if !ok {
-		t.Fatal("oom-killer service options are not registered")
+	for _, service := range capabilities.Services() {
+		if _, ok := registry.CreateOptions(service.Type); !ok {
+			t.Fatalf("manifest service %q is not registered", service.Type)
+		}
 	}
-
-	if _, ok := rawOptions.(*option.OOMKillerServiceOptions); !ok {
-		t.Fatalf("oom-killer options type = %T", rawOptions)
+	for _, excluded := range []string{"ccm", "ocm", "oom-killer"} {
+		if _, ok := registry.CreateOptions(excluded); ok {
+			t.Fatalf("excluded service %q is registered", excluded)
+		}
 	}
 }

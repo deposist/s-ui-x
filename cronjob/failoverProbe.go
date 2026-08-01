@@ -3,6 +3,7 @@ package cronjob
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/logger"
@@ -15,13 +16,11 @@ import (
 // dialers.
 const failoverProbeConcurrency = 4
 
-func (j *FailoverJob) probeMembers(group service.FailoverGroupConfig) map[string]bool {
-	results := make(map[string]bool, len(group.Members))
+func (j *FailoverJob) probeMembers(group service.FailoverGroupConfig) map[string]service.OutboundHealthSnapshot {
+	results := make(map[string]service.OutboundHealthSnapshot, len(group.Members))
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, failoverProbeConcurrency)
-	// TODO: thread a job-level context from Run() through runGroup() so probes
-	// cancel promptly on panel shutdown instead of running to group.Interval.
 	ctx, cancel := context.WithTimeout(context.Background(), group.Interval)
 	defer cancel()
 	for _, member := range group.Members {
@@ -31,13 +30,17 @@ func (j *FailoverJob) probeMembers(group service.FailoverGroupConfig) map[string
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			var ok bool
+			var delay uint16
+			var errMsg string
 			if j.probe != nil {
 				ok = j.probe(ctx, tag, group.ProbeTarget)
 			} else {
-				ok = j.ConfigService.CheckOutboundWithContext(ctx, tag, group.ProbeTarget).OK
+				check := j.ConfigService.CheckOutboundWithContext(ctx, tag, group.ProbeTarget)
+				ok, delay, errMsg = check.OK, check.Delay, check.Error
 			}
+			snapshot := service.RecordOutboundHealth(tag, ok, delay, errMsg, time.Now())
 			mu.Lock()
-			results[tag] = ok
+			results[tag] = snapshot
 			mu.Unlock()
 		}(member)
 	}

@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
 import en from './en'
+import fa from './fa'
 import ru from './ru'
+import vi from './vi'
+import zhcn from './zhcn'
+import zhtw from './zhtw'
 
-// Project convention (see CLAUDE.md / redesign notes): en is the source of truth
-// and ru is the second fully-maintained locale; fa/vi/zhcn/zhtw intentionally fall
-// back to en for newer keys (fallbackLocale='en'). So we enforce en<->ru parity
-// only - this catches a translation added to one but forgotten in the other (which
-// would surface as an unexpected English string in RU).
+const locales = { en, fa, ru, vi, zhcn, zhtw } as const
+
+// Every shipped locale must have the same leaf-key structure. Runtime fallback
+// remains useful for dynamic misses, but it must not hide incomplete bundles.
 const flatten = (obj: Record<string, unknown>, prefix = ''): string[] => {
   const out: string[] = []
   for (const [k, v] of Object.entries(obj)) {
@@ -21,17 +24,21 @@ const flatten = (obj: Record<string, unknown>, prefix = ''): string[] => {
   return out
 }
 
-describe('en/ru locale key parity', () => {
-  const enKeys = new Set(flatten(en as Record<string, unknown>))
-  const ruKeys = new Set(flatten(ru as Record<string, unknown>))
+describe('locale key parity', () => {
+  const referenceKeys = new Set(flatten(en as Record<string, unknown>))
 
-  it('ru defines every key en defines', () => {
-    const missing = [...enKeys].filter((k) => !ruKeys.has(k)).sort()
-    expect(missing, `keys in en but missing from ru: ${missing.join(', ')}`).toEqual([])
-  })
+  for (const [locale, messages] of Object.entries(locales)) {
+    if (locale === 'en') continue
+    const keys = new Set(flatten(messages as Record<string, unknown>))
 
-  it('ru does not define keys absent from en', () => {
-    const extra = [...ruKeys].filter((k) => !enKeys.has(k)).sort()
-    expect(extra, `keys in ru but missing from en: ${extra.join(', ')}`).toEqual([])
-  })
+    it(`${locale} defines every key en defines`, () => {
+      const missing = [...referenceKeys].filter((key) => !keys.has(key)).sort()
+      expect(missing, `keys in en but missing from ${locale}: ${missing.join(', ')}`).toEqual([])
+    })
+
+    it(`${locale} does not define keys absent from en`, () => {
+      const extra = [...keys].filter((key) => !referenceKeys.has(key)).sort()
+      expect(extra, `keys in ${locale} but missing from en: ${extra.join(', ')}`).toEqual([])
+    })
+  }
 })

@@ -18,7 +18,7 @@
               <v-select
               hide-details
               :label="$t('type')"
-              :items="Object.keys(inTypes).map((key,index) => ({title: key, value: Object.values(inTypes)[index]}))"
+              :items="typeOptions"
               v-model="inbound.type"
               @update:modelValue="changeType">
               </v-select>
@@ -27,6 +27,12 @@
               <v-text-field v-model="inbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
             </v-col>
           </v-row>
+          <ProtocolGuidance
+            :capabilities="capabilities"
+            category="inbounds"
+            :mode="id > 0 ? 'edit' : 'create'"
+            :model="inbound"
+          />
           <v-card
             v-if="[inTypes.HTTP, inTypes.Mixed].includes(inbound.type)"
             border
@@ -106,6 +112,9 @@
         </v-container>
       </v-card-text>
       <v-card-actions>
+        <span v-if="saveBlockedReason" class="text-error text-caption">
+          {{ saveBlockedReason }}
+        </span>
         <v-spacer></v-spacer>
         <v-btn
           color="primary"
@@ -118,7 +127,7 @@
           color="primary"
           variant="tonal"
           :loading="loading"
-          :disabled="loading"
+          :disabled="loading || !validate"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -152,12 +161,14 @@ import Transport from '@/components/Transport.vue'
 import AddrVue from '@/components/Addr.vue'
 import OutJsonVue from '@/components/OutJson.vue'
 import Data from '@/store/modules/data'
+import ProtocolGuidance from '@/components/recommendations/ProtocolGuidance.vue'
+import { availableInboundEditorTypes, defaultInboundType, typeOptions } from '@/types/runtimeCapabilities'
 export default {
   props: ['visible', 'id', 'inTags', 'tlsConfigs'],
   emits: ['close'],
   data() {
     return {
-      inbound: createInbound("direct",{ id:0, "tag": "" }),
+      inbound: createInbound(defaultInboundType(Data().capabilities) ?? '',{ id:0, "tag": "" }),
       title: "add",
       loading: false,
       side: "s",
@@ -218,8 +229,9 @@ export default {
         this.title = "edit"
       }
       else {
+        const type = defaultInboundType(Data().capabilities) ?? ''
         const port = RandomUtil.randomIntRange(10000, 60000)
-        this.inbound = createInbound("direct",{ id: 0, tag: "direct-"+port ,listen: "::", listen_port: port })
+        this.inbound = createInbound(type,{ id: 0, tag: type ? type + "-" + port : "" ,listen: "::", listen_port: port })
         if (this.HasInData.includes(this.inbound.type)){
           this.inbound.addrs = []
           this.inbound.out_json = {}
@@ -263,9 +275,7 @@ export default {
       this.$emit('close')
     },
     async saveChanges() {
-      // Guard against double-submit (button is also :disabled while loading).
-      if (!this.$props.visible || this.loading) return
-      // check duplicate tag
+      if (!this.$props.visible || this.loading || !this.validate) return
       const isDuplicatedTag = Data().checkTag("inbound", this.inbound.id, this.inbound.tag)
       if (isDuplicatedTag) return
 
@@ -293,12 +303,22 @@ export default {
     },
   },
   computed: {
+    capabilities() {
+      return Data().capabilities
+    },
+    typeOptions() {
+      return typeOptions(this.inTypes, availableInboundEditorTypes(Data().capabilities), this.inbound?.type)
+    },
+    saveBlockedReason(): string {
+      if (this.inbound == undefined) return this.$t('error.invalidData')
+      if (!Data().canSaveType('inbounds', this.inbound.type, this.inbound.id ?? 0)) return this.$t('form.cannotSave.capabilityUnavailable')
+      if (this.inbound.tag.trim() === '') return this.$t('form.cannotSave.tagRequired')
+      if (this.inbound.listen_port > 65535 || this.inbound.listen_port < 1) return this.$t('form.cannotSave.portRange')
+      if (this.OnlyTLS.includes(this.inbound.type) && this.inbound.tls_id == 0) return this.$t('form.cannotSave.tlsRequired')
+      return ''
+    },
     validate() {
-      if (this.inbound == undefined) return false
-      if (this.inbound.tag == "") return false
-      if (this.inbound.listen_port > 65535 || this.inbound.listen_port < 1) return false
-      if (this.OnlyTLS.includes(this.inbound.type) && this.inbound.tls_id == 0) return false
-      return true
+      return this.saveBlockedReason === ''
     },
     clients() {
       return Data().clients?? []
@@ -333,7 +353,8 @@ export default {
   components: {
     Listen, InTls, Hysteria2, Naive, Direct, Shadowsocks,
     Users, Hysteria, ShadowTls, TProxy, Multiplex, Tuic, Tun,
-    Trojan, AnyTls, Transport, AddrVue, OutJsonVue, Dial, DomainResolver
+    Trojan, AnyTls, Transport, AddrVue, OutJsonVue, Dial, DomainResolver,
+    ProtocolGuidance,
   }
 }
 </script>

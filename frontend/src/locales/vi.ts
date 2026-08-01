@@ -1,4 +1,7 @@
-export default {
+import en from './en'
+import { completeLocale } from './completeLocale'
+
+const messages = {
   nav: {
     groups: {
       proxy: "Proxy",
@@ -21,18 +24,33 @@ export default {
     leaveTitle: "Hủy thay đổi?",
     leaveConfirm: "Bạn có thay đổi chưa lưu. Hủy chúng?",
     discard: "Hủy bỏ",
+    cannotSave: {
+      tagRequired: "Nhập thẻ để lưu",
+      nameRequired: "Nhập tên để lưu",
+      portRange: "Cổng phải nằm trong khoảng 1 đến 65535",
+      tlsRequired: "Giao thức này yêu cầu cấu hình TLS",
+      tlsIncompatible: "Cấu hình TLS đã chọn không tương thích với giao thức này",
+      capabilityUnavailable: "Loại này không khả dụng trong bản dựng lõi đang chạy",
+    },
     sections: {
       basic: "Cơ bản",
       configuration: "Cấu hình",
     },
   },
-  success: "Thành công",
-  warning: "Cảnh báo",
-  failed: "Thất bại",
-  enable: "Kích hoạt",
-  disable: "Vô hiệu hóa",
-  none: "Không",
-  all: "Tất cả",
+  guidance: {
+    title: "Đề xuất có hướng dẫn",
+    apply: "Áp dụng",
+    applyAll: "Áp dụng tất cả mục khả dụng",
+    recommendedValue: "Giá trị đề xuất",
+    protocols: {
+      vless: "Dùng UUID máy khách hợp lệ. Vision flow cần TLS và transport tương thích; để trống flow nếu bạn không chủ ý cấu hình các điều kiện đó.",
+      vmess: "Dùng UUID máy khách hợp lệ và Alter ID 0. Giữ chế độ security tự động trừ khi khả năng tương tác yêu cầu bộ mã cụ thể.",
+      trojan: "Dùng mật khẩu máy khách mạnh và duy nhất. Thông thường cần TLS; chỉ cấu hình fallback khi bạn vận hành dịch vụ fallback.",
+      shadowsocks: "Chọn phương thức mà mọi máy khách đều hỗ trợ và dùng mật khẩu mạnh, duy nhất. Không cấu hình plugin nếu cả hai đầu không yêu cầu.",
+      socks: "Xác thực là tùy chọn. Ưu tiên SOCKS5 cho máy khách hiện tại và chỉ mở listener cho mạng đáng tin cậy.",
+      http: "Xác thực là tùy chọn. Bật TLS trước khi đưa proxy HTTP ra ngoài mạng đáng tin cậy.",
+    },
+  },
   loading: "Đang tải...",
   confirm: "Bạn chắc chắn chứ?",
   yes: "có",
@@ -336,6 +354,7 @@ export default {
         emptyOffline: "Không thể xem lịch sử lưu lượng khi trình duyệt ngoại tuyến.",
         emptyUnavailable: "Không thể tải lịch sử lưu lượng từ thống kê inbound hiện tại.",
         emptyNoHistory: "Chưa có lịch sử lưu lượng inbound.",
+        searchTimeZones: "Tìm kiếm múi giờ",
       },
       system: {
         title: "Trạng thái hệ thống",
@@ -430,6 +449,7 @@ export default {
     password: "Mật khẩu",
     pwRules: "Mật khẩu không thể trống",
     invalidCredentials: "Tên người dùng hoặc mật khẩu không hợp lệ.",
+    forcePasswordReset: "Bạn phải đổi mật khẩu trước khi tiếp tục.",
   },
   menu: {
     logout: "Đăng xuất",
@@ -626,20 +646,6 @@ export default {
       advRoutes: "Quảng bá Đường dẫn",
       advExitNode: "Quảng bá Nút thoát",
       udpTimeout: "Thời gian Chờ UDP",
-    },
-    ocm: {
-      credentialPath: "Đường dẫn Thông tin xác thực",
-      usagesPath: "Đường dẫn Thống kê",
-      users: "Người dùng",
-      userName: "Tên",
-      userToken: "Token",
-    },
-    ccm: {
-      credentialPath: "Đường dẫn Thông tin xác thực",
-      usagesPath: "Đường dẫn Thống kê",
-      users: "Người dùng",
-      userName: "Tên",
-      userToken: "Token",
     },
     derp: {
       configPath: "Đường dẫn Cấu hình",
@@ -948,3 +954,5 @@ export default {
     ms: "ms",
   },
 }
+
+export default completeLocale(en, messages)

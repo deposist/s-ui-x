@@ -21,23 +21,18 @@
         <span class="services-nexus__tag">{{ item.tag }}</span>
       </template>
       <template #col.listen="{ item }">
-        <span v-if="item.type !== 'oom-killer' && item.listen" class="nexus-mono">{{ item.listen }}</span>
+        <span v-if="item.listen" class="nexus-mono">{{ item.listen }}</span>
         <span v-else class="services-nexus__muted">—</span>
       </template>
       <template #col.listen_port="{ item }">
-        <span v-if="item.type !== 'oom-killer' && item.listen_port" class="nexus-mono">{{ item.listen_port }}</span>
+        <span v-if="item.listen_port" class="nexus-mono">{{ item.listen_port }}</span>
         <span v-else class="services-nexus__muted">—</span>
       </template>
       <template #col.tls="{ item }">
         <nexus-badge
-          v-if="item.type !== 'oom-killer'"
           :label="(item.tls_id ?? 0) > 0 ? $t('nexus.on') : $t('nexus.off')"
           :variant="(item.tls_id ?? 0) > 0 ? 'success' : 'secondary'"
         />
-        <span v-else class="services-nexus__muted">—</span>
-      </template>
-      <template #col.memory="{ item }">
-        <span>{{ item.type === 'oom-killer' ? (item.memory_limit || '—') : '—' }}</span>
       </template>
 
       <template #actions="{ item }">
@@ -72,7 +67,6 @@ interface ServiceRow {
   listen?: string
   listen_port?: number
   tls_id?: number
-  memory_limit?: string
   [key: string]: unknown
 }
 
@@ -96,12 +90,10 @@ const columns: Column<ServiceRow>[] = [
   { key: 'listen', labelKey: 'in.addr' },
   { key: 'listen_port', labelKey: 'in.port', sortable: true },
   { key: 'tls', labelKey: 'objects.tls' },
-  { key: 'memory', labelKey: 'types.oom.memoryLimit' },
 ]
 
 const filtered = computed<ServiceRow[]>(() => {
   const query = search.value.trim().toLowerCase()
-
   if (!query) return props.services
 
   return props.services.filter(item => String(item.tag).toLowerCase().includes(query))

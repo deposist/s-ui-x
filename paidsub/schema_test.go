@@ -69,6 +69,55 @@ func TestEnsureSchemaIdempotent(t *testing.T) {
 	}
 }
 
+func TestMigratePaymentOrderSnapshotsFailsClosedAndResolvesLegacyRows(t *testing.T) {
+	db := openTestDB(t)
+	if err := EnsureSchema(db); err != nil {
+		t.Fatalf("EnsureSchema: %v", err)
+	}
+	tariff := Tariff{Name: "Legacy", Price: 100, Currency: "RUB", AddDays: 45, AddTrafficBytes: 8192, Enabled: true}
+	if err := db.Create(&tariff).Error; err != nil {
+		t.Fatal(err)
+	}
+	paid := PaymentOrder{ClientId: 1, TariffId: tariff.Id, Provider: "yookassa", Amount: 100, Currency: "RUB", Status: StatusPaid, IdempotencyKey: "migrate-paid"}
+	paidMissingTariff := PaymentOrder{ClientId: 1, TariffId: tariff.Id + 999, Provider: "yookassa", Amount: 100, Currency: "RUB", Status: StatusPaid, IdempotencyKey: "migrate-paid-missing"}
+	cryptoBotPending := PaymentOrder{ClientId: 1, TariffId: tariff.Id, Provider: string(ProviderCryptoBot), Amount: 100, Currency: "RUB", Status: StatusPending, IdempotencyKey: "migrate-cryptobot"}
+	otherPending := PaymentOrder{ClientId: 1, TariffId: tariff.Id, Provider: "stripe", Amount: 100, Currency: "RUB", Status: StatusPending, IdempotencyKey: "migrate-other"}
+	for _, order := range []*PaymentOrder{&paid, &paidMissingTariff, &cryptoBotPending, &otherPending} {
+		if err := db.Create(order).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := migratePaymentOrderSnapshots(db); err != nil {
+		t.Fatalf("migratePaymentOrderSnapshots: %v", err)
+	}
+	if err := migratePaymentOrderSnapshots(db); err != nil {
+		t.Fatalf("idempotent migratePaymentOrderSnapshots: %v", err)
+	}
+
+	var gotPaid, gotMissing, gotCrypto, gotOther PaymentOrder
+	for id, target := range map[uint]*PaymentOrder{
+		paid.Id: &gotPaid, paidMissingTariff.Id: &gotMissing, cryptoBotPending.Id: &gotCrypto, otherPending.Id: &gotOther,
+	} {
+		if err := db.First(target, id).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if gotPaid.Status != StatusManualReview || gotPaid.SnapshotVersion != paymentOrderLegacyResolvedVersion ||
+		gotPaid.GrantedDays != 0 || gotPaid.GrantedTrafficBytes != 0 {
+		t.Fatalf("snapshotless paid order inferred a grant from mutable tariff data: %+v", gotPaid)
+	}
+	if gotMissing.Status != StatusManualReview || gotMissing.SnapshotVersion != paymentOrderLegacyResolvedVersion {
+		t.Fatalf("unprovable paid legacy order did not fail closed to review: %+v", gotMissing)
+	}
+	if gotCrypto.Status != StatusRecoverable || gotCrypto.SnapshotVersion != 0 {
+		t.Fatalf("unresolved CryptoBot order was not made recoverable: %+v", gotCrypto)
+	}
+	if gotOther.Status != StatusFailed || gotOther.SnapshotVersion != 0 {
+		t.Fatalf("snapshotless non-CryptoBot order did not fail closed: %+v", gotOther)
+	}
+}
+
 // TestPaymentOrdersTelegramIndex pins O-1: order history is queried by
 // telegram_user_id (OrdersForTgUser / RefundableOrdersForTgUser), so the column
 // must be indexed to avoid a full-table scan.

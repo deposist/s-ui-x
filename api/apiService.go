@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/logger"
 	"github.com/deposist/s-ui-x/realtime"
@@ -330,6 +331,10 @@ func (a *ApiService) GetOnlines(c *gin.Context) {
 	jsonObj(c, onlines, err)
 }
 
+func (a *ApiService) GetCapabilities(c *gin.Context) {
+	jsonObj(c, capabilities.BuildAPIView(), nil)
+}
+
 func (a *ApiService) GetLogs(c *gin.Context) {
 	count := c.Query("count")
 	if count == "" {
@@ -505,12 +510,12 @@ func (a *ApiService) Login(c *gin.Context) {
 			return
 		}
 	}
-	loginUser, err := a.UserService.Login(username, c.Request.FormValue("pass"), remoteIP)
-	if err != nil {
+	loginUser, forcePasswordReset, err := a.UserService.Login(username, c.Request.FormValue("pass"), remoteIP)
+	if err != nil && !errors.Is(err, service.ErrForcePasswordReset) {
 		recordLoginFailure(remoteIP)
 		recordLoginFailure(userKey)
 		a.recordAudit(c, username, "login_failed", "auth", service.AuditSeverityWarn, map[string]any{
-			"reason": err.Error(),
+			"reason": redact.String(err.Error()),
 		})
 		a.TelegramService.NotifyTelegramEvent("login_failed", telegramRequestFields(c))
 		jsonMsg(c, "", err)
@@ -529,8 +534,18 @@ func (a *ApiService) Login(c *gin.Context) {
 		logger.Warning("unable to get session generation:", err)
 	}
 
-	err = SetLoginUser(c, loginUser, sessionMaxAge, sessionGeneration)
+	if forcePasswordReset {
+		err = SetForcePasswordResetUser(c, loginUser, sessionMaxAge, sessionGeneration)
+	} else {
+		err = SetLoginUser(c, loginUser, sessionMaxAge, sessionGeneration)
+	}
 	if err == nil {
+		if forcePasswordReset {
+			logger.Info("user ", loginUser, " must change password")
+			a.recordAudit(c, loginUser, "password_reset_required", "auth", service.AuditSeverityWarn, nil)
+			c.JSON(http.StatusOK, Msg{Success: false, Msg: "", Obj: gin.H{"forcePasswordReset": true, "username": loginUser}})
+			return
+		}
 		logger.Info("user ", loginUser, " login success")
 		a.recordAudit(c, loginUser, "login_success", "auth", service.AuditSeverityInfo, nil)
 		a.TelegramService.NotifyTelegramEvent("login_success", map[string]string{
@@ -540,7 +555,7 @@ func (a *ApiService) Login(c *gin.Context) {
 	} else {
 		logger.Warning("login failed: ", err)
 		a.recordAudit(c, loginUser, "login_session_failed", "auth", service.AuditSeverityWarn, map[string]any{
-			"reason": err.Error(),
+			"reason": redact.String(err.Error()),
 		})
 	}
 
@@ -1015,7 +1030,7 @@ func (a *ApiService) AddToken(c *gin.Context) {
 
 func (a *ApiService) DeleteToken(c *gin.Context) {
 	tokenId := c.Request.FormValue("id")
-	err := a.UserService.DeleteToken(tokenId)
+	err := a.UserService.DeleteToken(GetLoginUser(c), tokenId)
 	if err == nil {
 		a.recordAudit(c, GetLoginUser(c), "api_token_deleted", "api_token", service.AuditSeverityWarn, map[string]any{
 			"id": tokenId,
@@ -1031,7 +1046,7 @@ func (a *ApiService) SetTokenEnabled(c *gin.Context) {
 		jsonMsg(c, "", err)
 		return
 	}
-	err = a.UserService.SetTokenEnabled(id, enabled)
+	err = a.UserService.SetTokenEnabled(GetLoginUser(c), id, enabled)
 	if err == nil {
 		a.recordAudit(c, GetLoginUser(c), "api_token_enabled_changed", "api_token", service.AuditSeverityWarn, map[string]any{
 			"id":      id,

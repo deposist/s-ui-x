@@ -105,6 +105,32 @@ func TestIssue6ImportWireguardNoPeersCountsEndpointSkip(t *testing.T) {
 	}
 }
 
+func TestOfficialCoreImportMarksUnsupportedProtocol(t *testing.T) {
+	initPlanExtraMainDB(t)
+	src := createPlanExtraSource(t, []planExtraInbound{{
+		id: 1, port: 443, protocol: "sudoku", tag: "unsupported-sudoku", settings: `{}`,
+	}})
+
+	plan, err := Plan(src, PlanOptions{Strategy: StrategyMerge})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Items) != 1 || !plan.Items[0].Unsupported || plan.Items[0].Reason != "unsupported by official core" || plan.Items[0].Action != ActionSkip {
+		t.Fatalf("unsupported plan item not marked: %#v", plan.Items)
+	}
+
+	report, err := Import(src, Options{DryRun: true, Strategy: StrategyMerge})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Unsupported) != 1 || report.Unsupported[0].Type != "sudoku" || report.Unsupported[0].Reason != "unsupported by official core" {
+		t.Fatalf("unsupported import report not marked: %#v", report.Unsupported)
+	}
+	if report.Summary.Inbounds.Skipped != 1 {
+		t.Fatalf("unsupported inbound not counted as skipped: %#v", report.Summary.Inbounds)
+	}
+}
+
 type planExtraInbound struct {
 	id       int64
 	port     int

@@ -3,6 +3,8 @@
     :dirty="dirty"
     :loading="loading"
     :model-value="visible"
+    :save-disabled="saveBlockedReason !== ''"
+    :save-disabled-reason="saveBlockedReason"
     :saving="loading"
     :title="$t('actions.' + title) + ' ' + $t('objects.outbound')"
     :width="720"
@@ -14,16 +16,22 @@
         <v-col cols="12" sm="6">
           <v-select
             hide-details
-            :items="Object.keys(outTypes).map((key,index) => ({title: key, value: Object.values(outTypes)[index]}))"
+            :items="typeOptions"
             :label="$t('type')"
             v-model="outbound.type"
             @update:modelValue="changeType">
           </v-select>
         </v-col>
         <v-col cols="12" sm="6">
-          <v-text-field v-model="outbound.tag" :label="$t('objects.tag')" hide-details></v-text-field>
+          <v-text-field v-model="outbound.tag" :label="$t('objects.tag')" hide-details :error="isBlankIdentity(outbound.tag)"></v-text-field>
         </v-col>
       </v-row>
+      <ProtocolGuidance
+        :capabilities="capabilities"
+        category="outbounds"
+        :mode="id > 0 ? 'edit' : 'create'"
+        :model="outbound"
+      />
       <v-row v-if="!NoServer.includes(outbound.type)">
         <v-col cols="12" sm="6">
           <v-text-field :label="$t('out.addr')" hide-details v-model="outbound.server"></v-text-field>
@@ -98,13 +106,16 @@ import AnyTls from '@/components/protocols/AnyTls.vue'
 import Data from '@/store/modules/data'
 import EntityDrawer from './EntityDrawer.vue'
 import FormSection from './FormSection.vue'
+import { isBlankIdentity } from '@/utils/entityIdentity'
+import { availableOutboundEditorTypes, defaultOutboundType, typeOptions } from '@/types/runtimeCapabilities'
+import ProtocolGuidance from '@/components/recommendations/ProtocolGuidance.vue'
 export default {
   inheritAttrs: false,
   props: ['visible', 'data', 'id', 'tags'],
   emits: ['close'],
   data() {
     return {
-      outbound: createOutbound("direct",{ "tag": "" }),
+      outbound: createOutbound(defaultOutboundType(Data().capabilities) ?? '',{ "tag": "" }),
       title: "add",
       link: "",
       loading: false,
@@ -115,6 +126,7 @@ export default {
     }
   },
   methods: {
+    isBlankIdentity,
     updateData(id: number) {
       if (id > 0) {
         const newData = JSON.parse(this.$props.data)
@@ -122,7 +134,8 @@ export default {
         this.title = "edit"
       }
       else {
-        this.outbound = createOutbound("direct",{ tag: "direct-" + RandomUtil.randomSeq(3) })
+        const type = defaultOutboundType(Data().capabilities) ?? ''
+        this.outbound = createOutbound(type,{ tag: type ? type + "-" + RandomUtil.randomSeq(3) : "" })
         this.title = "add"
       }
       this.snapshot = JSON.stringify(this.outbound)
@@ -139,10 +152,8 @@ export default {
       this.$emit('close')
     },
     async saveChanges() {
-      // Guard against double-submit (button is also :disabled while loading).
-      if (!this.$props.visible || this.loading) return
-      // check duplicate tag
-      const isDuplicatedTag = Data().checkTag("outbound",this.$props.id, this.outbound.tag)
+      if (!this.$props.visible || this.loading || this.saveBlockedReason !== '') return
+      const isDuplicatedTag = Data().checkTag('outbound', this.$props.id, this.outbound.tag)
       if (isDuplicatedTag) return
 
       // save data
@@ -165,9 +176,20 @@ export default {
           this.link = ""
         }
       }
-    }
+    },
   },
   computed: {
+    capabilities() {
+      return Data().capabilities
+    },
+    typeOptions() {
+      return typeOptions(this.outTypes, availableOutboundEditorTypes(Data().capabilities), this.outbound?.type)
+    },
+    saveBlockedReason(): string {
+      if (!Data().canSaveType('outbounds', this.outbound.type, this.outbound.id ?? 0)) return this.$t('form.cannotSave.capabilityUnavailable')
+      if (isBlankIdentity(this.outbound.tag)) return this.$t('form.cannotSave.tagRequired')
+      return ''
+    },
     dirty(): boolean {
       return this.snapshot !== "" && JSON.stringify(this.outbound) !== this.snapshot
     },
@@ -182,6 +204,7 @@ export default {
   components: { EntityDrawer, FormSection, Dial, Multiplex, Transport, OutTLS,
     Direct, Socks, Http, Shadowsocks, Vmess, Trojan,
     Wireguard, Hysteria, Naive, ShadowTls, Vless, Tuic,
-    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest, Failover }
+    Hysteria2, AnyTls, Tor, Ssh, Selector, UrlTest, Failover,
+    ProtocolGuidance }
 }
 </script>

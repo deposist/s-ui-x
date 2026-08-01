@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
@@ -60,6 +61,9 @@ func (o *OutboundService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 	}
 	directTag := DirectFallbackTag(db)
 	for _, outbound := range outbounds {
+		if !capabilities.IsTypeAvailable("outbounds", outbound.Type) {
+			continue
+		}
 		var outboundJson json.RawMessage
 		var err error
 		if outbound.Type == FailoverType {
@@ -175,6 +179,9 @@ func (s *OutboundService) RestartOutbounds(tx *gorm.DB, ids []uint) error {
 	for _, outbound := range outbounds {
 		if err := coreInstance.RemoveOutbound(outbound.Tag); err != nil && err != os.ErrInvalid {
 			return err
+		}
+		if !capabilities.IsTypeAvailable("outbounds", outbound.Type) {
+			continue
 		}
 		var outboundConfig json.RawMessage
 		var err error

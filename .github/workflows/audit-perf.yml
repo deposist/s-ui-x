@@ -17,29 +17,86 @@ concurrency:
 
 env:
   GOFLAGS: -mod=readonly
+  BENCHSTAT_VERSION: "v0.0.0-20260709024250-82a0b07e230d"
 
 jobs:
   bench-all:
     name: bench-all
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 60
     if: ${{ github.event_name != 'pull_request' || contains(join(github.event.pull_request.labels.*.name, ','), 'run-perf') }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Verify production frontend dist
+        working-directory: frontend
+        run: npm run verify:dist
+      - name: Install frontend assets for Go embed packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf web/html
+          mkdir -p web/html
+          cp -a frontend/dist/. web/html/
       - name: Install benchstat
         run: |
-          go install golang.org/x/perf/cmd/benchstat@latest
+          set -euo pipefail
+          go install "golang.org/x/perf/cmd/benchstat@${BENCHSTAT_VERSION}"
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Benchmark base revision on the same runner
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          BASE_SHA="$PR_BASE_SHA"
+          if [ -z "$BASE_SHA" ] && [ -n "$PUSH_BASE_SHA" ] && [ "$PUSH_BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$PUSH_BASE_SHA"
+          fi
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA="$(git rev-parse HEAD^)"
+          fi
+          git worktree add ../audit-perf-base "$BASE_SHA"
+          trap 'git worktree remove --force ../audit-perf-base' EXIT
+          npm ci --prefix ../audit-perf-base/frontend
+          npm run build --prefix ../audit-perf-base/frontend
+          rm -rf ../audit-perf-base/web/html
+          mkdir -p ../audit-perf-base/web/html
+          cp -a ../audit-perf-base/frontend/dist/. ../audit-perf-base/web/html/
+          mkdir -p tests/baseline/phase5
+          (
+            cd ../audit-perf-base
+            go test -run='^$' -bench=. -benchmem -benchtime=1s ./core ./sub ./paidsub ./service ./util ./util/common
+          ) > tests/baseline/phase5/bench-all.txt
+          grep -q '^Benchmark' tests/baseline/phase5/bench-all.txt
       - name: Run benchmarks
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name bench-all -CommandLine "go test ./... -bench=. -benchmem -run=^$ -benchtime=2s" -ContinueOnError
-      - name: Compare with Phase 5 baseline
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name benchstat -CommandLine "benchstat tests/baseline/phase5/bench-all.txt tests/baseline/phase8/bench-all.txt" -ContinueOnError
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name bench-all -CommandLine "go test -run=^$ -bench=. -benchmem -benchtime=1s ./core ./sub ./paidsub ./service ./util ./util/common"
+      - name: Require benchmark results and baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^Benchmark' tests/baseline/phase8/bench-all.txt
+          test -s tests/baseline/phase5/bench-all.txt
+      - name: Compare with same-run baseline
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File tests/baseline/run-command.ps1 -Phase phase8 -Name benchstat -CommandLine "benchstat tests/baseline/phase5/bench-all.txt tests/baseline/phase8/bench-all.txt"
       - name: Detect >20 percent ns/op regressions
         id: regression
         shell: bash
@@ -48,7 +105,6 @@ jobs:
           const fs = require('fs');
           const parse = (file) => {
             const rows = new Map();
-            if (!fs.existsSync(file)) return rows;
             for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
               const m = line.match(/^(Benchmark\S+)\s+\d+\s+([\d.]+)\s+ns\/op/);
               if (m) rows.set(m[1], Number(m[2]));
@@ -60,19 +116,14 @@ jobs:
           const regressions = [];
           for (const [name, oldNs] of oldRows) {
             const newNs = newRows.get(name);
-            if (oldNs > 0 && newNs > oldNs * 1.2) {
+            if (newNs !== undefined && oldNs > 0 && newNs > oldNs * 1.2) {
               regressions.push({ name, oldNs, newNs, ratio: newNs / oldNs });
             }
           }
           fs.writeFileSync('tests/baseline/phase8/perf-regressions.json', JSON.stringify(regressions, null, 2) + '\n');
-          if (regressions.length > 0) {
-            console.log(`regression=true`);
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'regression=true\n');
-            for (const row of regressions.slice(0, 20)) {
-              console.log(`::warning title=Perf regression::${row.name} ${row.oldNs} -> ${row.newNs} ns/op (${row.ratio.toFixed(2)}x)`);
-            }
-          } else {
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'regression=false\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `regression=${regressions.length > 0}\n`);
+          for (const row of regressions.slice(0, 20)) {
+            console.log(`::warning title=Perf regression::${row.name} ${row.oldNs} -> ${row.newNs} ns/op (${row.ratio.toFixed(2)}x)`);
           }
           NODE
       - name: Comment perf warning on PR
@@ -87,7 +138,7 @@ jobs:
               '',
               ...rows.slice(0, 20).map((row) => `- \`${row.name}\`: ${row.oldNs} -> ${row.newNs} ns/op (${row.ratio.toFixed(2)}x)`),
               '',
-              'This is a SOFT check; inspect `benchstat.txt` before deciding whether it is noise or a real regression.'
+              'Inspect benchstat.txt before deciding whether it is noise or a real regression.',
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -105,5 +156,5 @@ jobs:
             tests/baseline/phase8/benchstat.txt
             tests/baseline/phase8/benchstat.junit.xml
             tests/baseline/phase8/perf-regressions.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30

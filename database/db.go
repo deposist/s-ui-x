@@ -23,7 +23,31 @@ import (
 var (
 	dbMu sync.RWMutex
 	db   *gorm.DB
+
+	// maintenanceMu is held exclusively while a database restore replaces the
+	// SQLite file. DB operations that participate through EnterDBOperation drain
+	// before the swap and wait until the replacement is complete.
+	maintenanceMu sync.RWMutex
+	restoreMu     sync.Mutex
 )
+var ErrRestoreInProgress = errors.New("database restore is already in progress")
+
+// EnterDBOperation brackets an operation that may retain the current DB handle.
+func EnterDBOperation() func() {
+	maintenanceMu.RLock()
+	return maintenanceMu.RUnlock
+}
+
+func beginRestore() (func(), error) {
+	if !restoreMu.TryLock() {
+		return nil, ErrRestoreInProgress
+	}
+	maintenanceMu.Lock()
+	return func() {
+		maintenanceMu.Unlock()
+		restoreMu.Unlock()
+	}, nil
+}
 var adaptToCurrentVersion = AdaptToCurrentVersion
 
 const (

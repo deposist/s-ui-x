@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
@@ -18,6 +19,8 @@ import (
 
 var errAlreadyApplied = errors.New("order already finalized")
 var errRefundNotApplicable = errors.New("order is not refundable")
+
+var cryptoBotCreateMu sync.Mutex
 
 // isAlreadyRefunded reports whether a refundStarPayment error means the charge
 // was already refunded (e.g. by a concurrent refund via the other path).
@@ -34,8 +37,10 @@ func isAlreadyRefunded(err error) bool {
 // PaymentService orchestrates orders, invoices and renewals. Logic is scoped to
 // the resolved client; amounts are snapshotted server-side from the tariff.
 type PaymentService struct {
-	setting service.SettingService
-	tariffs TariffService
+	setting             service.SettingService
+	tariffs             TariffService
+	providerOverride    PaymentProvider
+	afterInvoiceCreated func()
 }
 
 func NewPaymentService() *PaymentService { return &PaymentService{} }
@@ -43,6 +48,9 @@ func NewPaymentService() *PaymentService { return &PaymentService{} }
 // providerByKind builds a configured provider if it is enabled and has its
 // token set; otherwise nil.
 func (p *PaymentService) providerByKind(kind ProviderKind) PaymentProvider {
+	if p.providerOverride != nil && p.providerOverride.Kind() == kind {
+		return p.providerOverride
+	}
 	s := &p.setting
 	switch kind {
 	case ProviderStars:
@@ -125,40 +133,118 @@ func (p *PaymentService) CreateOrder(ctx context.Context, client *model.Client, 
 		amount = tariff.Price
 		currency = tariff.Currency
 	}
-	ttlMin, _ := p.setting.GetPaidSubOrderTTLMinutes()
-	now := nowUnix()
-	order := &PaymentOrder{
-		ClientId:       client.Id,
-		TariffId:       tariff.Id,
-		Provider:       string(kind),
-		Amount:         amount,
-		Currency:       currency,
-		Status:         StatusPending,
-		TelegramUserId: tgUserId,
-		IdempotencyKey: common.Random(32),
-		CreatedAt:      now,
-		ExpiresAt:      now + int64(ttlMin)*60,
+	if kind == ProviderCryptoBot {
+		cryptoBotCreateMu.Lock()
+		defer cryptoBotCreateMu.Unlock()
+		if order, invoice, err := p.recoverCryptoBotOrder(client.Id, tariff.Id, tgUserId, amount, currency); err != nil || order != nil {
+			return order, invoice, err
+		}
+	}
+	ttlMinutes, _ := p.setting.GetPaidSubOrderTTLMinutes()
+	order := newPaymentOrder(client, tariff, kind, tgUserId, amount, currency, nowUnix(), ttlMinutes)
+	if kind == ProviderCryptoBot {
+		order.Status = StatusInvoiceCreating
 	}
 	db := database.GetDB()
 	if err := db.Create(order).Error; err != nil {
 		return nil, nil, err
 	}
-	inv, err := prov.CreateInvoice(ctx, order, tariff, client)
+	invoice, err := prov.CreateInvoice(ctx, order, tariff, client)
+	if err != nil {
+		failureStatus := StatusFailed
+		if kind == ProviderCryptoBot {
+			// Network/API failures before a usable reference is returned do not
+			// prove whether the remote invoice exists. Reconciliation searches by
+			// the immutable payload before any retry can create another invoice.
+			failureStatus = StatusRecoverable
+		}
+		if markErr := p.setOrderStatus(order.Id, order.Status, failureStatus); markErr != nil {
+			return order, nil, errors.Join(err, fmt.Errorf("mark order failed: %w", markErr))
+		}
+		if kind == ProviderCryptoBot {
+			return order, nil, err
+		}
+		return nil, nil, err
+	}
+	if p.afterInvoiceCreated != nil {
+		p.afterInvoiceCreated()
+	}
+	updates := map[string]any{"status": StatusPending}
+	if invoice.PayURL != "" {
+		updates["external_url"] = invoice.PayURL
+	}
+	if invoice.ProviderRef != "" {
+		updates["provider_ref"] = invoice.ProviderRef
+		ref, _ := json.Marshal(map[string]string{"ref": invoice.ProviderRef})
+		updates["provider_payload"] = ref
+	}
+	if kind == ProviderCryptoBot && (invoice.ProviderRef == "" || invoice.PayURL == "") {
+		_ = p.setOrderStatus(order.Id, StatusInvoiceCreating, StatusRecoverable)
+		return order, nil, fmt.Errorf("provider returned an incomplete invoice reference")
+	}
+	if err := db.Model(&PaymentOrder{}).Where("id = ? AND status = ?", order.Id, order.Status).Updates(updates).Error; err != nil {
+		failureStatus := StatusRecoverable
+		if deleter, ok := prov.(invoiceDeleter); ok && invoice.ProviderRef != "" {
+			if deleteErr := deleter.DeleteInvoice(ctx, invoice.ProviderRef); deleteErr != nil {
+				logger.Warning("paidsub: could not cancel invoice after reference persistence failure: ", deleteErr)
+			} else {
+				failureStatus = StatusFailed
+			}
+		}
+		if markErr := p.setOrderStatus(order.Id, order.Status, failureStatus); markErr != nil {
+			return order, nil, errors.Join(fmt.Errorf("persist provider invoice reference: %w", err), fmt.Errorf("mark order failed: %w", markErr))
+		}
+		return order, nil, fmt.Errorf("persist provider invoice reference: %w", err)
+	}
+	order.Status = StatusPending
+	order.ExternalURL = invoice.PayURL
+	order.ProviderRef = invoice.ProviderRef
+	return order, invoice, nil
+}
+
+func (p *PaymentService) recoverCryptoBotOrder(clientID, tariffID uint, tgUserID, amount int64, currency string) (*PaymentOrder, *Invoice, error) {
+	var order PaymentOrder
+	err := database.GetDB().
+		Where("client_id = ? AND tariff_id = ? AND telegram_user_id = ? AND provider = ? AND status IN ? AND amount = ? AND currency = ? AND expires_at >= ?",
+			clientID, tariffID, tgUserID, string(ProviderCryptoBot), []string{StatusInvoiceCreating, StatusRecoverable, StatusPending}, amount, currency, nowUnix()).
+		Order("id DESC").First(&order).Error
+	if database.IsNotFound(err) {
+		return nil, nil, nil
+	}
 	if err != nil {
 		return nil, nil, err
 	}
-	upd := map[string]any{}
-	if inv.PayURL != "" {
-		upd["external_url"] = inv.PayURL
+	providerRef := order.ProviderRef
+	if providerRef == "" {
+		providerRef = extractProviderRef(order.ProviderPayload)
 	}
-	if inv.ProviderRef != "" {
-		ref, _ := json.Marshal(map[string]string{"ref": inv.ProviderRef})
-		upd["provider_payload"] = ref
+	if providerRef == "" || order.ExternalURL == "" {
+		return &order, nil, fmt.Errorf("existing CryptoBot invoice is awaiting reconciliation")
 	}
-	if len(upd) > 0 {
-		_ = db.Model(&PaymentOrder{}).Where("id = ?", order.Id).Updates(upd).Error
+	return &order, &Invoice{
+		Method:      InvoiceURL,
+		PayURL:      order.ExternalURL,
+		ProviderRef: providerRef,
+		Payload:     order.IdempotencyKey,
+	}, nil
+}
+
+func newPaymentOrder(client *model.Client, tariff *Tariff, kind ProviderKind, tgUserID, amount int64, currency string, now int64, ttlMinutes int) *PaymentOrder {
+	return &PaymentOrder{
+		ClientId:            client.Id,
+		TariffId:            tariff.Id,
+		Provider:            string(kind),
+		Amount:              amount,
+		Currency:            currency,
+		Status:              StatusPending,
+		TelegramUserId:      tgUserID,
+		IdempotencyKey:      common.Random(32),
+		CreatedAt:           now,
+		ExpiresAt:           now + int64(ttlMinutes)*60,
+		GrantedDays:         tariff.AddDays,
+		GrantedTrafficBytes: tariff.AddTrafficBytes,
+		SnapshotVersion:     paymentOrderSnapshotVersion,
 	}
-	return order, inv, nil
 }
 
 func (p *PaymentService) getOrder(id uint) (*PaymentOrder, error) {
@@ -183,9 +269,14 @@ func (p *PaymentService) findOrderByPayload(payload string) (*PaymentOrder, erro
 }
 
 func (p *PaymentService) markFailed(id uint) {
-	db := database.GetDB()
-	_ = db.Model(&PaymentOrder{}).Where("id = ? AND status = ?", id, StatusPending).
-		Update("status", StatusFailed).Error
+	if err := p.setOrderStatus(id, StatusPending, StatusFailed); err != nil {
+		logger.Warning("paidsub: mark order failed: ", err)
+	}
+}
+
+func (p *PaymentService) setOrderStatus(id uint, from, to string) error {
+	return database.GetDB().Model(&PaymentOrder{}).Where("id = ? AND status = ?", id, from).
+		Update("status", to).Error
 }
 
 // ApplyPaidOrder finalizes a pending order and renews the client exactly once.
@@ -198,32 +289,31 @@ func (p *PaymentService) ApplyPaidOrder(orderID uint, chargeID string, raw []byt
 	var inboundIds []uint
 	var tgUserID int64
 	err := db.Transaction(func(tx *gorm.DB) error {
+		orderUpdates := map[string]any{
+			"status":             StatusPaid,
+			"paid_at":            nowUnix(),
+			"provider_charge_id": chargeID,
+		}
 		res := tx.Model(&PaymentOrder{}).
 			Where("id = ? AND status = ?", orderID, StatusPending).
-			Updates(map[string]any{
-				"status":             StatusPaid,
-				"paid_at":            nowUnix(),
-				"provider_charge_id": chargeID,
-				"provider_payload":   raw,
-			})
+			Updates(orderUpdates)
 		if res.Error != nil {
 			return res.Error
 		}
 		if res.RowsAffected != 1 {
 			return errAlreadyApplied
 		}
+		if len(raw) > 0 {
+			if err := tx.Model(&PaymentOrder{}).Where("id = ?", orderID).Update("provider_payload", raw).Error; err != nil {
+				return err
+			}
+		}
 		var order PaymentOrder
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			return err
 		}
-		var tariff Tariff
-		if err := tx.Where("id = ?", order.TariffId).First(&tariff).Error; err != nil {
-			return err
-		}
-		// Zero-value tariffs must never grant a renewal (defense in depth; the
-		// purchase path already rejects them).
-		if tariff.Price <= 0 && tariff.StarsAmount <= 0 {
-			return fmt.Errorf("tariff has no price")
+		if order.SnapshotVersion != paymentOrderSnapshotVersion || order.Amount <= 0 {
+			return fmt.Errorf("order has no valid purchase snapshot")
 		}
 		var client model.Client
 		if err := tx.Where("id = ?", order.ClientId).First(&client).Error; err != nil {
@@ -233,15 +323,15 @@ func (p *PaymentService) ApplyPaidOrder(orderID uint, chargeID string, raw []byt
 
 		now := nowUnix()
 		updates := map[string]any{"enable": true}
-		if tariff.AddDays > 0 {
+		if order.GrantedDays > 0 {
 			base := client.Expiry
 			if base < now {
 				base = now
 			}
-			updates["expiry"] = base + int64(tariff.AddDays)*86400
+			updates["expiry"] = base + int64(order.GrantedDays)*86400
 		}
-		if tariff.AddTrafficBytes > 0 {
-			updates["volume"] = client.Volume + tariff.AddTrafficBytes
+		if order.GrantedTrafficBytes > 0 {
+			updates["volume"] = client.Volume + order.GrantedTrafficBytes
 			updates["total_up"] = client.TotalUp + client.Up
 			updates["total_down"] = client.TotalDown + client.Down
 			updates["up"] = 0
@@ -296,10 +386,9 @@ func (p *PaymentService) ApplyPaidOrder(orderID uint, chargeID string, raw []byt
 }
 
 // ExpireStaleOrders marks pending non-polled orders past their TTL as expired.
-// Polled providers (CryptoBot) are deliberately EXCLUDED: their confirmation is
-// out-of-band, so a payment can land after the short local TTL and must remain
-// pending to be caught by the next poll. They are reaped instead by
-// ExpireStalePolledOrders on a long grace window.
+// Polled providers (CryptoBot) are deliberately excluded: their confirmation is
+// out-of-band, so they are expired only after a successful provider poll reports
+// the invoice terminal (see ExpireTerminalPolledOrders).
 func (p *PaymentService) ExpireStaleOrders() error {
 	db := database.GetDB()
 	return db.Model(&PaymentOrder{}).
@@ -308,16 +397,17 @@ func (p *PaymentService) ExpireStaleOrders() error {
 		Update("status", StatusExpired).Error
 }
 
-// ExpireStalePolledOrders reaps pending polled-provider (CryptoBot) orders whose
-// creation is older than graceSeconds. This hard ceiling is far beyond the local
-// order TTL so a late out-of-band payment is still caught by polling, while
-// genuinely abandoned invoices do not accumulate forever.
-func (p *PaymentService) ExpireStalePolledOrders(graceSeconds int64) error {
-	db := database.GetDB()
+// ExpireTerminalPolledOrders expires only provider-confirmed terminal invoices.
+// The caller supplies IDs from a successful bounded poll, so an outage,
+// malformed response, or canceled context cannot expire a potentially-paid row.
+func (p *PaymentService) ExpireTerminalPolledOrders(orderIDs []uint, graceSeconds int64) error {
+	if len(orderIDs) == 0 {
+		return nil
+	}
 	cutoff := nowUnix() - graceSeconds
-	return db.Model(&PaymentOrder{}).
-		Where("status = ? AND provider = ? AND created_at > 0 AND created_at < ?",
-			StatusPending, string(ProviderCryptoBot), cutoff).
+	return database.GetDB().Model(&PaymentOrder{}).
+		Where("id IN ? AND status = ? AND provider = ? AND created_at > 0 AND created_at < ?",
+			orderIDs, StatusPending, string(ProviderCryptoBot), cutoff).
 		Update("status", StatusExpired).Error
 }
 
@@ -383,9 +473,8 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			return err
 		}
-		var tariff Tariff
-		if err := tx.Where("id = ?", order.TariffId).First(&tariff).Error; err != nil {
-			return err
+		if order.SnapshotVersion != paymentOrderSnapshotVersion {
+			return fmt.Errorf("order has no valid purchase snapshot")
 		}
 		var client model.Client
 		if err := tx.Where("id = ?", order.ClientId).First(&client).Error; err != nil {
@@ -393,15 +482,15 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 		}
 		now := nowUnix()
 		updates := map[string]any{}
-		if tariff.AddDays > 0 && client.Expiry > 0 {
-			newExpiry := client.Expiry - int64(tariff.AddDays)*86400
+		if order.GrantedDays > 0 && client.Expiry > 0 {
+			newExpiry := client.Expiry - int64(order.GrantedDays)*86400
 			if newExpiry < now {
 				newExpiry = now
 			}
 			updates["expiry"] = newExpiry
 		}
-		if tariff.AddTrafficBytes > 0 {
-			newVolume := client.Volume - tariff.AddTrafficBytes
+		if order.GrantedTrafficBytes > 0 {
+			newVolume := client.Volume - order.GrantedTrafficBytes
 			if newVolume < 0 {
 				newVolume = 0
 			}
@@ -427,14 +516,16 @@ func (p *PaymentService) finalizeRefund(orderID uint, revoke bool) error {
 			// be clobbered with this order's stale snapshot (which would silently
 			// discard the usage accrued in the current window). Totals stay
 			// relative either way, so the ledger remains consistent.
-			var newerTrafficOrders int64
-			if err := tx.Model(&PaymentOrder{}).
-				Where("client_id = ? AND id > ? AND status = ?", order.ClientId, order.Id, StatusPaid).
-				Where("tariff_id IN (?)", tx.Model(&Tariff{}).Select("id").Where("add_traffic_bytes > 0")).
-				Count(&newerTrafficOrders).Error; err != nil {
+			var latestTrafficOrder PaymentOrder
+			err := tx.Model(&PaymentOrder{}).
+				Where("client_id = ? AND status = ?", order.ClientId, StatusPaid).
+				Where("granted_traffic_bytes > 0").
+				Order("id DESC").
+				First(&latestTrafficOrder).Error
+			if err != nil && !database.IsNotFound(err) {
 				return err
 			}
-			if newerTrafficOrders == 0 {
+			if database.IsNotFound(err) || latestTrafficOrder.Id == order.Id {
 				updates["up"] = order.GrantedUp
 				updates["down"] = order.GrantedDown
 			}

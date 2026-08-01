@@ -9,6 +9,22 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta1] - 2026-08-01 - ext-to-upstream port
+
+First beta of the 1.5.12 line. The panel now runs only on official sing-box v1.13.15 with a strict capability contract, transactional self-update, paid subscriptions, and full frontend parity. No manual migration is required.
+
+- Official core: builds exclusively against `github.com/sagernet/sing-box v1.13.15`. All fork patches, extended protocol tags, and third-party build flags were removed.
+- Capability manifest drives all layers: backend validation, frontend editors, import, doctor diagnostics, and runtime checks reject unsupported types before persistence. Historical rows remain inspectable and editable only when the type matches the running build.
+- Self-update is now a single binary-and-database transaction. Before any file is replaced, the panel writes a JSON transaction marker with SHA-256 digests of the candidate, backup, and a `VACUUM INTO` database snapshot. Recovery runs before migrations and fails closed on malformed state or identity mismatch.
+- Fixed a state-leak in the update flow: an `os.Stat` error on the pending marker could leave the service permanently blocked. All error paths now reset the update state before returning.
+- Payment orders persist immutable grant days, traffic, and snapshot version. Legacy orders without a snapshot enter permanent manual review with preserved provider evidence.
+- CryptoBot invoice identity is first-class. Creation is serialized and fail-closed. Reconciliation prefers paid duplicates, cancels active siblings, and persists failed cancellation retries across restarts.
+- Classic and Nexus share menu metadata and a palette-aware theme. Entity drawers reject blank identities, invalid ports, missing TLS, and unavailable runtime capabilities with visible localized reasons.
+- All six shipped locales now expose the same leaf-key structure. Missing translations fall back to English at runtime but are materialized in the bundle so tests reject structural drift.
+- Session regeneration, SQLite sessions, CSRF, WebSocket origins, rate limits, cookie invariants, and backup confidentiality are covered by focused race tests.
+
+Full release notes: [`docs/releases/v1.5.12-beta1.md`](docs/releases/v1.5.12-beta1.md).
+
 ## [1.5.11] - 2026-07-07 - Telegram Chat ID detection
 
 Stable patch release for Telegram notification setup. No manual database or configuration migration is required.

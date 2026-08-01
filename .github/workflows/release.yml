@@ -13,7 +13,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   NODE_VERSION: "25"
@@ -22,14 +22,39 @@ env:
   BOOTLIN_BASE_URL: https://toolchains.bootlin.com/downloads/releases/toolchains
 
 jobs:
-  build-frontend:
+  release-ref:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.checkout.outputs.tag }}
+      commit: ${{ steps.checkout.outputs.commit }}
+      version: ${{ steps.checkout.outputs.version }}
+      prerelease: ${{ steps.checkout.outputs.prerelease }}
     steps:
-      - name: Check out repository
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          submodules: recursive
           fetch-depth: 1
+      - name: Validate and check out exact release tag
+        id: checkout
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ inputs.tag || github.ref_name }}
+          event_commit: ${{ github.event_name == 'push' && github.sha || '' }}
+
+  build-frontend:
+    needs: release-ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
+          event_commit: ${{ github.event_name == 'push' && github.sha || '' }}
 
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -50,7 +75,7 @@ jobs:
 
       - name: Frontend lint
         working-directory: frontend
-        run: npm run lint
+        run: npm run lint -- --max-warnings=0
 
       - name: Frontend unit tests
         working-directory: frontend
@@ -60,6 +85,9 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Verify production frontend dist
+        working-directory: frontend
+        run: npm run verify:dist
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -67,9 +95,16 @@ jobs:
           path: frontend/dist/
           retention-days: 1
 
+  build-windows:
+    needs: release-ref
+    uses: ./.github/workflows/windows.yml
+    with:
+      tag: ${{ needs.release-ref.outputs.tag }}
+      expected_commit: ${{ needs.release-ref.outputs.commit }}
+
   build-linux:
     name: Build-${{ matrix.platform }}
-    needs: build-frontend
+    needs: [release-ref, build-frontend]
     strategy:
       fail-fast: false
       matrix:
@@ -83,8 +118,16 @@ jobs:
           - { platform: s390x, arch: s390x, bootlin: s390x-z13, naive: false }
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
+          event_commit: ${{ github.event_name == 'push' && github.sha || '' }}
 
       - name: Download frontend build artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -177,11 +220,10 @@ jobs:
           cp s-ui.service s-ui/
           cp s-ui.sh s-ui/
 
-      - name: Package
-        run: tar -zcvf s-ui-linux-${{ matrix.platform }}.tar.gz s-ui
-
+          tar -czf "s-ui-linux-${{ matrix.platform }}.tar.gz" s-ui
       - name: Generate SHA256 checksum
-        run: sha256sum s-ui-linux-${{ matrix.platform }}.tar.gz > s-ui-linux-${{ matrix.platform }}.tar.gz.sha256
+        shell: bash
+        run: sha256sum --binary s-ui-linux-${{ matrix.platform }}.tar.gz > s-ui-linux-${{ matrix.platform }}.tar.gz.sha256
 
       - name: Upload build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -192,60 +234,106 @@ jobs:
             ./s-ui-linux-${{ matrix.platform }}.tar.gz.sha256
           retention-days: 1
 
-  publish-linux:
-    name: Publish Linux artifacts
-    needs: build-linux
+  publish-release:
+    name: Reconcile and publish verified release
+    needs: [release-ref, build-linux, build-windows]
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository (for release notes)
+      - name: Check out release tooling
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
-
-      - name: Normalize release tag
-        id: vars
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
-          case "$TAG" in
-            v*) echo "tag=$TAG" >> "$GITHUB_OUTPUT" ;;
-            *) TAG="v$TAG"; echo "tag=$TAG" >> "$GITHUB_OUTPUT" ;;
-          esac
-          case "$TAG" in
-            *-alpha*|*-beta*|*-rc*|*-pre*)
-              echo "prerelease=true" >> "$GITHUB_OUTPUT"
-              echo "make_latest=false" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "prerelease=false" >> "$GITHUB_OUTPUT"
-              echo "make_latest=true" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-          NOTES_FILE=".github/RELEASE_NOTES_${TAG}.md"
-          if [ -f "$NOTES_FILE" ]; then
-            echo "notes_path=$NOTES_FILE" >> "$GITHUB_OUTPUT"
-          else
-            echo "notes_path=" >> "$GITHUB_OUTPUT"
-          fi
-
+      - name: Check out exact release tag
+        uses: ./.github/actions/checkout-release-tag
+        with:
+          tag: ${{ needs.release-ref.outputs.tag }}
+          expected_commit: ${{ needs.release-ref.outputs.commit }}
       - name: Download Linux build artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: s-ui-linux-*
           path: release-assets
           merge-multiple: true
-
-      - name: Publish to current repository Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+      - name: Download Windows build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: s-ui ${{ steps.vars.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          prerelease: ${{ steps.vars.outputs.prerelease == 'true' }}
-          make_latest: ${{ steps.vars.outputs.make_latest }}
-          body_path: ${{ steps.vars.outputs.notes_path }}
-          fail_on_unmatched_files: true
-          files: release-assets/*
+          pattern: s-ui-windows-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify local release checksums
+        working-directory: release-assets
+        shell: bash
+        run: sha256sum --check --strict --binary s-ui-linux-*.sha256 s-ui-windows-*.sha256
+      - name: Ensure draft release exists
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+          COMMIT: ${{ needs.release-ref.outputs.commit }}
+          PRERELEASE: ${{ needs.release-ref.outputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NOTES_PATH="$RUNNER_TEMP/empty-release-notes.md"
+          if [[ -f ".github/RELEASE_NOTES_${TAG}.md" ]]; then
+            NOTES_PATH=".github/RELEASE_NOTES_${TAG}.md"
+          else
+            : > "$NOTES_PATH"
+          fi
+          echo "notes_path=$NOTES_PATH" >> "$GITHUB_OUTPUT"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,targetCommitish,isDraft,isPrerelease,name,body >/tmp/release.json 2>/dev/null; then
+            jq -e --arg tag "$TAG" --arg commit "$COMMIT" --arg prerelease "$PRERELEASE" --arg notes "$(cat "$NOTES_PATH")" '
+              .tagName == $tag and
+              .targetCommitish == $commit and
+              .isDraft == true and
+              (.isPrerelease | tostring) == $prerelease and
+              (.name == ("s-ui " + $tag)) and
+              .body == $notes
+            ' /tmp/release.json >/dev/null
+          else
+            args=(release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --target "$COMMIT" --title "s-ui $TAG" --notes-file "$NOTES_PATH" --draft --latest=false)
+            [[ "$PRERELEASE" == true ]] && args+=(--prerelease)
+            gh "${args[@]}"
+          fi
+      - name: Reconcile release assets by authoritative digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+        run: scripts/check-release-assets.sh "$GITHUB_REPOSITORY" "$TAG" release-assets
+      - name: Verify exact remote release assets and digests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+        run: scripts/check-release-assets.sh --verify "$GITHUB_REPOSITORY" "$TAG" release-assets
+      - name: Publish verified release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+          PRERELEASE: ${{ needs.release-ref.outputs.prerelease }}
+          NOTES_PATH: ${{ steps.release.outputs.notes_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "s-ui $TAG" --notes-file "$NOTES_PATH" --draft=false)
+          if [[ "$PRERELEASE" == true ]]; then
+            args+=(--prerelease --latest=false)
+          else
+            args+=(--prerelease=false --latest)
+          fi
+          gh "${args[@]}"
+      - name: Verify published release inventory and classification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-ref.outputs.tag }}
+          PRERELEASE: ${{ needs.release-ref.outputs.prerelease }}
+        shell: bash
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,targetCommitish,isDraft,isPrerelease >/tmp/published-release.json
+          jq -e --arg tag "$TAG" --arg commit "${{ needs.release-ref.outputs.commit }}" --arg prerelease "$PRERELEASE" '
+            .tagName == $tag and
+            .targetCommitish == $commit and
+            .isDraft == false and
+            (.isPrerelease | tostring) == $prerelease
+          ' /tmp/published-release.json >/dev/null

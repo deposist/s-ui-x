@@ -4,11 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "vite --host",
+    "gen:capabilities": "node scripts/gen-capabilities.cjs",
+    "check:capabilities": "node scripts/gen-capabilities.cjs --check",
     "build": "vue-tsc --noEmit && vite build",
+    "verify:dist": "node scripts/verify-dist-assets.mjs",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:unit": "vitest run",
-    "lint": "eslint ."
+    "test": "node scripts/run-vitest.mjs",
+    "test:unit": "node scripts/run-vitest.mjs",
+    "lint": "eslint .",
+    "test:drive-case": "node ../tests/vitest-drive-case.mjs"
   },
   "dependencies": {
     "@mdi/js": "7.4.47",

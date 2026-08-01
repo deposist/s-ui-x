@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/deposist/s-ui-x/config"
 	"github.com/deposist/s-ui-x/core"
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/ipmonitor"
@@ -263,9 +265,13 @@ func (s *ConfigService) CheckOutbound(tag string, link string) core.CheckOutboun
 	}
 	coreInstance := s.coreInstance()
 	if coreInstance == nil || !coreInstance.IsRunning() {
-		return core.CheckOutboundResult{Error: "core not running"}
+		result := core.CheckOutboundResult{Error: "core not running"}
+		SetOutboundHealth(tag, false, 0, result.Error)
+		return result
 	}
-	return coreInstance.CheckOutbound(coreInstance.GetCtx(), tag, link)
+	result := coreInstance.CheckOutbound(coreInstance.GetCtx(), tag, link)
+	SetOutboundHealth(tag, result.OK, result.Delay, result.Error)
+	return result
 }
 
 func (s *ConfigService) CheckOutboundWithContext(ctx context.Context, tag string, link string) core.CheckOutboundResult {
@@ -274,9 +280,13 @@ func (s *ConfigService) CheckOutboundWithContext(ctx context.Context, tag string
 	}
 	coreInstance := s.coreInstance()
 	if coreInstance == nil || !coreInstance.IsRunning() {
-		return core.CheckOutboundResult{Error: "core not running"}
+		result := core.CheckOutboundResult{Error: "core not running"}
+		SetOutboundHealth(tag, false, 0, result.Error)
+		return result
 	}
-	return coreInstance.CheckOutbound(ctx, tag, link)
+	result := coreInstance.CheckOutbound(ctx, tag, link)
+	SetOutboundHealth(tag, result.OK, result.Delay, result.Error)
+	return result
 }
 
 func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initUsers string, loginUser string, hostname string) (objs []string, err error) {
@@ -347,9 +357,69 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 // dispatchSave routes the save to the owning entity service and translates its
 // outcome into the post-commit core plan. The bool result reports whether the
 // client policy cache must be invalidated after commit.
+func validateCapabilitySave(tx *gorm.DB, obj, act string, data json.RawMessage) error {
+	if act != "new" && act != "edit" {
+		return nil
+	}
+	switch obj {
+	case "inbounds", "outbounds", "endpoints", "services":
+	default:
+		return nil
+	}
+	var entity struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &entity); err != nil {
+		return err
+	}
+	if !capabilities.IsTypeAllowed(obj, entity.Type) {
+		return common.NewErrorf("unsupported %s type %q by official core", obj, entity.Type)
+	}
+	if capabilities.IsTypeAvailable(obj, entity.Type) {
+		return nil
+	}
+	if act == "edit" {
+		var entityID uint
+		var raw struct {
+			ID uint `json:"id"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return err
+		}
+		entityID = raw.ID
+		if entityID > 0 {
+			var storedType string
+			var dbModel any
+			switch obj {
+			case "inbounds":
+				dbModel = &model.Inbound{}
+			case "outbounds":
+				dbModel = &model.Outbound{}
+			case "endpoints":
+				dbModel = &model.Endpoint{}
+			case "services":
+				dbModel = &model.Service{}
+			}
+			if err := tx.Model(dbModel).Select("type").Where("id = ?", entityID).Scan(&storedType).Error; err != nil {
+				return err
+			}
+			if storedType == entity.Type {
+				return nil
+			}
+		}
+	}
+	return common.NewErrorf("%s type %q is unavailable in this build", obj, entity.Type)
+}
+
 func (s *ConfigService) dispatchSave(tx *gorm.DB, obj string, act string, data json.RawMessage, initUsers string, hostname string) ([]string, postCommitCorePlan, bool, error) {
 	objs := []string{obj}
 	var plan postCommitCorePlan
+	if err := validateEntityIdentity(obj, act, data); err != nil {
+		return nil, plan, false, err
+	}
+	if err := validateCapabilitySave(tx, obj, act, data); err != nil {
+		return nil, plan, false, err
+	}
 	switch obj {
 	case "clients":
 		inboundIds, err := s.ClientService.Save(tx, act, data, hostname)
@@ -401,6 +471,9 @@ func (s *ConfigService) dispatchSave(tx *gorm.DB, obj string, act string, data j
 		return objs, plan, false, nil
 	case "config":
 		if err := validateConfigLogOutput(data); err != nil {
+			return nil, plan, false, err
+		}
+		if err := validateConfigRuleConditions(data); err != nil {
 			return nil, plan, false, err
 		}
 		storageData, _, err := normalizeManagedRuleSetsForStorage(data)
@@ -455,6 +528,60 @@ func validateConfigLogOutput(data json.RawMessage) error {
 	}
 	if !config.IsSafeLogOutputPath(logBlock.Output) {
 		return common.NewError("log.output must be a relative path within the panel directory; absolute paths and '..' are not allowed")
+	}
+	return nil
+}
+
+// entityIdentityField reports the JSON field used as a reference in the
+// assembled configuration. Client names are descriptive, not references.
+func entityIdentityField(obj string) (string, bool) {
+	switch obj {
+	case "inbounds", "outbounds", "services", "endpoints":
+		return "tag", true
+	case "tls":
+		return "name", true
+	default:
+		return "", false
+	}
+}
+
+func validateEntityIdentity(obj, act string, data json.RawMessage) error {
+	if act != "new" && act != "edit" {
+		return nil
+	}
+	field, ok := entityIdentityField(obj)
+	if !ok {
+		return nil
+	}
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return nil
+	}
+	raw, ok := payload[field]
+	if !ok {
+		return common.NewErrorf("%s: %s is required", obj, field)
+	}
+	var value string
+	if err := json.Unmarshal(raw, &value); err != nil {
+		return common.NewErrorf("%s: %s must be a string", obj, field)
+	}
+	if strings.TrimSpace(value) == "" {
+		return common.NewErrorf("%s: %s must not be empty", obj, field)
+	}
+	return nil
+}
+
+func validateConfigRuleConditions(data json.RawMessage) error {
+	issues, err := core.RuleConditionIssues(data)
+	if err != nil {
+		return common.NewErrorf("decode config rules: %v", err)
+	}
+	for _, issue := range issues {
+		if issue.Code == core.RuleConditionCodeDroppedRule {
+			logger.Warningf("config %s: %s", issue.Path, issue.Message)
+			continue
+		}
+		return common.NewErrorf("%s %s; fix or remove the rule, otherwise sing-box will not start", issue.Path, issue.Message)
 	}
 	return nil
 }

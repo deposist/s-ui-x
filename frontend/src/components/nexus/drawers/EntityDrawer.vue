@@ -41,8 +41,12 @@
     </div>
 
     <div class="nexus-drawer__footer">
+      <span v-if="saveDisabled && saveDisabledReason" class="nexus-drawer__reason">
+        <v-icon icon="lucide:alert-circle" size="16" />
+        {{ saveDisabledReason }}
+      </span>
       <v-chip
-        v-if="dirty"
+        v-else-if="dirty"
         class="nexus-drawer__dirty"
         color="warning"
         prepend-icon="lucide:alert-triangle"
@@ -79,6 +83,7 @@ const props = withDefaults(defineProps<{
   dirty?: boolean
   saving?: boolean
   saveDisabled?: boolean
+  saveDisabledReason?: string
 }>(), {
   width: 560,
 })
@@ -199,5 +204,13 @@ const onModel = (value: boolean) => {
   position: sticky;
   inset-block-end: 0;
   z-index: 2;
+}
+
+.nexus-drawer__reason {
+  align-items: center;
+  color: rgb(var(--v-theme-error));
+  display: inline-flex;
+  font-size: 0.8rem;
+  gap: var(--nexus-gap-1);
 }
 </style>

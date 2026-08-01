@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
@@ -61,6 +62,9 @@ func (o *EndpointService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 		return nil, err
 	}
 	for _, endpoint := range endpoints {
+		if !capabilities.IsTypeAvailable("endpoints", endpoint.Type) {
+			continue
+		}
 		endpointJson, err := endpoint.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -181,6 +185,9 @@ func (s *EndpointService) RestartEndpoints(tx *gorm.DB, ids []uint) error {
 	for _, endpoint := range endpoints {
 		if err := coreInstance.RemoveEndpoint(endpoint.Tag); err != nil && err != os.ErrInvalid {
 			return err
+		}
+		if !capabilities.IsTypeAvailable("endpoints", endpoint.Type) {
+			continue
 		}
 		endpointConfig, err := endpoint.MarshalJSON()
 		if err != nil {

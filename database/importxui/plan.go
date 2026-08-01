@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/deposist/s-ui-x/core/capabilities"
 	"github.com/deposist/s-ui-x/database"
 	"github.com/deposist/s-ui-x/database/model"
 	"github.com/deposist/s-ui-x/util/common"
@@ -69,6 +70,8 @@ type PlanItem struct {
 	AdminMode   string          `json:"adminMode,omitempty"`
 	PreviewJSON json.RawMessage `json:"previewJson"`
 	Warnings    []string        `json:"warnings,omitempty"`
+	Unsupported bool            `json:"unsupported,omitempty"`
+	Reason      string          `json:"reason,omitempty"`
 }
 
 type Progress struct {
@@ -256,6 +259,10 @@ func (s *importState) planInboundsEndpoints(ctx context.Context, tx *gorm.DB, sr
 		if err := checkContext(ctx); err != nil {
 			return err
 		}
+		if !capabilities.IsTypeAllowed("inbounds", row.Protocol) && row.Protocol != "wireguard" {
+			plan.Items = append(plan.Items, unsupportedPlanItem(KindInbound, row.ID, row.Tag, row.Protocol))
+			return nil
+		}
 		if row.Protocol == "wireguard" {
 			endpoint, warnings, err := mapWireguardEndpoint(row)
 			if err != nil || endpoint == nil {
@@ -391,6 +398,20 @@ func warningOnlyItem(kind string, srcID any, srcTag string, dstTag string, warni
 		Action:      ActionSkip,
 		PreviewJSON: json.RawMessage(`null`),
 		Warnings:    warnings,
+	}
+}
+
+func unsupportedPlanItem(kind string, srcID any, srcTag, entityType string) PlanItem {
+	return PlanItem{
+		Kind:        kind,
+		SrcID:       srcID,
+		SrcTag:      srcTag,
+		DstTag:      srcTag,
+		Action:      ActionSkip,
+		PreviewJSON: json.RawMessage(`null`),
+		Warnings:    []string{fmt.Sprintf("%s %s: unsupported type %q by official core", kind, srcTag, entityType)},
+		Unsupported: true,
+		Reason:      "unsupported by official core",
 	}
 }
 
@@ -663,6 +684,11 @@ func (s *applyState) applyInboundsEndpoints(ctx context.Context, tx *gorm.DB, sr
 	return src.eachInbound(func(row xuiInboundRow) error {
 		if err := checkContext(ctx); err != nil {
 			return err
+		}
+		if !capabilities.IsTypeAllowed("inbounds", row.Protocol) && row.Protocol != "wireguard" {
+			s.report.Summary.Inbounds.Skipped++
+			s.report.markUnsupported(KindInbound, row.Tag, row.Protocol, "unsupported by official core")
+			return nil
 		}
 		if row.Protocol == "wireguard" {
 			endpoint, warnings, err := mapWireguardEndpoint(row)

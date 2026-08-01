@@ -9,6 +9,22 @@
 
 Пока нет unreleased-изменений.
 
+## [1.5.12-beta1] - 2026-08-01 - порт ext-to-upstream
+
+Первая beta в ветке 1.5.12. Панель работает только на официальном sing-box v1.13.15 со строгим capability-контрактом, транзакционным self-update, платными подписками и полным frontend-parity. Ручная миграция не требуется.
+
+- Официальное ядро: сборка только на `github.com/sagernet/sing-box v1.13.15`. Все fork-патчи, extended-теги протоколов и сторонние build-флаги удалены.
+- Capability-манифест управляет всеми слоями: backend-валидация, frontend-редакторы, import, doctor-диагностика и runtime-проверки отклоняют неподдерживаемые типы до сохранения. Исторические строки остаются доступными для просмотра и редактирования только если тип совпадает с текущей сборкой.
+- Self-update стал единой транзакцией binary-and-database. Перед заменой любого файла панель записывает JSON transaction marker с SHA-256-дайджестами candidate, backup и `VACUUM INTO` database snapshot. Recovery выполняется до миграций и fails closed при malformed state или identity mismatch.
+- Исправлена утечка состояния в update-flow: ошибка `os.Stat` pending marker могла навсегда заблокировать сервис. Теперь все error-paths сбрасывают состояние перед возвратом.
+- Payment orders сохраняют immutable grant days, traffic и snapshot version. Legacy orders без snapshot переходят в permanent manual review с сохранённым provider evidence.
+- CryptoBot invoice identity стал first-class. Создание сериализовано и fail-closed. Reconciliation предпочитает paid duplicates, отменяет active siblings и сохраняет failed cancellation retries между рестартами.
+- Classic и Nexus разделяют menu metadata и palette-aware theme. Entity drawers отклоняют blank identities, invalid ports, missing TLS и unavailable runtime capabilities с visible localized reasons.
+- Все шесть shipped locales теперь expose одинаковую leaf-key structure. Missing translations fallback на English at runtime, но materialized в bundle, поэтому tests reject structural drift.
+- Session regeneration, SQLite sessions, CSRF, WebSocket origins, rate limits, cookie invariants и backup confidentiality покрыты focused race tests.
+
+Полные release notes: [`docs/releases/v1.5.12-beta1.md`](docs/releases/v1.5.12-beta1.md).
+
 ## [1.5.11] - 2026-07-07 - определение Telegram Chat ID
 
 Стабильный patch-релиз для настройки Telegram-уведомлений. Ручная миграция базы данных или конфигурации не требуется.

@@ -246,3 +246,100 @@ func assertIntegrationAuditEvent(t *testing.T, eventName string, resource string
 	}
 	return event
 }
+
+func TestIntegrationForcedPasswordResetRestrictsSessionUntilChange(t *testing.T) {
+	resetRateLimitState()
+	settingService := initSessionTestDB(t)
+	if _, err := settingService.GetAllSetting(); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(model.Setting{}).Where("key = ?", "webPath").Update("value", "/").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := (&service.UserService{}).UpdateFirstUser("admin", "reset-old-password"); err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(model.User{}).Where("username = ?", "admin").Update("force_password_reset", true).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.Use(sessions.Sessions("s-ui", cookie.NewStore([]byte("test-secret"))))
+	NewAPIHandler(router.Group("/api"), nil)
+	jar := integrationCookieJar{}
+
+	loginForm := url.Values{"user": {"admin"}, "pass": {"reset-old-password"}}
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(loginForm.Encode()))
+	loginReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	loginRecorder := performIntegrationRequest(router, loginReq, &jar)
+	if loginRecorder.Code != http.StatusOK {
+		t.Fatalf("forced-reset login returned %d body=%s", loginRecorder.Code, loginRecorder.Body.String())
+	}
+	var loginMsg Msg
+	if err := json.Unmarshal(loginRecorder.Body.Bytes(), &loginMsg); err != nil {
+		t.Fatal(err)
+	}
+	if loginMsg.Success || loginMsg.Msg != "" {
+		t.Fatalf("forced-reset login response = %#v", loginMsg)
+	}
+	loginObj, ok := loginMsg.Obj.(map[string]interface{})
+	if !ok || loginObj["forcePasswordReset"] != true || loginObj["username"] != "admin" {
+		t.Fatalf("forced-reset login object = %#v", loginMsg.Obj)
+	}
+
+	blockedReq := httptest.NewRequest(http.MethodGet, "/api/load", nil)
+	blockedRecorder := performIntegrationRequest(router, blockedReq, &jar)
+	if blockedRecorder.Code != http.StatusForbidden {
+		t.Fatalf("reset-required session allowed /load with status %d body=%s", blockedRecorder.Code, blockedRecorder.Body.String())
+	}
+
+	csrfReq := httptest.NewRequest(http.MethodGet, "/api/csrf", nil)
+	csrfRecorder := performIntegrationRequest(router, csrfReq, &jar)
+	if csrfRecorder.Code != http.StatusOK {
+		t.Fatalf("csrf for reset-required session returned %d body=%s", csrfRecorder.Code, csrfRecorder.Body.String())
+	}
+	csrfToken := integrationCSRFToken(t, csrfRecorder)
+
+	failedChange := url.Values{"oldPass": {"wrong-password"}, "newUsername": {"admin"}, "newPass": {"reset-new-password"}}
+	failedReq := httptest.NewRequest(http.MethodPost, "/api/changePass", strings.NewReader(failedChange.Encode()))
+	failedReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	failedReq.Header.Set(csrfHeader, csrfToken)
+	failedRecorder := performIntegrationRequest(router, failedReq, &jar)
+	if failedRecorder.Code != http.StatusOK {
+		t.Fatalf("failed reset returned %d body=%s", failedRecorder.Code, failedRecorder.Body.String())
+	}
+	var failedMsg Msg
+	if err := json.Unmarshal(failedRecorder.Body.Bytes(), &failedMsg); err != nil {
+		t.Fatal(err)
+	}
+	if failedMsg.Success {
+		t.Fatal("wrong bootstrap password unexpectedly succeeded")
+	}
+	blockedRecorder = performIntegrationRequest(router, httptest.NewRequest(http.MethodGet, "/api/load", nil), &jar)
+	if blockedRecorder.Code != http.StatusForbidden {
+		t.Fatalf("failed reset cleared restriction with status %d", blockedRecorder.Code)
+	}
+
+	changeForm := url.Values{"oldPass": {"reset-old-password"}, "newUsername": {"admin"}, "newPass": {"reset-new-password"}}
+	changeReq := httptest.NewRequest(http.MethodPost, "/api/changePass", strings.NewReader(changeForm.Encode()))
+	changeReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	changeReq.Header.Set(csrfHeader, csrfToken)
+	changeRecorder := performIntegrationRequest(router, changeReq, &jar)
+	if changeRecorder.Code != http.StatusOK {
+		t.Fatalf("successful reset returned %d body=%s", changeRecorder.Code, changeRecorder.Body.String())
+	}
+	assertIntegrationMsgSuccess(t, changeRecorder)
+
+	allowedRecorder := performIntegrationRequest(router, httptest.NewRequest(http.MethodGet, "/api/load", nil), &jar)
+	if allowedRecorder.Code != http.StatusOK {
+		t.Fatalf("session remained restricted after reset: status %d body=%s", allowedRecorder.Code, allowedRecorder.Body.String())
+	}
+	var stored model.User
+	if err := database.GetDB().Where("username = ?", "admin").First(&stored).Error; err != nil {
+		t.Fatal(err)
+	}
+	if stored.ForcePasswordReset {
+		t.Fatal("successful password change left force reset enabled")
+	}
+}

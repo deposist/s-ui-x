@@ -96,7 +96,7 @@ func (j *FailoverJob) runGroup(coreInst *core.Core, group service.FailoverGroupC
 	j.mu.Lock()
 	for _, member := range group.Members {
 		h := st.health[member]
-		if results[member] {
+		if results[member].Status == "healthy" {
 			h.ConsecutiveUp++
 			h.ConsecutiveDown = 0
 		} else {
