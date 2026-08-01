@@ -175,7 +175,7 @@ jobs:
             *) echo "no pinned libcronet sha256 for arch ${{ matrix.arch }}" >&2; exit 1 ;;
           esac
           curl --fail --location --silent --show-error -o s-ui-windows/libcronet.dll "${{ env.LIBCRONET_BASE_URL }}/libcronet-windows-${{ matrix.arch }}.dll"
-          printf '%s  *s-ui-windows/libcronet.dll\n' "$CRONET_SHA256" | sha256sum --check --binary -
+          printf '%s  *s-ui-windows/libcronet.dll\n' "$CRONET_SHA256" | sha256sum --check -
 
       - name: Package
         shell: bash
