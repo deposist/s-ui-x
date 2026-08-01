@@ -301,12 +301,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-ref.outputs.tag }}
-        run: scripts/check-release-assets.sh "$GITHUB_REPOSITORY" "$TAG" release-assets
+        run: bash scripts/check-release-assets.sh "$GITHUB_REPOSITORY" "$TAG" release-assets
       - name: Verify exact remote release assets and digests
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-ref.outputs.tag }}
-        run: scripts/check-release-assets.sh --verify "$GITHUB_REPOSITORY" "$TAG" release-assets
+        run: bash scripts/check-release-assets.sh --verify "$GITHUB_REPOSITORY" "$TAG" release-assets
       - name: Publish verified release
         env:
           GH_TOKEN: ${{ github.token }}
