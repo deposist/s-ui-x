@@ -14,8 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/deposist/s-ui-x/logger"
 )
 
 const (
@@ -267,8 +265,4 @@ func RestoreBackup(execPath string) error {
 	return syncUpdateDirectory(filepath.Dir(execPath))
 }
 
-func removeUpdateFileBestEffort(path string) {
-	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
-		logger.Warning("panel update: cleanup failed:", err)
-	}
-}
+

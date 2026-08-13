@@ -9,6 +9,19 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta2] - 2026-08-13 - maintenance beta
+
+Second beta of the 1.5.12 line. The panel embeds sing-box v1.13.18, fixes three dependency advisories, and makes x-ui import stop with a clear error when the source database is unavailable. No manual migration is required.
+
+- sing-box updated to v1.13.18 with sing v0.8.13 and wireguard-go v0.0.4.
+- quic-go v0.59.1 closes the HTTP/3 QPACK memory-exhaustion advisory (GO-2026-5676).
+- golang.org/x/text v0.39.0 stops an infinite loop on invalid internationalized-domain input (GO-2026-5970).
+- google.golang.org/grpc v1.82.1 removes HTTP/2 transport and xDS RBAC vulnerabilities (GO-2026-6061).
+- Frontend packages updated: axios 1.19.0 and transitive fixes for postcss, nanoid, brace-expansion, immutable. `npm audit` reports zero vulnerabilities.
+- x-ui import stops with a clear error when the source database cannot be opened.
+
+Full release notes: [`docs/releases/v1.5.12-beta2.md`](docs/releases/v1.5.12-beta2.md).
+
 ## [1.5.12-beta1] - 2026-08-01 - ext-to-upstream port
 
 First beta of the 1.5.12 line. The panel now runs only on official sing-box v1.13.15 with a strict capability contract, transactional self-update, paid subscriptions, and full frontend parity. No manual migration is required.

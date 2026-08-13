@@ -1,6 +1,7 @@
 package importxui
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"path/filepath"
@@ -69,6 +70,42 @@ func TestMapXrayRouting(t *testing.T) {
 	// domain geosite:cn -> geosite-cn rule set, ip geoip:cn -> geoip-cn rule set.
 	if len(route["rules"].([]any)) != 1 || len(route["rule_set"].([]any)) != 2 {
 		t.Fatalf("unexpected mapped route: %#v", route)
+	}
+}
+
+func TestSourceDBReadersRejectUnavailableHandle(t *testing.T) {
+	src := &sourceDB{
+		db:      &gorm.DB{Config: &gorm.Config{}},
+		dialect: Dialect3XUIMHSanaei{},
+	}
+	historyApply := &applyState{
+		plan: map[string]PlanItem{
+			planKey(KindHistory, "traffic"): {
+				Kind: KindHistory, SrcID: "traffic", Action: ActionCreate,
+			},
+		},
+		report: &Report{},
+	}
+	cases := []struct {
+		name string
+		run  func() error
+	}{
+		{"each inbound", func() error { return src.eachInbound(func(xuiInboundRow) error { return nil }) }},
+		{"each client traffic", func() error { return src.eachClientTraffic(func(xuiClientTraffic) error { return nil }) }},
+		{"inbound count", func() error { _, err := src.inboundCount(); return err }},
+		{"settings", func() error { _, err := src.settings(); return err }},
+		{"users", func() error { _, err := src.users(); return err }},
+		{"outbound traffics", func() error { _, err := src.outboundTraffics(); return err }},
+		{"xray config", func() error { _, err := src.xrayConfig(); return err }},
+		{"plan historical", func() error { return planHistorical(context.Background(), src, &MigrationPlan{}) }},
+		{"apply historical", func() error { return historyApply.applyHistorical(context.Background(), nil, src, ApplyOptions{}) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := tc.run(); !errors.Is(err, gorm.ErrInvalidDB) {
+				t.Fatalf("error = %v, want %v", err, gorm.ErrInvalidDB)
+			}
+		})
 	}
 }
 

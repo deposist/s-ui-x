@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -123,18 +124,16 @@ func sqliteReadOnlyURI(path string) (string, error) {
 }
 
 func (s *sourceDB) close() {
-	if s == nil || s.db == nil {
+	sqlDB, err := s.sqlDB()
+	if err != nil {
 		return
 	}
-	sqlDB, err := s.db.DB()
-	if err == nil {
-		_ = sqlDB.Close()
-	}
+	_ = sqlDB.Close()
 }
 
 func (s *sourceDB) validate() error {
 	_ = s.db.Exec("PRAGMA trusted_schema=OFF").Error
-	sqlDB, err := s.db.DB()
+	sqlDB, err := s.sqlDB()
 	if err != nil {
 		return err
 	}
@@ -166,7 +165,11 @@ func hashSource(path string) (string, error) {
 }
 
 func (s *sourceDB) eachInbound(fn func(xuiInboundRow) error) error {
-	rows, err := s.dialect.ReadInbounds(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return err
+	}
+	rows, err := s.dialect.ReadInbounds(db)
 	if err != nil {
 		return err
 	}
@@ -179,7 +182,11 @@ func (s *sourceDB) eachInbound(fn func(xuiInboundRow) error) error {
 }
 
 func (s *sourceDB) eachClientTraffic(fn func(xuiClientTraffic) error) error {
-	rows, err := s.dialect.ReadClients(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return err
+	}
+	rows, err := s.dialect.ReadClients(db)
 	if err != nil {
 		return err
 	}
@@ -192,7 +199,11 @@ func (s *sourceDB) eachClientTraffic(fn func(xuiClientTraffic) error) error {
 }
 
 func (s *sourceDB) inboundCount() (int, error) {
-	rows, err := s.dialect.ReadInbounds(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return 0, err
+	}
+	rows, err := s.dialect.ReadInbounds(db)
 	if err != nil {
 		return 0, err
 	}
@@ -200,7 +211,11 @@ func (s *sourceDB) inboundCount() (int, error) {
 }
 
 func (s *sourceDB) settings() ([]xuiSetting, error) {
-	return s.dialect.ReadSettings(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return nil, err
+	}
+	return s.dialect.ReadSettings(db)
 }
 
 type xuiUser struct {
@@ -210,23 +225,43 @@ type xuiUser struct {
 }
 
 func (s *sourceDB) users() ([]xuiUser, error) {
-	return s.dialect.ReadUsers(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return nil, err
+	}
+	return s.dialect.ReadUsers(db)
 }
 
 func (s *sourceDB) outboundTraffics() ([]xuiOutboundTraffic, error) {
-	return s.dialect.ReadOutboundTraffics(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return nil, err
+	}
+	return s.dialect.ReadOutboundTraffics(db)
 }
 
 func (s *sourceDB) xrayConfig() (string, error) {
-	return s.dialect.ReadXrayConfig(s.sqlDB())
+	db, err := s.sqlDB()
+	if err != nil {
+		return "", err
+	}
+	return s.dialect.ReadXrayConfig(db)
 }
 
-func (s *sourceDB) sqlDB() *sql.DB {
+var errXUISourceUnavailable = errors.New("xui source database is unavailable")
+
+func (s *sourceDB) sqlDB() (*sql.DB, error) {
+	if s == nil || s.db == nil {
+		return nil, errXUISourceUnavailable
+	}
 	sqlDB, err := s.db.DB()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("get xui source database: %w", err)
 	}
-	return sqlDB
+	if sqlDB == nil {
+		return nil, errXUISourceUnavailable
+	}
+	return sqlDB, nil
 }
 
 func nullString(v sql.NullString) string {

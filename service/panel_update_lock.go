@@ -20,6 +20,7 @@ func acquirePanelUpdateProcessLock(execPath string) (panelUpdateProcessLock, err
 	if execPath == "" {
 		return nil, errors.New("cannot locate current executable")
 	}
+	// #nosec G304 -- execPath comes from os.Executable in production; the fixed suffix is the updater-owned process lock.
 	file, err := os.OpenFile(execPath+panelUpdateLockSuffix, os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("open update process lock: %w", err)

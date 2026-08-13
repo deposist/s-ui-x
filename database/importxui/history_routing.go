@@ -25,7 +25,11 @@ func planHistorical(ctx context.Context, src *sourceDB, plan *MigrationPlan) err
 	if err := checkContext(ctx); err != nil {
 		return err
 	}
-	clients, err := src.dialect.ReadClients(src.sqlDB())
+	db, err := src.sqlDB()
+	if err != nil {
+		return err
+	}
+	clients, err := src.dialect.ReadClients(db)
 	if err != nil {
 		return err
 	}
@@ -81,7 +85,11 @@ func (s *applyState) applyHistorical(ctx context.Context, tx *gorm.DB, src *sour
 		now = opts.Now()
 	}
 	var stats []model.Stats
-	clients, err := src.dialect.ReadClients(src.sqlDB())
+	db, err := src.sqlDB()
+	if err != nil {
+		return err
+	}
+	clients, err := src.dialect.ReadClients(db)
 	if err != nil {
 		return err
 	}

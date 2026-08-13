@@ -382,6 +382,7 @@ func writeAtomicUpdateFile(path string, data []byte, mode os.FileMode) error {
 }
 
 func syncUpdateDirectory(path string) error {
+	// #nosec G304 -- path is the directory containing updater-owned files derived from the current executable path.
 	directory, err := os.Open(path)
 	if err != nil {
 		return err

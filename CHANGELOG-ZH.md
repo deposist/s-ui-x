@@ -8,6 +8,19 @@
 
 暂无未发布变更。
 
+## [1.5.12-beta2] - 2026-08-13 - 维护版 beta
+
+1.5.12 分支的第二个 beta。面板嵌入 sing-box v1.13.18，修复三个依赖安全公告，并且当源数据库不可用时 x-ui 导入会明确报错。无需手动迁移。
+
+- sing-box 更新到 v1.13.18，sing 到 v0.8.13，wireguard-go 到 v0.0.4。
+- quic-go v0.59.1 修复 HTTP/3 QPACK 内存耗尽问题 (GO-2026-5676)。
+- golang.org/x/text v0.39.0 修复无效国际化域名输入导致的死循环 (GO-2026-5970)。
+- google.golang.org/grpc v1.82.1 修复 HTTP/2 传输和 xDS RBAC 漏洞 (GO-2026-6061)。
+- 前端依赖已更新：axios 1.19.0 以及 postcss、nanoid、brace-expansion、immutable 的传递修复。`npm audit` 报告 0 个漏洞。
+- 当源数据库无法打开时，x-ui 导入会停止并显示明确错误。
+
+完整 release notes: [`docs/releases/v1.5.12-beta2.md`](docs/releases/v1.5.12-beta2.md)。
+
 ## [1.5.12-beta1] - 2026-08-01 - ext-to-upstream 迁移
 
 1.5.12 分支的第一个 beta。面板仅基于官方 sing-box v1.13.15 构建，具备严格的 capability 合约、事务性 self-update、付费订阅和完整的 frontend 一致性。无需手动迁移。
