@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -335,6 +336,139 @@ func TestRecoverPendingUpdateInvalidMarkerFailsClosed(t *testing.T) {
 	}
 	if got, err := os.ReadFile(execPath); err != nil || string(got) != "BROKEN-NEW" {
 		t.Fatalf("invalid marker changed live binary: %q, %v", got, err)
+	}
+}
+
+func TestRecoverPendingUpdateMigratesLegacyNumericMarker(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("0"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if rolledBack, err := RecoverPendingUpdate(execPath); err != nil || rolledBack {
+		t.Fatalf("legacy marker recovery = (%t, %v), want (false, nil)", rolledBack, err)
+	}
+	if got, _ := os.ReadFile(execPath); string(got) != "BROKEN-NEW" {
+		t.Fatalf("live binary changed during legacy recovery: %q", got)
+	}
+	if _, err := os.Stat(execPath + backupSuffix); err != nil {
+		t.Fatalf("rollback backup was removed: %v", err)
+	}
+	raw, err := os.ReadFile(execPath + pendingSuffix)
+	if err != nil {
+		t.Fatalf("upgraded marker was not written: %v", err)
+	}
+	var marker pendingUpdateMarker
+	if err := json.Unmarshal(raw, &marker); err != nil {
+		t.Fatalf("upgraded marker is not JSON: %v", err)
+	}
+	if marker.Version != updateMarkerVersion || marker.Phase != updatePhaseApplied || marker.Attempts != 1 {
+		t.Fatalf("upgraded marker = version %d phase %q attempts %d, want v%d applied attempts 1", marker.Version, marker.Phase, marker.Attempts, updateMarkerVersion)
+	}
+	candidateDigest, err := updateFileSHA256(execPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backupDigest, err := updateFileSHA256(execPath + backupSuffix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if marker.CandidateSHA256 != candidateDigest || marker.BackupSHA256 != backupDigest {
+		t.Fatalf("upgraded marker digests = candidate %q backup %q", marker.CandidateSHA256, marker.BackupSHA256)
+	}
+	if err := MarkPendingUpdateBooting(execPath); err != nil {
+		t.Fatalf("legacy recovery could not enter booting phase: %v", err)
+	}
+	if err := ConfirmPendingUpdate(execPath); err != nil {
+		t.Fatalf("legacy recovery could not confirm cleanly: %v", err)
+	}
+	if _, err := os.Stat(execPath + pendingSuffix); !os.IsNotExist(err) {
+		t.Fatal("pending marker should be removed after confirmation")
+	}
+	if _, err := os.Stat(execPath + backupSuffix); !os.IsNotExist(err) {
+		t.Fatal("rollback backup should be removed after confirmation")
+	}
+}
+
+func TestRecoverPendingUpdateLegacyNumericMarkerRollsBackAtThreshold(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("1"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if rolledBack, err := RecoverPendingUpdate(execPath); err != nil || !rolledBack {
+		t.Fatalf("legacy threshold recovery = (%t, %v), want (true, nil)", rolledBack, err)
+	}
+	if got, _ := os.ReadFile(execPath); string(got) != "GOOD-OLD" {
+		t.Fatalf("binary not rolled back, got %q", got)
+	}
+	if _, err := os.Stat(execPath + pendingSuffix); !os.IsNotExist(err) {
+		t.Fatal("pending marker should be cleared after rollback")
+	}
+	if _, err := os.Stat(execPath + backupSuffix); !os.IsNotExist(err) {
+		t.Fatal("backup should be consumed by rollback")
+	}
+}
+
+func TestRecoverPendingUpdateLegacyNumericMarkerCleansUnswappedUpdate(t *testing.T) {
+	installPanelUpdateTestDatabaseHooks(t)
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := os.WriteFile(execPath, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+backupSuffix, []byte("GOOD-OLD"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("0"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if rolledBack, err := RecoverPendingUpdate(execPath); err != nil || rolledBack {
+		t.Fatalf("unswapped legacy recovery = (%t, %v), want (false, nil)", rolledBack, err)
+	}
+	if got, _ := os.ReadFile(execPath); string(got) != "GOOD-OLD" {
+		t.Fatalf("live binary changed during cleanup: %q", got)
+	}
+	if _, err := os.Stat(execPath + backupSuffix); !os.IsNotExist(err) {
+		t.Fatal("stale backup should be cleaned up")
+	}
+	if _, err := os.Stat(execPath + pendingSuffix); !os.IsNotExist(err) {
+		t.Fatal("pending marker should be cleaned up")
+	}
+}
+
+func TestRecoverPendingUpdateLegacyNumericMarkerMissingBackupFailsClosed(t *testing.T) {
+	dir := t.TempDir()
+	execPath := filepath.Join(dir, "sui")
+	if err := os.WriteFile(execPath, []byte("BROKEN-NEW"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(execPath+pendingSuffix, []byte("0"), testPrivateFileMode); err != nil {
+		t.Fatal(err)
+	}
+
+	if rolledBack, err := RecoverPendingUpdate(execPath); err == nil || rolledBack {
+		t.Fatalf("legacy recovery without backup = (%t, %v), want unresolved error", rolledBack, err)
+	}
+	if got, _ := os.ReadFile(execPath); string(got) != "BROKEN-NEW" {
+		t.Fatalf("missing backup changed live binary: %q", got)
 	}
 }
 

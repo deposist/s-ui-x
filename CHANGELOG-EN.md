@@ -9,6 +9,16 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta3] - 2026-08-14 - startup hotfix
+
+Hotfix for a startup failure that could appear after updating to v1.5.12-beta1 or v1.5.12-beta2 from a version older than v1.5.12-beta1. No manual migration is required.
+
+- The panel reads the legacy numeric self-update marker, upgrades it to the current JSON format, and continues the normal recovery path.
+- A binary that repeatedly fails to boot still rolls back to its backup at the same threshold. Startup still stops when the rollback backup is missing.
+- Release notes include a manual recovery procedure for servers already stuck in a restart loop.
+
+Full release notes: [`docs/releases/v1.5.12-beta3.md`](docs/releases/v1.5.12-beta3.md).
+
 ## [1.5.12-beta2] - 2026-08-13 - maintenance beta
 
 Second beta of the 1.5.12 line. The panel embeds sing-box v1.13.18, fixes three dependency advisories, and makes x-ui import stop with a clear error when the source database is unavailable. No manual migration is required.

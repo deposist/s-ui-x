@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/deposist/s-ui-x/logger"
@@ -126,6 +127,13 @@ func readPendingUpdateMarker(execPath string) (pendingUpdateMarker, error) {
 	if err != nil {
 		return pendingUpdateMarker{}, err
 	}
+	if attempts, ok := parseLegacyPendingUpdateAttempts(raw); ok {
+		marker, err := upgradeLegacyPendingUpdateMarker(execPath, attempts)
+		if err != nil {
+			return marker, fmt.Errorf("upgrade legacy pending marker: %v", err)
+		}
+		return marker, nil
+	}
 	var marker pendingUpdateMarker
 	if err := json.Unmarshal(raw, &marker); err != nil {
 		return marker, fmt.Errorf("decode pending marker: %w", err)
@@ -154,6 +162,47 @@ func readPendingUpdateMarker(execPath string) (pendingUpdateMarker, error) {
 		}
 	}
 	return marker, nil
+}
+
+// Releases before the v2 transaction marker stored the boot-attempt counter
+// as a plain integer in the same file.
+func parseLegacyPendingUpdateAttempts(raw []byte) (int, bool) {
+	trimmed := strings.TrimSpace(string(raw))
+	if trimmed == "" {
+		return 0, false
+	}
+	attempts, err := strconv.Atoi(trimmed)
+	if err != nil || attempts < 0 {
+		return 0, false
+	}
+	return attempts, true
+}
+
+func upgradeLegacyPendingUpdateMarker(execPath string, attempts int) (pendingUpdateMarker, error) {
+	backupDigest, err := updateFileSHA256(execPath + backupSuffix)
+	if err != nil {
+		return pendingUpdateMarker{}, fmt.Errorf("backup digest: %w", err)
+	}
+	liveDigest, err := updateFileSHA256(execPath)
+	if err != nil {
+		return pendingUpdateMarker{}, fmt.Errorf("live binary digest: %w", err)
+	}
+	transactionID, err := newUpdateTransactionID()
+	if err != nil {
+		return pendingUpdateMarker{}, err
+	}
+	phase := updatePhaseApplied
+	if strings.EqualFold(liveDigest, backupDigest) {
+		phase = updatePhasePrepared
+	}
+	return pendingUpdateMarker{
+		Version:         updateMarkerVersion,
+		TransactionID:   transactionID,
+		Phase:           phase,
+		Attempts:        attempts,
+		CandidateSHA256: liveDigest,
+		BackupSHA256:    backupDigest,
+	}, nil
 }
 
 func markPendingUpdateApplied(execPath string) error {
