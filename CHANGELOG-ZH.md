@@ -8,6 +8,16 @@
 
 暂无未发布变更。
 
+## [1.5.12-beta5] - 2026-08-15 - 修复 WARP endpoint 诊断
+
+1.5.12 分支的第五个 beta 修复了 Doctor 诊断将 WARP endpoint 误报为官方核心不支持的问题，同时修复了会拒绝修改 WARP endpoint 的保存检查。无需手动迁移。
+
+- Doctor 不再把 WARP endpoint 报成不受支持的历史实体。`warp` 现在会在能力检查前解析为 `wireguard`。
+- 修改 WARP endpoint 不再因类型不支持而失败。保存校验里应用了相同的别名解析。
+- 现有的 WARP endpoint 保留自己的 tag，无需改动。
+
+完整 release notes: [`docs/releases/v1.5.12-beta5.md`](docs/releases/v1.5.12-beta5.md)。
+
 ## [1.5.12-beta4] - 2026-08-15 - 修复 WARP 路由
 
 1.5.12 分支的第四个 beta 修复了在 Rules 中将 WARP endpoint 设为 Default outbound 后核心重启失败的问题。无需手动迁移。

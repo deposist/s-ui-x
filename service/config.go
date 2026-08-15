@@ -372,10 +372,14 @@ func validateCapabilitySave(tx *gorm.DB, obj, act string, data json.RawMessage) 
 	if err := json.Unmarshal(data, &entity); err != nil {
 		return err
 	}
-	if !capabilities.IsTypeAllowed(obj, entity.Type) {
+	checkType := entity.Type
+	if obj == "endpoints" {
+		checkType = coreEndpointType(entity.Type)
+	}
+	if !capabilities.IsTypeAllowed(obj, checkType) {
 		return common.NewErrorf("unsupported %s type %q by official core", obj, entity.Type)
 	}
-	if capabilities.IsTypeAvailable(obj, entity.Type) {
+	if capabilities.IsTypeAvailable(obj, checkType) {
 		return nil
 	}
 	if act == "edit" {

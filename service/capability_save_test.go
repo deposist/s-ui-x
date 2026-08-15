@@ -53,6 +53,33 @@ func TestConfigSaveRejectsUnavailableOfficialCapability(t *testing.T) {
 	}
 }
 
+func TestValidateCapabilitySaveResolvesWarpEndpointAlias(t *testing.T) {
+	initSettingTestDB(t)
+	if err := database.GetDB().Create(&model.Endpoint{
+		Type:    "warp",
+		Tag:     "warp-zWj",
+		Options: json.RawMessage(`{}`),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	// Editing an existing WARP endpoint must not be rejected as unsupported:
+	// the panel-only alias resolves to wireguard.
+	if err := validateCapabilitySave(database.GetDB(), "endpoints", "edit", json.RawMessage(`{"id":1,"type":"warp"}`)); err != nil {
+		t.Fatalf("warp endpoint edit rejected: %v", err)
+	}
+
+	// A new WARP endpoint follows wireguard availability exactly; in builds
+	// without the wireguard tag it is unavailable, never "unsupported".
+	err := validateCapabilitySave(database.GetDB(), "endpoints", "new", json.RawMessage(`{"type":"warp"}`))
+	if err == nil {
+		return // wireguard compiled in this build; new warp is allowed
+	}
+	if strings.Contains(err.Error(), "unsupported") {
+		t.Fatalf("warp endpoint must not be reported as unsupported: %v", err)
+	}
+}
+
 func TestConfigSaveAllowsDeletionOfUnsupportedHistoricalRow(t *testing.T) {
 	initSettingTestDB(t)
 	historical := model.Service{Type: "ccm", Tag: "historical-unsupported", Options: json.RawMessage(`{}`)}

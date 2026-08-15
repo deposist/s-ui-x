@@ -31,3 +31,24 @@ func TestCapabilityContractChecksReportExactUnsupportedReasons(t *testing.T) {
 		t.Fatalf("missing exact capability reasons: %#v", items)
 	}
 }
+
+func TestCapabilityContractChecksResolvesWarpEndpointAlias(t *testing.T) {
+	initSettingTestDB(t)
+	if err := database.GetDB().Create(&model.Endpoint{
+		Type:    "warp",
+		Tag:     "warp-zWj",
+		Options: json.RawMessage(`{}`),
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	items := capabilityContractChecks(database.GetDB())
+	for _, item := range items {
+		if item.ID != "capability-endpoints-1" {
+			continue
+		}
+		if strings.Contains(item.Message, "unsupported by official core") {
+			t.Fatalf("warp endpoint must resolve to wireguard, got: %#v", item)
+		}
+	}
+}

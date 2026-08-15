@@ -9,6 +9,16 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta5] - 2026-08-15 - WARP endpoint diagnostics fix
+
+The fifth beta of the 1.5.12 line fixes a Doctor diagnostic that flagged WARP endpoints as unsupported by the official core. It also fixes the save check that rejected edits to WARP endpoints. No manual migration is required.
+
+- The Doctor no longer reports WARP endpoints as unsupported historical entities. `warp` now resolves to `wireguard` before the capability check.
+- Editing a WARP endpoint no longer fails with an unsupported type error. The same alias resolution is applied during save validation.
+- Existing WARP endpoints keep their tag and need no changes.
+
+Full release notes: [`docs/releases/v1.5.12-beta5.md`](docs/releases/v1.5.12-beta5.md).
+
 ## [1.5.12-beta4] - 2026-08-15 - WARP routing fix
 
 The fourth beta of the 1.5.12 line fixes a core restart failure that occurred when a WARP endpoint was selected as the Default outbound in Rules. No manual migration is required.

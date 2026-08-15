@@ -160,11 +160,15 @@ func capabilityContractChecks(db *gorm.DB) []DoctorItem {
 			continue
 		}
 		for _, row := range rows {
+			checkType := row.Type
+			if check.name == "endpoints" {
+				checkType = coreEndpointType(row.Type)
+			}
 			reason := ""
 			switch {
-			case !capabilities.IsTypeAllowed(check.name, row.Type):
+			case !capabilities.IsTypeAllowed(check.name, checkType):
 				reason = "unsupported by official core"
-			case !capabilities.IsTypeAvailable(check.name, row.Type):
+			case !capabilities.IsTypeAvailable(check.name, checkType):
 				reason = "unavailable in this build"
 			}
 			if reason == "" {
