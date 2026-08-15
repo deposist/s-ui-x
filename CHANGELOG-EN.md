@@ -9,6 +9,16 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta4] - 2026-08-15 - WARP routing fix
+
+The fourth beta of the 1.5.12 line fixes a core restart failure that occurred when a WARP endpoint was selected as the Default outbound in Rules. No manual migration is required.
+
+- Selecting a WARP endpoint as `route.final` no longer causes the core restart to fail with `default outbound not found: <tag>`.
+- The panel keeps existing WARP tags and writes the endpoint to sing-box as a WireGuard endpoint.
+- Existing WARP endpoints do not need to be recreated.
+
+Full release notes: [`docs/releases/v1.5.12-beta4.md`](docs/releases/v1.5.12-beta4.md).
+
 ## [1.5.12-beta3] - 2026-08-14 - startup hotfix
 
 Hotfix for a startup failure that could appear after updating to v1.5.12-beta1 or v1.5.12-beta2 from a version older than v1.5.12-beta1. No manual migration is required.

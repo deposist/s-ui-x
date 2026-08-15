@@ -70,7 +70,7 @@ trap - EXIT HUP INT TERM
 cd "$repo_dir"
 echo "Backend"
 
-BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_musl,badlinkname,tfogo_checklinkname0,with_tailscale"
+BUILD_TAGS="with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_wireguard,with_naive_outbound,with_musl,badlinkname,tfogo_checklinkname0,with_tailscale"
 
 # Embed the release artifact platform suffix so the in-panel self-update knows
 # which `s-ui-linux-<platform>.tar.gz` asset to fetch (config.ResolveArtifactPlatform).

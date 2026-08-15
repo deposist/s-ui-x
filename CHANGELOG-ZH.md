@@ -8,6 +8,16 @@
 
 暂无未发布变更。
 
+## [1.5.12-beta4] - 2026-08-15 - 修复 WARP 路由
+
+1.5.12 分支的第四个 beta 修复了在 Rules 中将 WARP endpoint 设为 Default outbound 后核心重启失败的问题。无需手动迁移。
+
+- 将 WARP endpoint 设为 `route.final` 后，核心重启不再因 `default outbound not found: <tag>` 失败。
+- 面板会保留现有的 WARP tag，并将 endpoint 以 WireGuard 类型写入 sing-box 配置。
+- 现有的 WARP endpoint 不需要重新创建。
+
+完整 release notes: [`docs/releases/v1.5.12-beta4.md`](docs/releases/v1.5.12-beta4.md)。
+
 ## [1.5.12-beta3] - 2026-08-14 - 启动修复
 
 修复从早于 v1.5.12-beta1 的版本升级到 v1.5.12-beta1 或 v1.5.12-beta2 后可能出现的启动失败。无需手动迁移。

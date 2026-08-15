@@ -62,7 +62,7 @@ func (o *EndpointService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 		return nil, err
 	}
 	for _, endpoint := range endpoints {
-		if !capabilities.IsTypeAvailable("endpoints", endpoint.Type) {
+		if !isEndpointTypeAvailable(endpoint.Type) {
 			continue
 		}
 		endpointJson, err := endpoint.MarshalJSON()
@@ -72,6 +72,15 @@ func (o *EndpointService) GetAllConfig(db *gorm.DB) ([]json.RawMessage, error) {
 		endpointsJson = append(endpointsJson, endpointJson)
 	}
 	return endpointsJson, nil
+}
+
+// isEndpointTypeAvailable checks the official core type emitted for a panel
+// endpoint. WARP is stored as a panel-only alias but renders as wireguard.
+func isEndpointTypeAvailable(endpointType string) bool {
+	if endpointType == "warp" {
+		endpointType = "wireguard"
+	}
+	return capabilities.IsTypeAvailable("endpoints", endpointType)
 }
 
 func (s *EndpointService) Save(tx *gorm.DB, act string, data json.RawMessage) (*entityCoreChange, error) {
@@ -186,7 +195,7 @@ func (s *EndpointService) RestartEndpoints(tx *gorm.DB, ids []uint) error {
 		if err := coreInstance.RemoveEndpoint(endpoint.Tag); err != nil && err != os.ErrInvalid {
 			return err
 		}
-		if !capabilities.IsTypeAvailable("endpoints", endpoint.Type) {
+		if !isEndpointTypeAvailable(endpoint.Type) {
 			continue
 		}
 		endpointConfig, err := endpoint.MarshalJSON()
