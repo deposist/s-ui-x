@@ -234,7 +234,7 @@
     {
       "type": "wireguard",
       "buildTag": "with_wireguard",
-      "notes": "Official sing-box wireguard endpoint; warp maps to this type. Requires upstream wireguard build tag — NOT the extended AWG fork."
+      "notes": "Official sing-box wireguard endpoint; warp maps to this type. Requires the upstream wireguard build tag."
     },
     {
       "type": "tailscale",

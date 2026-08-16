@@ -8,6 +8,14 @@
 
 暂无未发布变更。
 
+## [1.5.12-beta6] - 2026-08-17 - 协议说明清理
+
+1.5.12 分支的第六个 beta 不包含功能变化。协议能力说明中 WireGuard 的条目带有一条指向面板并未使用的 sing-box 分支的引用，现已移除。
+
+- 协议清单中的 WireGuard 说明以及由它生成的协议矩阵现在只说明需要官方 wireguard build tag。
+
+完整发行说明：[`docs/releases/v1.5.12-beta6.md`](docs/releases/v1.5.12-beta6.md)。
+
 ## [1.5.12-beta5] - 2026-08-15 - 修复 WARP endpoint 诊断
 
 1.5.12 分支的第五个 beta 修复了 Doctor 诊断将 WARP endpoint 误报为官方核心不支持的问题，同时修复了会拒绝修改 WARP endpoint 的保存检查。无需手动迁移。

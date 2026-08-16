@@ -9,6 +9,14 @@ This is the English-language changelog. See `CHANGELOG-RU.md` for Russian and
 
 No unreleased changes yet.
 
+## [1.5.12-beta6] - 2026-08-17 - protocol notes cleanup
+
+The sixth beta of the 1.5.12 line contains no feature changes. The protocol capability notes for WireGuard carried a reference to a sing-box fork the panel does not use; the reference is removed.
+
+- The WireGuard note in the protocol manifest, and the protocol matrix generated from it, now say only that the official wireguard build tag is required.
+
+Full release notes: [`docs/releases/v1.5.12-beta6.md`](docs/releases/v1.5.12-beta6.md).
+
 ## [1.5.12-beta5] - 2026-08-15 - WARP endpoint diagnostics fix
 
 The fifth beta of the 1.5.12 line fixes a Doctor diagnostic that flagged WARP endpoints as unsupported by the official core. It also fixes the save check that rejected edits to WARP endpoints. No manual migration is required.

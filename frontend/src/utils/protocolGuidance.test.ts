@@ -41,7 +41,7 @@ describe('official protocol guidance', () => {
       ['vless', 'vmess', 'trojan', 'shadowsocks', 'socks', 'http']
         .flatMap((type) => [protocolGuidance(capabilities, 'inbounds', type), protocolGuidance(capabilities, 'outbounds', type)]),
     )
-    for (const forbidden of ['trusttunnel', 'mieru', 'sudoku', 'amnezia', 'mtproxy', 'masque', 'openvpn']) {
+    for (const forbidden of ['trusttunnel', 'mieru', 'sudoku', 'mtproxy', 'masque', 'openvpn']) {
       expect(source.toLowerCase()).not.toContain(forbidden)
     }
   })

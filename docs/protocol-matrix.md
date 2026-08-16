@@ -30,7 +30,7 @@ Single source of truth: `core/capabilities/protocols.json`.
 | selector |  |  | yes |  |  |  |  |  |  | selector | Manual operator-selected group backed directly by the core selector outbound. |
 | urltest |  |  | yes |  |  |  |  |  |  | urltest | Latency-based group backed directly by the core urltest outbound. |
 | failover |  |  | yes |  |  |  |  |  |  | selector | Panel-managed priority failover assembled as a core selector. |
-| wireguard |  |  |  | yes |  |  |  |  | with_wireguard |  | Official sing-box wireguard endpoint; warp maps to this type. Requires upstream wireguard build tag — NOT the extended AWG fork. |
+| wireguard |  |  |  | yes |  |  |  |  | with_wireguard |  | Official sing-box wireguard endpoint; warp maps to this type. Requires the upstream wireguard build tag. |
 | tailscale |  |  |  | yes |  |  |  |  | with_tailscale |  |  |
 | resolved |  |  |  |  | yes |  |  |  |  |  |  |
 | ssm-api |  |  |  |  | yes |  |  |  |  |  |  |

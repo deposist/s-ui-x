@@ -62,6 +62,7 @@ CLAUDE.md
 AGENTS.md
 .claude/
 .pi/
+.omp/
 
 # Kiro local specs (not for public repo)
 .kiro/
